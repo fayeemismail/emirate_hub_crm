@@ -72,7 +72,7 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
             </div>
             <div>
               <span className="text-[10px] font-bold text-sky-400 tracking-wider uppercase block">
-                Foundex Website Form Simulator
+                Emirate Hub Website Form Simulator
               </span>
               <h3 className="text-xs sm:text-sm font-bold text-white">
                 Submit Customer Service Request
@@ -97,7 +97,7 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
             </div>
             <h4 className="text-lg font-bold text-white">Request Submitted Successfully!</h4>
             <p className="text-xs text-slate-300 max-w-xs mx-auto">
-              Your inquiry has been routed to Foundex Admin Portal. The dashboard graph and Jira-style Kanban board have been updated in real time.
+              Your inquiry has been routed to Emirate Hub Admin Portal. The dashboard graph and Jira-style Kanban board have been updated in real time.
             </p>
           </div>
         ) : (

@@ -1,7 +1,13 @@
 'use client';
 
 import React from 'react';
-import { ServiceRequest, MessagesGraphData } from '../../types';
+import { 
+  ServiceRequest, 
+  OverviewKpi,
+  MonthlyTrendsResponse,
+  ServiceAnalyticsResponse,
+  FunnelAnalyticsResponse
+} from '../../types';
 import { MessagesGraph } from './MessagesGraph';
 import { PortalBanner } from './components/PortalBanner';
 import { OverviewMetrics } from './components/OverviewMetrics';
@@ -10,7 +16,11 @@ import { DemandBreakdown } from './components/DemandBreakdown';
 
 interface DashboardOverviewProps {
   requests: ServiceRequest[];
-  graphData: MessagesGraphData[];
+  overviewKpi?: OverviewKpi | null;
+  monthlyTrends?: MonthlyTrendsResponse | null;
+  serviceAnalytics?: ServiceAnalyticsResponse | null;
+  funnelAnalytics?: FunnelAnalyticsResponse | null;
+  isLoadingAnalytics?: boolean;
   onNavigateToRequests: () => void;
   onSelectRequest: (req: ServiceRequest) => void;
   onOpenSimulateModal: () => void;
@@ -18,7 +28,11 @@ interface DashboardOverviewProps {
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   requests,
-  graphData,
+  overviewKpi,
+  monthlyTrends,
+  serviceAnalytics,
+  funnelAnalytics,
+  isLoadingAnalytics = false,
   onNavigateToRequests,
   onSelectRequest,
   onOpenSimulateModal,
@@ -36,14 +50,22 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
       {/* Metrics Row */}
       <OverviewMetrics
-        totalCount={requests.length}
+        totalCount={overviewKpi?.totalLeads ?? requests.length}
         pendingCount={pendingCount}
         inProgressCount={inProgressCount}
         resolvedCount={resolvedCount}
+        momGrowth={overviewKpi?.momGrowthPercentage}
+        winRate={overviewKpi?.winRatePercentage}
       />
 
-      {/* Featured Chart: All Messages Graph */}
-      <MessagesGraph data={graphData} />
+      {/* Featured Chart: Live Route-Driven Analytics */}
+      <MessagesGraph
+        monthlyTrends={monthlyTrends}
+        serviceAnalytics={serviceAnalytics}
+        funnelAnalytics={funnelAnalytics}
+        overviewKpi={overviewKpi}
+        isLoading={isLoadingAnalytics}
+      />
 
       {/* Bottom Grid: Recent Activity & Categories */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -55,7 +77,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         />
 
         {/* Consultancy Services Breakdown */}
-        <DemandBreakdown />
+        <DemandBreakdown
+          services={serviceAnalytics?.services}
+          isLoading={isLoadingAnalytics}
+        />
       </div>
     </div>
   );

@@ -29,7 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { user, logout } = useAuth();
   const userInitials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-    : 'FX';
+    : 'EH';
 
   const navItems = [
     {
@@ -70,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div className="flex flex-col">
                 <span className="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5 uppercase font-mono">
-                  foundex
+                  emirate hub
                 </span>
                 <span className="text-[9px] font-semibold tracking-wider text-sky-400 uppercase">
                   Business Consultancy
@@ -146,10 +146,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div className="flex flex-col min-w-0 flex-1">
               <span className="text-xs font-bold text-slate-200 truncate">
-                {user?.name || 'FoundX Admin'}
+                {user?.name || 'Emirate Hub Admin'}
               </span>
               <span className="text-[10px] text-slate-400 truncate">
-                {user?.email || 'admin@foundx.com'}
+                {user?.email || 'admin@emirate.com'}
               </span>
             </div>
             <button

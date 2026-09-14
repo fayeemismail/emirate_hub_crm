@@ -13,7 +13,7 @@ export const PortalBanner: React.FC<PortalBannerProps> = ({ onOpenSimulateModal 
           <Briefcase className="w-5 h-5" />
         </div>
         <div>
-          <h2 className="text-sm font-bold text-white">Foundex Consultancy Website Portal</h2>
+          <h2 className="text-sm font-bold text-white">Emirate Hub Consultancy Website Portal</h2>
           <p className="text-xs text-slate-400">
             Incoming business inquiry messages are routed directly to this management panel in real time.
           </p>

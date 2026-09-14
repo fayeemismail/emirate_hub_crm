@@ -1,5 +1,5 @@
 /**
- * Foundex CRM API Client
+ * Emirate Hub CRM API Client
  * Enterprise REST client with authentication headers, cookie support, and typed endpoints.
  */
 
@@ -91,6 +91,47 @@ export interface MonthlyTrendItem {
   winRatePercentage: number;
   momChangePercentage: number | null;
   statusBreakdown: Record<string, number>;
+}
+
+export interface MonthlyTrendsResponse {
+  year: number;
+  totalYearLeads: number;
+  overallWinRatePercentage: number;
+  trends: MonthlyTrendItem[];
+}
+
+export interface ServicePerformanceItem {
+  service: string;
+  totalInquiries: number;
+  sharePercentage: number;
+  wonCount: number;
+  lostCount: number;
+  inProgressCount: number;
+  winRatePercentage: number;
+  avgCloseTimeDays: number;
+}
+
+export interface ServiceAnalyticsResponse {
+  totalInquiries: number;
+  services: ServicePerformanceItem[];
+}
+
+export interface FunnelStageItem {
+  slug: string;
+  title: string;
+  order: number;
+  color: string;
+  leadCount: number;
+  percentageOfTotal: number;
+  dropOffCount: number;
+  dropOffRatePercentage: number;
+  avgDwellTimeHours: number;
+  avgDwellTimeDays: number;
+}
+
+export interface FunnelAnalyticsResponse {
+  totalLeadsInFunnel: number;
+  stages: FunnelStageItem[];
 }
 
 // Token helper
@@ -267,12 +308,14 @@ export const leadsApi = {
     id: string,
     details: {
       priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+      name?: string;
       firstName?: string;
       lastName?: string;
       email?: string;
       phone?: string;
       service?: string;
       message?: string;
+      status?: string;
     }
   ): Promise<ApiResponse<LeadItem>> => {
     return request<LeadItem>(`/v1/admin/leads/${id}`, {
@@ -281,7 +324,14 @@ export const leadsApi = {
     });
   },
 
+  deleteLead: async (id: string): Promise<ApiResponse<any>> => {
+    return request<any>(`/v1/admin/leads/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
   createPublicLead: async (data: {
+    name?: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -301,15 +351,55 @@ export const leadsApi = {
  * Analytics API
  */
 export const analyticsApi = {
-  getOverview: async (): Promise<ApiResponse<OverviewKpi>> => {
-    return request<OverviewKpi>('/v1/admin/analytics/overview', {
+  getOverview: async (params?: { startDate?: string; endDate?: string }): Promise<ApiResponse<OverviewKpi>> => {
+    const q = new URLSearchParams();
+    if (params?.startDate) q.append('startDate', params.startDate);
+    if (params?.endDate) q.append('endDate', params.endDate);
+    const queryString = q.toString() ? `?${q.toString()}` : '';
+    return request<OverviewKpi>(`/v1/admin/analytics/overview${queryString}`, {
       method: 'GET',
     });
   },
 
-  getMonthlyTrends: async (year?: number): Promise<ApiResponse<{ trends: MonthlyTrendItem[] }>> => {
-    const q = year ? `?year=${year}` : '';
-    return request<{ trends: MonthlyTrendItem[] }>(`/v1/admin/analytics/monthly-trends${q}`, {
+  getMonthlyTrends: async (params?: {
+    year?: number;
+    service?: string;
+    status?: string;
+  }): Promise<ApiResponse<MonthlyTrendsResponse>> => {
+    const q = new URLSearchParams();
+    if (params?.year) q.append('year', String(params.year));
+    if (params?.service) q.append('service', params.service);
+    if (params?.status) q.append('status', params.status);
+    const queryString = q.toString() ? `?${q.toString()}` : '';
+    return request<MonthlyTrendsResponse>(`/v1/admin/analytics/monthly-trends${queryString}`, {
+      method: 'GET',
+    });
+  },
+
+  getServiceAnalytics: async (params?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ApiResponse<ServiceAnalyticsResponse>> => {
+    const q = new URLSearchParams();
+    if (params?.startDate) q.append('startDate', params.startDate);
+    if (params?.endDate) q.append('endDate', params.endDate);
+    const queryString = q.toString() ? `?${q.toString()}` : '';
+    return request<ServiceAnalyticsResponse>(`/v1/admin/analytics/services${queryString}`, {
+      method: 'GET',
+    });
+  },
+
+  getFunnelAnalytics: async (params?: {
+    startDate?: string;
+    endDate?: string;
+    service?: string;
+  }): Promise<ApiResponse<FunnelAnalyticsResponse>> => {
+    const q = new URLSearchParams();
+    if (params?.startDate) q.append('startDate', params.startDate);
+    if (params?.endDate) q.append('endDate', params.endDate);
+    if (params?.service) q.append('service', params.service);
+    const queryString = q.toString() ? `?${q.toString()}` : '';
+    return request<FunnelAnalyticsResponse>(`/v1/admin/analytics/funnel${queryString}`, {
       method: 'GET',
     });
   },

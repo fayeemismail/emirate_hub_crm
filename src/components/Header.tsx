@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Bell, Menu, Briefcase, LogOut } from 'lucide-react';
+import { Search, Menu, Briefcase, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
@@ -10,7 +10,7 @@ interface HeaderProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   onOpenMobileMenu: () => void;
-  unreadCount: number;
+  unreadCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,7 +19,6 @@ export const Header: React.FC<HeaderProps> = ({
   searchTerm,
   setSearchTerm,
   onOpenMobileMenu,
-  unreadCount,
 }) => {
   const { user, logout } = useAuth();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -31,7 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
         .join('')
         .substring(0, 2)
         .toUpperCase()
-    : 'FX';
+    : 'EH';
 
   return (
     <header className="h-16 px-3 sm:px-6 lg:px-8 bg-[#0f172a]/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between sticky top-0 z-30 transition-all">
@@ -70,19 +69,6 @@ export const Header: React.FC<HeaderProps> = ({
           />
         </div>
 
-        {/* Notifications Icon */}
-        <div className="relative shrink-0">
-          <button 
-            aria-label="View Notifications"
-            className="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-800/80 border border-white/10 hover:border-white/20 transition-all"
-          >
-            <Bell className="w-4 h-4" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-sky-400 ring-2 ring-[#0f172a]" />
-            )}
-          </button>
-        </div>
-
         {/* User Avatar with Dropdown */}
         <div className="relative shrink-0">
           <button
@@ -101,8 +87,8 @@ export const Header: React.FC<HeaderProps> = ({
               />
               <div className="absolute right-0 mt-2 w-56 p-2 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-white/10 shadow-2xl z-50 text-xs">
                 <div className="px-3 py-2 border-b border-white/10 mb-1">
-                  <div className="font-bold text-white truncate">{user?.name || 'FoundX Admin'}</div>
-                  <div className="text-[10px] text-slate-400 truncate">{user?.email || 'admin@foundx.com'}</div>
+                  <div className="font-bold text-white truncate">{user?.name || 'Emirate Hub Admin'}</div>
+                  <div className="text-[10px] text-slate-400 truncate">{user?.email || 'admin@emirate.com'}</div>
                   <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 text-[9px] font-semibold">
                     {user?.role || 'ADMIN'}
                   </span>

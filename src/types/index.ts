@@ -3,6 +3,7 @@ export type RequestPriority = 'Low' | 'Medium' | 'High';
 
 export interface ServiceRequest {
   id: string;
+  name?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -15,6 +16,7 @@ export interface ServiceRequest {
   notes?: string[];
   assignedTo?: string;
   companyName?: string;
+  isDeleted?: boolean;
 }
 
 export interface MessagesGraphData {
@@ -35,3 +37,14 @@ export interface DashboardMetrics {
   avgResponseTimeHours: number;
   satisfactionRate: number;
 }
+
+export type {
+  OverviewKpi,
+  MonthlyTrendItem,
+  MonthlyTrendsResponse,
+  ServicePerformanceItem,
+  ServiceAnalyticsResponse,
+  FunnelStageItem,
+  FunnelAnalyticsResponse,
+} from '../lib/api';
+

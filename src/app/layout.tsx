@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Foundex CRM • Executive Business Consultancy Admin Portal",
-  description: "Enterprise CRM and advisory management platform for Foundex Business Consultancy.",
+  title: "Emirate Hub CRM • Executive Business Consultancy Admin Portal",
+  description: "Enterprise CRM and advisory management platform for Emirate Hub Business Consultancy.",
 };
 
 export default function RootLayout({

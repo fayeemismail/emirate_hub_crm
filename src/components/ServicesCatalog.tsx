@@ -16,10 +16,10 @@ export const ServicesCatalog: React.FC = () => {
       <div>
         <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
           <Layers className="w-5 h-5 text-indigo-400" />
-          Foundex Company Services Catalog
+          Emirate Hub Company Services Catalog
         </h2>
         <p className="text-xs text-gray-400">
-          Services presented on Foundex website for visitor inquiries
+          Services presented on Emirate Hub website for visitor inquiries
         </p>
       </div>
 

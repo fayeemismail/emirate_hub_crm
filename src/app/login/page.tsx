@@ -61,8 +61,8 @@ export default function LoginPage() {
   }, []);
 
   const handleQuickFill = () => {
-    setEmail('admin@foundx.com');
-    setPassword('Admin@FoundX2026!');
+    setEmail('admin@emirate.com');
+    setPassword('Admin@Emirate2026!');
     setErrorMessage('');
   };
 
@@ -112,7 +112,7 @@ export default function LoginPage() {
           </div>
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-2xl font-extrabold text-white tracking-tight uppercase font-mono">
-              foundex
+              emirate hub
             </h1>
             <span className="px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[10px] font-semibold uppercase tracking-wider">
               Admin Portal
@@ -163,7 +163,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@foundx.com"
+                  placeholder="admin@emirate.com"
                   autoComplete="email"
                   required
                   className="w-full pl-10 pr-3 py-2.5 bg-slate-800/80 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400/30 transition-all"
@@ -270,7 +270,7 @@ export default function LoginPage() {
 
         {/* Footer info */}
         <div className="text-center text-[11px] text-slate-500">
-          Foundex Business Consultancy & Advisory CRM • Enterprise Security
+          Emirate Hub Business Consultancy & Advisory CRM • Enterprise Security
         </div>
       </div>
     </div>

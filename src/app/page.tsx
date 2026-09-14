@@ -2,11 +2,19 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ServiceRequest, RequestStatus, MessagesGraphData } from '../types';
-import { INITIAL_SERVICE_REQUESTS, MESSAGES_GRAPH_TIMELINE } from '../data/mockData';
+import { 
+  ServiceRequest, 
+  RequestStatus, 
+  RequestPriority, 
+  OverviewKpi,
+  MonthlyTrendsResponse,
+  ServiceAnalyticsResponse,
+  FunnelAnalyticsResponse 
+} from '../types';
+import { INITIAL_SERVICE_REQUESTS } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { leadsApi, analyticsApi } from '../lib/api';
-import { leadToServiceRequest, requestStatusToBackendSlug } from '../lib/adapters';
+import { leadToServiceRequest, requestStatusToBackendSlug, sortByPriorityDesc, requestPriorityToBackendEnum } from '../lib/adapters';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
 import { DashboardOverview } from '../components/Dashboard/Overview';
@@ -29,7 +37,7 @@ export default function Home() {
 
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab') as ValidTab | null;
-    const storedTab = localStorage.getItem('foundex_active_tab') as ValidTab | null;
+    const storedTab = (localStorage.getItem('emirate_active_tab') || localStorage.getItem('foundex_active_tab')) as ValidTab | null;
 
     let targetTab: ValidTab = 'dashboard';
     if (tabParam && validTabs.includes(tabParam)) {
@@ -41,7 +49,7 @@ export default function Home() {
     setActiveTab(targetTab);
 
     try {
-      localStorage.setItem('foundex_active_tab', targetTab);
+      localStorage.setItem('emirate_active_tab', targetTab);
       const url = new URL(window.location.href);
       if (targetTab !== 'dashboard') {
         url.searchParams.set('tab', targetTab);
@@ -62,10 +70,10 @@ export default function Home() {
       const tabParam = params.get('tab') as any;
       if (tabParam && validTabs.includes(tabParam)) {
         setActiveTab(tabParam);
-        localStorage.setItem('foundex_active_tab', tabParam);
+        localStorage.setItem('emirate_active_tab', tabParam);
       } else {
         setActiveTab('dashboard');
-        localStorage.setItem('foundex_active_tab', 'dashboard');
+        localStorage.setItem('emirate_active_tab', 'dashboard');
       }
     };
 
@@ -78,7 +86,7 @@ export default function Home() {
     setActiveTab(tab);
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('foundex_active_tab', tab);
+        localStorage.setItem('emirate_active_tab', tab);
         const url = new URL(window.location.href);
         if (tab !== 'dashboard') {
           url.searchParams.set('tab', tab);
@@ -91,8 +99,12 @@ export default function Home() {
       }
     }
   }, []);
-  const [requests, setRequests] = useState<ServiceRequest[]>(INITIAL_SERVICE_REQUESTS);
-  const [graphData, setGraphData] = useState<MessagesGraphData[]>(MESSAGES_GRAPH_TIMELINE);
+
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [overviewKpi, setOverviewKpi] = useState<OverviewKpi | null>(null);
+  const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrendsResponse | null>(null);
+  const [serviceAnalytics, setServiceAnalytics] = useState<ServiceAnalyticsResponse | null>(null);
+  const [funnelAnalytics, setFunnelAnalytics] = useState<FunnelAnalyticsResponse | null>(null);
   const [isDataLoading, setIsDataLoading] = useState(false);
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,17 +124,41 @@ export default function Home() {
     if (!isAuthenticated) return;
     setIsDataLoading(true);
     try {
-      const [leadsRes, analyticsRes] = await Promise.allSettled([
+      const [leadsRes, overviewRes, trendsRes, servicesRes, funnelRes] = await Promise.allSettled([
         leadsApi.getAdminLeads({ limit: 100 }),
         analyticsApi.getOverview(),
+        analyticsApi.getMonthlyTrends({ year: new Date().getFullYear() }),
+        analyticsApi.getServiceAnalytics(),
+        analyticsApi.getFunnelAnalytics(),
       ]);
 
-      if (leadsRes.status === 'fulfilled' && leadsRes.value?.data && leadsRes.value.data.length > 0) {
-        const mapped = leadsRes.value.data.map(leadToServiceRequest);
+      if (leadsRes.status === 'fulfilled' && leadsRes.value?.data) {
+        // Only show real data, filter out soft-deleted leads
+        const rawList = Array.isArray(leadsRes.value.data) ? leadsRes.value.data : [];
+        const mapped = rawList
+          .filter((l: any) => !l.isDeleted)
+          .map(leadToServiceRequest)
+          .sort(sortByPriorityDesc);
         setRequests(mapped);
+      } else {
+        setRequests([]);
+      }
+
+      if (overviewRes.status === 'fulfilled' && overviewRes.value?.data) {
+        setOverviewKpi(overviewRes.value.data);
+      }
+      if (trendsRes.status === 'fulfilled' && trendsRes.value?.data) {
+        setMonthlyTrends(trendsRes.value.data);
+      }
+      if (servicesRes.status === 'fulfilled' && servicesRes.value?.data) {
+        setServiceAnalytics(servicesRes.value.data);
+      }
+      if (funnelRes.status === 'fulfilled' && funnelRes.value?.data) {
+        setFunnelAnalytics(funnelRes.value.data);
       }
     } catch (err) {
       console.error('Failed to load live backend data:', err);
+      setRequests([]);
     } finally {
       setIsDataLoading(false);
     }
@@ -154,15 +190,64 @@ export default function Home() {
     // Persist to backend only if it is a valid MongoDB ObjectId
     const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
     if (!isMongoId) {
-      // Mock/local lead; status already updated in local state
       return;
     }
 
     try {
       const backendSlug = requestStatusToBackendSlug(newStatus);
       await leadsApi.updateLeadStatus(id, backendSlug, 0, `Status moved to ${newStatus}`);
+      loadBackendData();
     } catch (err: any) {
       console.warn(`Could not sync status to backend for lead ${id}:`, err?.message || err);
+    }
+  };
+
+  // Handle admin changing priority with live backend sync and priority re-sort
+  const handleUpdatePriority = async (id: string, newPriority: RequestPriority) => {
+    // Optimistically update priority and maintain high-priority-on-top sorting
+    setRequests(prev => {
+      const updated = prev.map(req => {
+        if (req.id === id) {
+          return { ...req, priority: newPriority };
+        }
+        return req;
+      });
+      return updated.sort(sortByPriorityDesc);
+    });
+
+    if (selectedRequestModal?.id === id) {
+      setSelectedRequestModal(prev => prev ? { ...prev, priority: newPriority } : null);
+    }
+
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
+    if (!isMongoId) return;
+
+    try {
+      const backendPriority = requestPriorityToBackendEnum(newPriority);
+      await leadsApi.updateLeadDetails(id, { priority: backendPriority });
+      loadBackendData();
+    } catch (err: any) {
+      console.warn(`Could not sync priority to backend for lead ${id}:`, err?.message || err);
+    }
+  };
+
+  // Handle soft delete with live backend sync (never show soft deleted data)
+  const handleDeleteRequest = async (id: string) => {
+    // Optimistically remove from visible list
+    setRequests(prev => prev.filter(req => req.id !== id));
+
+    if (selectedRequestModal?.id === id) {
+      setSelectedRequestModal(null);
+    }
+
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
+    if (!isMongoId) return;
+
+    try {
+      await leadsApi.deleteLead(id);
+      loadBackendData();
+    } catch (err: any) {
+      console.warn(`Could not soft delete lead ${id} on backend:`, err?.message || err);
     }
   };
 
@@ -197,8 +282,10 @@ export default function Home() {
   // Handle new submission simulated from website form with live backend ingestion
   const handleSubmitNewRequest = async (newReqData: Omit<ServiceRequest, 'id' | 'createdAt' | 'status' | 'priority'>) => {
     try {
+      const clientFullName = newReqData.name || `${newReqData.firstName} ${newReqData.lastName}`.trim();
       // Send to public lead ingestion endpoint
       const res = await leadsApi.createPublicLead({
+        name: clientFullName,
         firstName: newReqData.firstName,
         lastName: newReqData.lastName,
         email: newReqData.email,
@@ -213,7 +300,7 @@ export default function Home() {
 
       if (res.data) {
         const mappedNewLead = leadToServiceRequest(res.data);
-        setRequests(prev => [mappedNewLead, ...prev]);
+        setRequests(prev => [mappedNewLead, ...prev].sort(sortByPriorityDesc));
         // Refresh leads from backend to ensure complete metadata and valid ObjectId
         loadBackendData();
       } else {
@@ -221,42 +308,35 @@ export default function Home() {
         const newId = `REQ-2026-${String(requests.length + 1).padStart(3, '0')}`;
         const newRequest: ServiceRequest = {
           ...newReqData,
+          name: clientFullName,
           id: newId,
           createdAt: new Date().toISOString(),
           status: 'Pending',
           priority: 'High',
           notes: ['Submitted via website form simulator.'],
+          isDeleted: false,
         };
-        setRequests(prev => [newRequest, ...prev]);
+        setRequests(prev => [newRequest, ...prev].sort(sortByPriorityDesc));
       }
     } catch (err) {
       console.warn('Backend submission failed, saving locally:', err);
       const newId = `REQ-2026-${String(requests.length + 1).padStart(3, '0')}`;
+      const clientFullName = newReqData.name || `${newReqData.firstName} ${newReqData.lastName}`.trim();
       const newRequest: ServiceRequest = {
         ...newReqData,
+        name: clientFullName,
         id: newId,
         createdAt: new Date().toISOString(),
         status: 'Pending',
         priority: 'High',
         notes: ['Submitted via website form simulator.'],
+        isDeleted: false,
       };
-      setRequests(prev => [newRequest, ...prev]);
+      setRequests(prev => [newRequest, ...prev].sort(sortByPriorityDesc));
     }
 
-    // Dynamically update latest day's graph total
-    setGraphData(prev => {
-      const updated = [...prev];
-      const lastIdx = updated.length - 1;
-      if (lastIdx >= 0) {
-        updated[lastIdx] = {
-          ...updated[lastIdx],
-          total: updated[lastIdx].total + 1,
-          webDev: newReqData.service === 'Web Development' ? updated[lastIdx].webDev + 1 : updated[lastIdx].webDev,
-          aiAutomation: newReqData.service === 'AI & Automation' ? updated[lastIdx].aiAutomation + 1 : updated[lastIdx].aiAutomation,
-        };
-      }
-      return updated;
-    });
+    // Refresh live backend analytics and graphs
+    loadBackendData();
   };
 
   if (authLoading || (!isAuthenticated && typeof window !== 'undefined')) {
@@ -264,7 +344,7 @@ export default function Home() {
       <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-slate-400">
           <div className="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-medium">Authenticating Foundex session...</span>
+          <span className="text-xs font-medium">Authenticating Emirate Hub session...</span>
         </div>
       </div>
     );
@@ -286,7 +366,7 @@ export default function Home() {
         {/* Header Bar */}
         <Header
           title={
-            activeTab === 'dashboard' ? 'Foundex Executive Dashboard' : 'Client Service Inquiries'
+            activeTab === 'dashboard' ? 'Emirate Hub Executive Dashboard' : 'Client Service Inquiries'
           }
           subtitle={
             activeTab === 'dashboard'
@@ -309,7 +389,11 @@ export default function Home() {
           {activeTab === 'dashboard' && (
             <DashboardOverview
               requests={requests}
-              graphData={graphData}
+              overviewKpi={overviewKpi}
+              monthlyTrends={monthlyTrends}
+              serviceAnalytics={serviceAnalytics}
+              funnelAnalytics={funnelAnalytics}
+              isLoadingAnalytics={isDataLoading}
               onNavigateToRequests={() => handleTabChange('requests')}
               onSelectRequest={(req) => setSelectedRequestModal(req)}
               onOpenSimulateModal={() => setIsSimulateModalOpen(true)}
@@ -319,17 +403,20 @@ export default function Home() {
           {activeTab === 'requests' && (
             <ServiceRequestsView
               requests={requests}
+              isLoading={isDataLoading}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               onSelectRequest={(req) => setSelectedRequestModal(req)}
               onUpdateStatus={handleUpdateStatus}
+              onUpdatePriority={handleUpdatePriority}
+              onDeleteRequest={handleDeleteRequest}
             />
           )}
         </main>
 
         {/* Footer */}
         <footer className="px-8 py-4 border-t border-white/10 text-center text-xs text-slate-400 font-medium">
-          Foundex Business Consultancy Admin Portal • Executive Slate Theme
+          Emirate Hub Business Consultancy Admin Portal • Executive Slate Theme
         </footer>
       </div>
 
@@ -338,6 +425,8 @@ export default function Home() {
         request={selectedRequestModal}
         onClose={() => setSelectedRequestModal(null)}
         onUpdateStatus={handleUpdateStatus}
+        onUpdatePriority={handleUpdatePriority}
+        onDeleteRequest={handleDeleteRequest}
         onAddNote={handleAddNote}
       />
 

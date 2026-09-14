@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ServiceRequest, RequestStatus } from '../../types';
+import { ServiceRequest, RequestStatus, RequestPriority } from '../../types';
+import { sortByPriorityDesc } from '../../lib/adapters';
+import { PrioritySelector } from '../ui/PrioritySelector';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { 
   AlertCircle, 
   Clock, 
@@ -11,13 +14,16 @@ import {
   PhoneOff, 
   Eye, 
   GripVertical,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Trash2
 } from 'lucide-react';
 
 interface KanbanBoardProps {
   requests: ServiceRequest[];
   onSelectRequest: (req: ServiceRequest) => void;
   onUpdateStatus: (id: string, newStatus: RequestStatus) => void;
+  onUpdatePriority?: (id: string, newPriority: RequestPriority) => void;
+  onDeleteRequest?: (id: string) => void;
 }
 
 const COLUMNS: { id: RequestStatus; title: string; color: string; bg: string; border: string; icon: React.ElementType }[] = [
@@ -51,9 +57,21 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   requests,
   onSelectRequest,
   onUpdateStatus,
+  onUpdatePriority,
+  onDeleteRequest,
 }) => {
   const [draggedRequestId, setDraggedRequestId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<RequestStatus | null>(null);
+
+  // Confirmation Alert Dialog state
+  const [confirmAction, setConfirmAction] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  } | null>(null);
 
   // Drag handlers
   const handleDragStart = (e: React.DragEvent, reqId: string) => {
@@ -98,17 +116,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-xs text-sky-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <span className="flex items-center gap-2">
           <GripVertical className="w-4 h-4 text-sky-400 shrink-0" />
-          <span><strong>Jira Drag & Drop Board:</strong> Drag cards between columns on desktop, or swipe across columns on mobile.</span>
+          <span><strong>Jira Drag & Drop Board:</strong> Drag cards between columns on desktop, or swipe across columns on mobile. Leads are sorted with High Priority on top.</span>
         </span>
         <span className="text-[10px] font-mono font-bold bg-sky-500/20 px-2 py-0.5 rounded text-sky-200 uppercase self-start sm:self-auto shrink-0">
-          Live State Sync
+          Priority Sorted
         </span>
       </div>
 
       {/* Kanban Board Columns - Swipeable Carousel on Mobile, Grid on Tablet/Desktop */}
       <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-5 overflow-x-auto snap-x snap-mandatory pb-4 md:pb-0 scrollbar-none items-start">
         {COLUMNS.map((column) => {
-          const columnRequests = requests.filter(r => r.status === column.id);
+          const columnRequests = requests
+            .filter(r => r.status === column.id)
+            .sort(sortByPriorityDesc);
           const isOver = dragOverColumn === column.id;
           const Icon = column.icon;
 
@@ -152,6 +172,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <div className="space-y-3">
                   {columnRequests.map((req) => {
                     const isBeingDragged = draggedRequestId === req.id;
+                    const clientName = req.name || `${req.firstName} ${req.lastName}`.trim() || 'Client';
 
                     return (
                       <div
@@ -168,26 +189,58 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           }
                         `}
                       >
-                        {/* Drag Handle & Top Bar */}
+                        {/* Drag Handle, Priority Selector & Soft Delete */}
                         <div className="flex items-center justify-between gap-2 text-xs">
                           <div className="flex items-center gap-1.5 text-slate-400">
                             <GripVertical className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition-colors" />
                             <span className="font-mono text-[10px] font-semibold text-slate-300">{req.id}</span>
                           </div>
 
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                            req.priority === 'High' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                            req.priority === 'Medium' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                            'bg-sky-500/10 text-sky-400 border border-sky-500/20'
-                          }`}>
-                            {req.priority}
-                          </span>
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <PrioritySelector
+                              priority={req.priority}
+                              onChange={(newPriority) => {
+                                if (newPriority === req.priority) return;
+                                setConfirmAction({
+                                  isOpen: true,
+                                  title: 'Change Inquiry Priority',
+                                  message: `Are you sure you want to change priority for "${clientName}" from "${req.priority}" to "${newPriority}"? Inquiries will be automatically re-sorted with High priority on top.`,
+                                  confirmText: `Set as ${newPriority}`,
+                                  variant: newPriority === 'High' ? 'danger' : 'warning',
+                                  onConfirm: () => onUpdatePriority?.(req.id, newPriority),
+                                });
+                              }}
+                              align="right"
+                              size="sm"
+                            />
+
+                            {onDeleteRequest && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmAction({
+                                    isOpen: true,
+                                    title: 'Soft Delete Inquiry',
+                                    message: `Are you sure you want to soft delete the inquiry from "${clientName}" (${req.service})? This record will be archived and hidden from all active views.`,
+                                    confirmText: 'Yes, Delete',
+                                    variant: 'danger',
+                                    onConfirm: () => onDeleteRequest(req.id),
+                                  });
+                                }}
+                                title="Soft delete lead"
+                                className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Customer Full Name & Email */}
                         <div className="space-y-1">
                           <h4 className="font-bold text-white text-xs group-hover:text-sky-300 transition-colors flex items-center justify-between">
-                            <span className="truncate">{req.firstName} {req.lastName}</span>
+                            <span className="truncate">{clientName}</span>
                           </h4>
                           <p className="text-[11px] text-slate-400 flex items-center gap-1 min-w-0">
                             <Mail className="w-3 h-3 text-slate-500 shrink-0" />
@@ -219,7 +272,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                         {/* Message Preview */}
                         <p className="text-xs text-slate-300 bg-white/[0.02] p-2.5 rounded-lg border border-white/5 line-clamp-2 leading-relaxed italic">
-                          "{req.message}"
+                          {req.message ? `"${req.message}"` : <span className="italic text-slate-500">No message provided</span>}
                         </p>
 
                         {/* Mobile Quick Move Dropdown Options */}
@@ -266,6 +319,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           );
         })}
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmAction && (
+        <ConfirmModal
+          isOpen={confirmAction.isOpen}
+          onClose={() => setConfirmAction(null)}
+          onConfirm={confirmAction.onConfirm}
+          title={confirmAction.title}
+          message={confirmAction.message}
+          confirmText={confirmAction.confirmText}
+          variant={confirmAction.variant}
+        />
+      )}
     </div>
   );
 };
