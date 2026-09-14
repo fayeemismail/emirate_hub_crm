@@ -4,10 +4,7 @@ import React from 'react';
 import { 
   LayoutDashboard, 
   Inbox, 
-  Layers, 
-  Settings, 
   ChevronRight, 
-  Plus, 
   X, 
   Briefcase,
   LogOut
@@ -15,12 +12,11 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'requests' | 'services' | 'settings';
-  setActiveTab: (tab: 'dashboard' | 'requests' | 'services' | 'settings') => void;
+  activeTab: 'dashboard' | 'requests';
+  setActiveTab: (tab: 'dashboard' | 'requests') => void;
   pendingCount: number;
   isOpenMobile: boolean;
   setIsOpenMobile: (open: boolean) => void;
-  onOpenSimulateModal: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -29,7 +25,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   pendingCount,
   isOpenMobile,
   setIsOpenMobile,
-  onOpenSimulateModal,
 }) => {
   const { user, logout } = useAuth();
   const userInitials = user?.name
@@ -48,18 +43,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Service Inquiries',
       icon: Inbox,
       badge: pendingCount > 0 ? pendingCount : null,
-    },
-    {
-      id: 'services',
-      label: 'Consultancy Services',
-      icon: Layers,
-      badge: null,
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: Settings,
-      badge: null,
     },
   ] as const;
 
@@ -156,18 +139,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Bottom Actions & Profile */}
         <div className="p-4 border-t border-white/10 space-y-3">
-          {/* Quick Simulate Button */}
-          <button
-            onClick={() => {
-              onOpenSimulateModal();
-              setIsOpenMobile(false);
-            }}
-            className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-300 text-xs font-semibold tracking-wide transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Simulate Form Request</span>
-          </button>
-
           {/* Business Admin Profile & Logout */}
           <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-800/60 border border-white/10">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-600 to-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shrink-0">

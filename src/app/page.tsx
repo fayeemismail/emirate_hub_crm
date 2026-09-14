@@ -13,14 +13,84 @@ import { DashboardOverview } from '../components/Dashboard/Overview';
 import { ServiceRequestsView } from '../components/ServiceRequests/ServiceRequestsView';
 import { RequestDetailModal } from '../components/ServiceRequests/RequestDetailModal';
 import { SimulateFormModal } from '../components/ServiceRequests/SimulateFormModal';
-import { ServicesCatalog } from '../components/ServicesCatalog';
-import { SettingsView } from '../components/SettingsView';
 
 export default function Home() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'requests' | 'services' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'requests'>('dashboard');
+
+  // Synchronize active tab with URL query parameter (?tab=...) and localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const validTabs = ['dashboard', 'requests'] as const;
+    type ValidTab = typeof validTabs[number];
+
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab') as ValidTab | null;
+    const storedTab = localStorage.getItem('foundex_active_tab') as ValidTab | null;
+
+    let targetTab: ValidTab = 'dashboard';
+    if (tabParam && validTabs.includes(tabParam)) {
+      targetTab = tabParam;
+    } else if (storedTab && validTabs.includes(storedTab)) {
+      targetTab = storedTab;
+    }
+
+    setActiveTab(targetTab);
+
+    try {
+      localStorage.setItem('foundex_active_tab', targetTab);
+      const url = new URL(window.location.href);
+      if (targetTab !== 'dashboard') {
+        url.searchParams.set('tab', targetTab);
+      } else {
+        url.searchParams.delete('tab');
+      }
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  // Listen to browser navigation (back / forward buttons)
+  useEffect(() => {
+    const handlePopState = () => {
+      const validTabs = ['dashboard', 'requests'] as const;
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as any;
+      if (tabParam && validTabs.includes(tabParam)) {
+        setActiveTab(tabParam);
+        localStorage.setItem('foundex_active_tab', tabParam);
+      } else {
+        setActiveTab('dashboard');
+        localStorage.setItem('foundex_active_tab', 'dashboard');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Handler for changing tabs with URL and localStorage sync
+  const handleTabChange = useCallback((tab: 'dashboard' | 'requests') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('foundex_active_tab', tab);
+        const url = new URL(window.location.href);
+        if (tab !== 'dashboard') {
+          url.searchParams.set('tab', tab);
+        } else {
+          url.searchParams.delete('tab');
+        }
+        window.history.replaceState({}, '', url.toString());
+      } catch {
+        // Ignore
+      }
+    }
+  }, []);
   const [requests, setRequests] = useState<ServiceRequest[]>(INITIAL_SERVICE_REQUESTS);
   const [graphData, setGraphData] = useState<MessagesGraphData[]>(MESSAGES_GRAPH_TIMELINE);
   const [isDataLoading, setIsDataLoading] = useState(false);
@@ -205,11 +275,10 @@ export default function Home() {
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         pendingCount={pendingCount}
         isOpenMobile={isOpenMobileSidebar}
         setIsOpenMobile={setIsOpenMobileSidebar}
-        onOpenSimulateModal={() => setIsSimulateModalOpen(true)}
       />
 
       {/* Main Content Workspace */}
@@ -217,25 +286,21 @@ export default function Home() {
         {/* Header Bar */}
         <Header
           title={
-            activeTab === 'dashboard' ? 'Foundex Executive Dashboard' :
-            activeTab === 'requests' ? 'Client Service Inquiries' :
-            activeTab === 'services' ? 'Consultancy Offerings' : 'Settings'
+            activeTab === 'dashboard' ? 'Foundex Executive Dashboard' : 'Client Service Inquiries'
           }
           subtitle={
-            activeTab === 'dashboard' ? 'Overview of business consultancy inquiries & message metrics' :
-            activeTab === 'requests' ? 'User messages submitted from company website with Jira drag and drop' :
-            activeTab === 'services' ? 'Active consultancy services presented on website' :
-            'Admin preferences'
+            activeTab === 'dashboard'
+              ? 'Overview of business consultancy inquiries & message metrics'
+              : 'User messages submitted from company website with Jira drag and drop'
           }
           searchTerm={searchTerm}
           setSearchTerm={(term) => {
             setSearchTerm(term);
             if (activeTab !== 'requests') {
-              setActiveTab('requests');
+              handleTabChange('requests');
             }
           }}
           onOpenMobileMenu={() => setIsOpenMobileSidebar(true)}
-          onOpenSimulateModal={() => setIsSimulateModalOpen(true)}
           unreadCount={pendingCount}
         />
 
@@ -245,7 +310,7 @@ export default function Home() {
             <DashboardOverview
               requests={requests}
               graphData={graphData}
-              onNavigateToRequests={() => setActiveTab('requests')}
+              onNavigateToRequests={() => handleTabChange('requests')}
               onSelectRequest={(req) => setSelectedRequestModal(req)}
               onOpenSimulateModal={() => setIsSimulateModalOpen(true)}
             />
@@ -257,17 +322,8 @@ export default function Home() {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               onSelectRequest={(req) => setSelectedRequestModal(req)}
-              onOpenSimulateModal={() => setIsSimulateModalOpen(true)}
               onUpdateStatus={handleUpdateStatus}
             />
-          )}
-
-          {activeTab === 'services' && (
-            <ServicesCatalog />
-          )}
-
-          {activeTab === 'settings' && (
-            <SettingsView />
           )}
         </main>
 

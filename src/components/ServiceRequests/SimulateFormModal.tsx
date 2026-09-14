@@ -16,13 +16,11 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
   onClose,
   onSubmitNewRequest,
 }) => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [service, setService] = useState(COMPANY_SERVICES[0]);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [service, setService] = useState(COMPANY_SERVICES[0]);
-  const [message, setMessage] = useState('');
-  const [companyName, setCompanyName] = useState('');
+  const [requestText, setRequestText] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
   if (!isOpen) return null;
@@ -30,30 +28,32 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !message.trim()) {
+    if (!name.trim() || !email.trim()) {
       return;
     }
 
+    const nameParts = name.trim().split(/\s+/);
+    const firstName = nameParts[0] || 'Client';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
     onSubmitNewRequest({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      firstName,
+      lastName,
       email: email.trim(),
-      phone: phone.trim() ? phone.trim() : undefined, // Optional handling!
+      phone: phone.trim() ? phone.trim() : undefined,
       service,
-      message: message.trim(),
-      companyName: companyName.trim() ? companyName.trim() : undefined,
+      message: requestText.trim() || 'Service request submitted',
     });
 
     setIsSuccess(true);
     setTimeout(() => {
       setIsSuccess(false);
       // Reset form
-      setFirstName('');
-      setLastName('');
+      setService(COMPANY_SERVICES[0]);
+      setName('');
       setEmail('');
       setPhone('');
-      setMessage('');
-      setCompanyName('');
+      setRequestText('');
       onClose();
     }, 1800);
   };
@@ -65,7 +65,7 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Banner */}
-        <div className="p-4 sm:p-5 border-b border-white/10 bg-gradient-to-r from-slate-900 via-[#1e293b] to-[#0f172a] flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-white/10 bg-linear-to-r from-slate-900 via-[#1e293b] to-[#0f172a] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg formal-gradient-bg flex items-center justify-center text-white shadow-md font-bold text-xs shrink-0">
               <Globe className="w-4 h-4" />
@@ -107,111 +107,78 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
               <span>Simulates visitor filling out the contact form on website.</span>
             </div>
 
-            {/* First Name & Last Name */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-slate-200 font-bold mb-1">
-                  First Name <span className="text-sky-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Sarah"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-200 font-bold mb-1">
-                  Last Name <span className="text-sky-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Jenkins"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-                />
-              </div>
-            </div>
-
-            {/* Email & Phone (Optional) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-slate-200 font-bold mb-1">
-                  Email Address <span className="text-sky-400">*</span>
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="sarah@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-200 font-bold mb-1 flex items-center justify-between">
-                  <span>Phone Number</span>
-                  <span className="text-[10px] text-slate-400 font-normal italic">(Optional)</span>
-                </label>
-                <input
-                  type="tel"
-                  placeholder="+1 (555) 019-2831"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-                />
-              </div>
-            </div>
-
-            {/* Service & Company Name */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-slate-200 font-bold mb-1">
-                  Requested Service <span className="text-sky-400">*</span>
-                </label>
-                <select
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-sky-500 cursor-pointer"
-                >
-                  {COMPANY_SERVICES.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-slate-200 font-bold mb-1 flex items-center justify-between">
-                  <span>Company Name</span>
-                  <span className="text-[10px] text-slate-400 font-normal italic">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Acme Corp"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-                />
-              </div>
-            </div>
-
-            {/* Message Body */}
+            {/* 1. Service */}
             <div>
               <label className="block text-slate-200 font-bold mb-1">
-                Client Inquiry Message <span className="text-sky-400">*</span>
+                Service <span className="text-sky-400">*</span>
+              </label>
+              <select
+                value={service}
+                onChange={(e) => setService(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+              >
+                {COMPANY_SERVICES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* 2. Name */}
+            <div>
+              <label className="block text-slate-200 font-bold mb-1">
+                Name <span className="text-sky-400">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Full Name (e.g. Sarah Jenkins)"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+              />
+            </div>
+
+            {/* 3. Email Address */}
+            <div>
+              <label className="block text-slate-200 font-bold mb-1">
+                Email Address <span className="text-sky-400">*</span>
+              </label>
+              <input
+                type="email"
+                required
+                placeholder="sarah@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+              />
+            </div>
+
+            {/* 4. Phone (Optional) */}
+            <div>
+              <label className="text-slate-200 font-bold mb-1 flex items-center justify-between">
+                <span>Phone</span>
+                <span className="text-[10px] text-slate-400 font-normal italic">(Optional)</span>
+              </label>
+              <input
+                type="tel"
+                placeholder="+1 (555) 019-2831"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+              />
+            </div>
+
+            {/* 5. Request (Optional) */}
+            <div>
+              <label className="text-slate-200 font-bold mb-1 flex items-center justify-between">
+                <span>Request</span>
+                <span className="text-[10px] text-slate-400 font-normal italic">(Optional)</span>
               </label>
               <textarea
                 rows={3}
-                required
-                placeholder="Describe your consultancy requirements, timeline, or scope..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Describe your request or leave notes (optional)..."
+                value={requestText}
+                onChange={(e) => setRequestText(e.target.value)}
                 className="w-full p-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 leading-relaxed"
               />
             </div>

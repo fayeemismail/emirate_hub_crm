@@ -11,7 +11,6 @@ import {
   PhoneOff, 
   Eye, 
   GripVertical,
-  Plus,
   ArrowRightLeft
 } from 'lucide-react';
 
@@ -19,7 +18,6 @@ interface KanbanBoardProps {
   requests: ServiceRequest[];
   onSelectRequest: (req: ServiceRequest) => void;
   onUpdateStatus: (id: string, newStatus: RequestStatus) => void;
-  onOpenSimulateModal: () => void;
 }
 
 const COLUMNS: { id: RequestStatus; title: string; color: string; bg: string; border: string; icon: React.ElementType }[] = [
@@ -53,7 +51,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   requests,
   onSelectRequest,
   onUpdateStatus,
-  onOpenSimulateModal,
 }) => {
   const [draggedRequestId, setDraggedRequestId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<RequestStatus | null>(null);
@@ -264,17 +261,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Bottom Action */}
-              <div className="mt-4 pt-3 border-t border-white/5">
-                <button
-                  onClick={onOpenSimulateModal}
-                  className="w-full py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 text-[11px] text-slate-300 hover:text-white font-semibold transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Simulate Form Request</span>
-                </button>
               </div>
             </div>
           );

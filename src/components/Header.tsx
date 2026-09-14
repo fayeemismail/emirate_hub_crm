@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Bell, Menu, PlusCircle, Briefcase, LogOut } from 'lucide-react';
+import { Search, Bell, Menu, Briefcase, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
@@ -10,7 +10,6 @@ interface HeaderProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   onOpenMobileMenu: () => void;
-  onOpenSimulateModal: () => void;
   unreadCount: number;
 }
 
@@ -20,7 +19,6 @@ export const Header: React.FC<HeaderProps> = ({
   searchTerm,
   setSearchTerm,
   onOpenMobileMenu,
-  onOpenSimulateModal,
   unreadCount,
 }) => {
   const { user, logout } = useAuth();
@@ -71,17 +69,6 @@ export const Header: React.FC<HeaderProps> = ({
             className="w-full pl-8 pr-2.5 py-1.5 bg-slate-800/80 border border-white/10 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-500/50 transition-all"
           />
         </div>
-
-        {/* Simulate Request Button - Responsive icon on small mobile */}
-        <button
-          onClick={onOpenSimulateModal}
-          className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl formal-gradient-bg text-white text-xs font-semibold shadow-md shadow-sky-900/30 hover:opacity-95 transition-all shrink-0"
-          title="Simulate Website Form Request"
-        >
-          <PlusCircle className="w-3.5 h-3.5 shrink-0" />
-          <span className="hidden sm:inline">Simulate Request</span>
-          <span className="sm:hidden text-[11px]">New</span>
-        </button>
 
         {/* Notifications Icon */}
         <div className="relative shrink-0">

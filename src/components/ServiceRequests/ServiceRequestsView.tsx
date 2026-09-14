@@ -16,11 +16,8 @@ import {
   AlertCircle, 
   Eye, 
   ChevronDown,
-  Sparkles,
-  Plus,
   Kanban,
-  Table as TableIcon,
-  LayoutGrid
+  Table as TableIcon
 } from 'lucide-react';
 
 interface ServiceRequestsViewProps {
@@ -28,7 +25,6 @@ interface ServiceRequestsViewProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   onSelectRequest: (req: ServiceRequest) => void;
-  onOpenSimulateModal: () => void;
   onUpdateStatus: (id: string, newStatus: RequestStatus) => void;
 }
 
@@ -37,12 +33,11 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
   searchTerm,
   setSearchTerm,
   onSelectRequest,
-  onOpenSimulateModal,
   onUpdateStatus,
 }) => {
   const [activeTab, setActiveTab] = useState<'All' | RequestStatus>('All');
   const [selectedService, setSelectedService] = useState<string>('All');
-  const [viewMode, setViewMode] = useState<'kanban' | 'table' | 'cards'>('kanban');
+  const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
 
   // Available unique services
   const servicesList = Array.from(new Set(requests.map(r => r.service)));
@@ -121,14 +116,6 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
             User inquiries submitted from Foundex website contact form with Jira drag and drop board
           </p>
         </div>
-
-        <button
-          onClick={onOpenSimulateModal}
-          className="px-4 py-2 rounded-xl formal-gradient-bg text-white text-xs font-semibold shadow-lg shadow-sky-900/20 hover:opacity-95 transition-all flex items-center justify-center gap-2 self-start sm:self-auto"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Simulate Form Submission</span>
-        </button>
       </div>
 
       {/* Filter Toolbar & View Mode Switcher */}
@@ -167,7 +154,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           {/* Secondary Filters & View Switcher */}
           <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
             {/* Service Category Dropdown */}
-            <div className="relative flex-1 sm:flex-none min-w-[140px]">
+            <div className="relative flex-1 sm:flex-none min-w-35">
               <select
                 value={selectedService}
                 onChange={(e) => setSelectedService(e.target.value)}
@@ -209,18 +196,6 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 <TableIcon className="w-3.5 h-3.5" />
                 <span>Table</span>
               </button>
-
-              <button
-                onClick={() => setViewMode('cards')}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 sm:gap-1.5 ${
-                  viewMode === 'cards' 
-                    ? 'bg-sky-500 text-white shadow-sm font-semibold' 
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>Cards</span>
-              </button>
             </div>
           </div>
         </div>
@@ -232,15 +207,8 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           <Inbox className="w-10 h-10 text-slate-600 mx-auto" />
           <h3 className="text-base font-semibold text-white">No Service Requests Found</h3>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            No matching requests fit your current search or status filter. Try clearing filters or submit a new simulated request.
+            No matching requests fit your current search or status filter. Try clearing your filters or check back later.
           </p>
-          <button
-            onClick={onOpenSimulateModal}
-            className="px-4 py-2 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-medium hover:bg-sky-500/30 transition-all inline-flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Submit Test Request Form
-          </button>
         </div>
       ) : viewMode === 'kanban' ? (
         /* Jira-Style Drag & Drop Board */
@@ -248,102 +216,93 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           requests={filteredRequests}
           onSelectRequest={onSelectRequest}
           onUpdateStatus={onUpdateStatus}
-          onOpenSimulateModal={onOpenSimulateModal}
         />
-      ) : viewMode === 'table' ? (
+      ) : (
         /* Table View with responsive overflow */
         <div className="formal-card rounded-2xl border border-white/10 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[700px]">
+            <table className="w-full text-left border-collapse min-w-175">
               <thead>
-                <tr className="border-b border-white/10 text-[11px] font-semibold text-slate-400 uppercase tracking-wider bg-white/[0.01]">
+                <tr className="border-b border-white/10 text-[11px] font-semibold text-slate-400 uppercase tracking-wider bg-white/1">
                   <th className="py-3.5 px-4">User Details</th>
                   <th className="py-3.5 px-4">Phone (Optional)</th>
                   <th className="py-3.5 px-4">Service</th>
                   <th className="py-3.5 px-4">Message Snippet</th>
                   <th className="py-3.5 px-4">Submitted</th>
                   <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th className="py-3.5 px-4 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/10 text-xs text-slate-300">
+              <tbody className="divide-y divide-white/5 text-xs">
                 {filteredRequests.map((req) => (
-                  <tr
-                    key={req.id}
-                    className="hover:bg-white/[0.03] transition-colors group cursor-pointer"
+                  <tr 
+                    key={req.id} 
                     onClick={() => onSelectRequest(req)}
+                    className="hover:bg-white/2 cursor-pointer transition-colors group"
                   >
-                    {/* User First/Last Name & Email */}
                     <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-xs font-bold text-sky-300 shrink-0">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center font-bold text-sky-300 text-[11px] shrink-0">
                           {req.firstName[0]}{req.lastName[0]}
                         </div>
-                        <div>
-                          <div className="font-semibold text-white group-hover:text-sky-300 transition-colors">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-white truncate group-hover:text-sky-300 transition-colors">
                             {req.firstName} {req.lastName}
-                          </div>
-                          <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                          </p>
+                          <p className="text-[11px] text-slate-400 truncate flex items-center gap-1">
                             <Mail className="w-3 h-3 text-slate-500 shrink-0" />
                             {req.email}
-                          </div>
+                          </p>
                         </div>
                       </div>
                     </td>
 
-                    {/* Phone (Optional) */}
                     <td className="py-3.5 px-4">
                       {req.phone ? (
-                        <div className="flex items-center gap-1.5 text-slate-300">
-                          <Phone className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                          <span className="font-mono text-[11px]">{req.phone}</span>
-                        </div>
+                        <span className="font-mono text-slate-300 text-[11px] bg-white/3 px-2 py-0.5 rounded border border-white/5">
+                          {req.phone}
+                        </span>
                       ) : (
-                        <span className="text-[11px] text-slate-500 italic flex items-center gap-1">
+                        <span className="text-slate-500 text-[11px] italic flex items-center gap-1">
                           <PhoneOff className="w-3 h-3 shrink-0" />
-                          Not Provided
+                          None
                         </span>
                       )}
                     </td>
 
-                    {/* Service */}
                     <td className="py-3.5 px-4">
-                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-sky-500/10 text-sky-300 border border-sky-500/20 whitespace-nowrap">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-800 border border-white/10 text-slate-300">
                         {req.service}
                       </span>
                     </td>
 
-                    {/* Message Snippet */}
                     <td className="py-3.5 px-4 max-w-xs">
-                      <p className="line-clamp-2 text-slate-400 leading-relaxed">
+                      <p className="text-slate-400 truncate text-[11px]">
                         "{req.message}"
                       </p>
                     </td>
 
-                    {/* Submitted Date */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-slate-400 text-[11px]">
-                      <div className="flex items-center gap-1">
+                    <td className="py-3.5 px-4 text-slate-400 whitespace-nowrap text-[11px]">
+                      <span className="flex items-center gap-1.5">
                         <Calendar className="w-3 h-3 text-slate-500 shrink-0" />
                         {new Date(req.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                      </div>
+                      </span>
                     </td>
 
-                    {/* Status */}
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       {getStatusBadge(req.status)}
                     </td>
 
-                    {/* Actions */}
-                    <td className="py-3.5 px-4 text-right">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectRequest(req);
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-sky-500/20 text-slate-300 hover:text-sky-200 border border-white/10 hover:border-sky-500/30 text-xs font-medium transition-all"
+                        className="px-2.5 py-1 rounded-lg text-sky-400 hover:text-white hover:bg-sky-500/20 text-xs font-semibold transition-all inline-flex items-center gap-1"
                       >
-                        <Eye className="w-3.5 h-3.5 inline mr-1" />
-                        Details
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Details</span>
                       </button>
                     </td>
                   </tr>
@@ -351,75 +310,6 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
               </tbody>
             </table>
           </div>
-        </div>
-      ) : (
-        /* Cards View - Responsive Grid */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredRequests.map((req) => (
-            <div
-              key={req.id}
-              onClick={() => onSelectRequest(req)}
-              className="formal-card formal-card-hover rounded-2xl p-4 sm:p-5 border border-white/10 space-y-4 cursor-pointer flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-sky-500/20 border border-sky-500/30 flex items-center justify-center font-bold text-sky-300 text-xs shrink-0">
-                      {req.firstName[0]}{req.lastName[0]}
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="font-semibold text-white text-sm truncate">
-                        {req.firstName} {req.lastName}
-                      </h4>
-                      <p className="text-xs text-slate-400 flex items-center gap-1 truncate">
-                        <Mail className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{req.email}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  {getStatusBadge(req.status)}
-                </div>
-
-                {/* Phone tag */}
-                <div className="text-xs text-slate-400 pt-1 border-t border-white/5 flex items-center justify-between">
-                  <span className="font-medium text-slate-400">Contact Phone:</span>
-                  {req.phone ? (
-                    <span className="font-mono text-sky-300 font-medium">{req.phone}</span>
-                  ) : (
-                    <span className="text-slate-500 italic">Not provided</span>
-                  )}
-                </div>
-
-                {/* Requested Service */}
-                <div>
-                  <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">
-                    Service Category
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20 inline-block">
-                    {req.service}
-                  </span>
-                </div>
-
-                {/* Message Body */}
-                <div>
-                  <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">
-                    User Message
-                  </span>
-                  <p className="text-xs text-slate-300 leading-relaxed bg-white/[0.02] p-3 rounded-xl border border-white/5 line-clamp-3">
-                    "{req.message}"
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
-                <span>{new Date(req.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                <span className="text-sky-400 font-medium hover:underline flex items-center gap-1">
-                  View Record &rarr;
-                </span>
-              </div>
-            </div>
-          ))}
         </div>
       )}
     </div>
