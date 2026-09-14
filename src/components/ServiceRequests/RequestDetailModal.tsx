@@ -257,7 +257,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
                   {/* Sleek Segmented Priority Selector */}
                   <div>
-                    <label className="text-xs text-slate-400 block mb-1.5 flex items-center justify-between">
+                    <label className="text-xs text-slate-400  mb-1.5 flex items-center justify-between">
                       <span className="font-medium text-slate-300">Admin Priority:</span>
                       <span className="text-[10px] text-sky-400 font-mono">High sorts on top</span>
                     </label>

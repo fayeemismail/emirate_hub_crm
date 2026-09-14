@@ -139,7 +139,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               onDragLeave={(e) => handleDragLeave(e, column.id)}
               onDrop={(e) => handleDrop(e, column.id)}
               className={`
-                formal-card rounded-2xl p-4 border transition-all duration-200 min-h-[480px] sm:min-h-[520px] flex flex-col justify-between
+                formal-card rounded-2xl p-4 border transition-all duration-200 min-h-120 sm:min-h-130 flex flex-col justify-between
                 w-[85vw] sm:w-[320px] md:w-auto shrink-0 snap-center
                 ${isOver 
                   ? 'border-sky-500/60 bg-sky-950/20 ring-2 ring-sky-500/30 scale-[1.01]' 
@@ -271,7 +271,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         </div>
 
                         {/* Message Preview */}
-                        <p className="text-xs text-slate-300 bg-white/[0.02] p-2.5 rounded-lg border border-white/5 line-clamp-2 leading-relaxed italic">
+                        <p className="text-xs text-slate-300 bg-white/2 p-2.5 rounded-lg border border-white/5 line-clamp-2 leading-relaxed italic">
                           {req.message ? `"${req.message}"` : <span className="italic text-slate-500">No message provided</span>}
                         </p>
 

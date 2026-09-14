@@ -231,7 +231,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           </div>
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-16 bg-white/[0.03] border border-white/5 rounded-xl flex items-center justify-between px-4">
+              <div key={i} className="h-16 bg-white/3 border border-white/5 rounded-xl flex items-center justify-between px-4">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-white/10" />
                   <div className="space-y-1.5">
