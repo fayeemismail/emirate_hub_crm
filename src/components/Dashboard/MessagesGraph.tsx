@@ -152,22 +152,22 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
   const momGrowth = overviewKpi?.momGrowthPercentage ?? null;
 
   return (
-    <div className="formal-card rounded-2xl p-4 sm:p-6 border border-white/10 relative overflow-hidden space-y-5">
+    <div className="office-blue-card rounded-2xl p-4 sm:p-6 border border-blue-400/25 relative overflow-hidden space-y-5">
       {/* Background Ambient Glow */}
-      <div className="absolute -top-24 -right-24 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-72 h-72 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
 
       {/* Chart Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-blue-400/20 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 shrink-0">
+            <div className="p-2 rounded-xl bg-blue-500/20 border border-blue-400/30 text-sky-300 shrink-0">
               <BarChart3 className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-base font-bold text-white tracking-tight">
                 Inquiry Analytics & Pipeline Trends
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-sky-200/80">
                 Inquiry volume, pipeline progression, and service demand metrics
               </p>
             </div>
@@ -175,14 +175,14 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
         </div>
 
         {/* View Mode Tabs */}
-        <div className="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-white/10 text-xs self-start md:self-auto shrink-0 flex-wrap">
+        <div className="flex items-center gap-1 bg-[#061730] p-1 rounded-xl border border-blue-400/25 text-xs self-start md:self-auto shrink-0 flex-wrap">
           <button
             type="button"
             onClick={() => setActiveTab('monthly')}
             className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'monthly'
-                ? 'bg-sky-500 text-white font-semibold shadow-md shadow-sky-950/40'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-blue-600 text-white font-semibold shadow-md shadow-blue-900/50'
+                : 'text-sky-200 hover:text-white hover:bg-blue-800/30'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -194,8 +194,8 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
             onClick={() => setActiveTab('funnel')}
             className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'funnel'
-                ? 'bg-indigo-500 text-white font-semibold shadow-md shadow-indigo-950/40'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-900/50'
+                : 'text-sky-200 hover:text-white hover:bg-blue-800/30'
             }`}
           >
             <GitCommit className="w-3.5 h-3.5" />
@@ -207,8 +207,8 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
             onClick={() => setActiveTab('services')}
             className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'services'
-                ? 'bg-emerald-500 text-white font-semibold shadow-md shadow-emerald-950/40'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-teal-600 text-white font-semibold shadow-md shadow-teal-900/50'
+                : 'text-sky-200 hover:text-white hover:bg-blue-800/30'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -229,15 +229,15 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                 {totalYearVolume}
               </span>
-              <span className="text-xs text-slate-400 font-medium">
+              <span className="text-xs text-sky-200/80 font-medium">
                 total inquiries in {selectedYear}
               </span>
 
               {momGrowth !== null && (
                 <span className={`text-xs font-bold flex items-center gap-1 px-2.5 py-1 rounded-md border ml-auto sm:ml-0 ${
                   momGrowth >= 0 
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                    : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40' 
+                    : 'bg-rose-500/20 text-rose-300 border-rose-400/40'
                 }`}>
                   {momGrowth >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {momGrowth >= 0 ? `+${momGrowth}%` : `${momGrowth}%`} MoM
@@ -251,7 +251,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 <Loader2 className="w-3.5 h-3.5 text-sky-400 animate-spin mr-1" />
               )}
 
-              <span className="text-xs text-slate-400 flex items-center gap-1">
+              <span className="text-xs text-sky-200 font-medium flex items-center gap-1">
                 <Filter className="w-3 h-3 text-sky-400" />
                 Service:
               </span>
@@ -259,7 +259,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 value={selectedService}
                 onChange={(e) => handleServiceChange(e.target.value)}
                 aria-label="Filter Trends by Service"
-                className="bg-slate-900/90 border border-white/10 rounded-xl px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500 cursor-pointer"
+                className="bg-[#061834] border border-blue-400/30 rounded-xl px-2.5 py-1 text-xs text-white focus:outline-none focus:border-sky-400 cursor-pointer"
               >
                 <option value="all">All Service Categories</option>
                 {availableServices.map((svc) => (
@@ -273,7 +273,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 value={selectedYear}
                 onChange={(e) => handleYearChange(Number(e.target.value))}
                 aria-label="Select Year for Analytics"
-                className="bg-slate-900/90 border border-white/10 rounded-xl px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500 cursor-pointer font-mono"
+                className="bg-[#061834] border border-blue-400/30 rounded-xl px-2.5 py-1 text-xs text-white focus:outline-none focus:border-sky-400 cursor-pointer font-mono"
               >
                 {[currentYear, currentYear - 1, currentYear - 2].map((yr) => (
                   <option key={yr} value={yr}>
@@ -292,8 +292,8 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 onClick={() => handleServiceChange('all')}
                 className={`px-2.5 py-1 rounded-lg transition-all text-[11px] whitespace-nowrap cursor-pointer ${
                   selectedService === 'all'
-                    ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 font-semibold'
-                    : 'text-slate-400 hover:text-white bg-white/3 border border-transparent'
+                    ? 'bg-blue-600 text-white border border-blue-400/50 font-semibold shadow-sm'
+                    : 'text-sky-200 hover:text-white bg-blue-950/40 border border-blue-400/25'
                 }`}
               >
                 All Services
@@ -305,8 +305,8 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                   onClick={() => handleServiceChange(svc)}
                   className={`px-2.5 py-1 rounded-lg transition-all text-[11px] whitespace-nowrap cursor-pointer ${
                     selectedService === svc
-                      ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 font-semibold'
-                      : 'text-slate-400 hover:text-white bg-white/3 border border-transparent'
+                      ? 'bg-blue-600 text-white border border-blue-400/50 font-semibold shadow-sm'
+                      : 'text-sky-200 hover:text-white bg-blue-950/40 border border-blue-400/25'
                   }`}
                 >
                   {svc}
@@ -324,13 +324,13 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               >
                 <defs>
                   <linearGradient id="trendsGlowGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0284c7" stopOpacity="0.4" />
+                    <stop offset="0%" stopColor="#0284c7" stopOpacity="0.45" />
                     <stop offset="100%" stopColor="#0284c7" stopOpacity="0.0" />
                   </linearGradient>
                   <linearGradient id="trendsLineGradient" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stopColor="#38bdf8" />
-                    <stop offset="50%" stopColor="#0284c7" />
-                    <stop offset="100%" stopColor="#6366f1" />
+                    <stop offset="50%" stopColor="#60a5fa" />
+                    <stop offset="100%" stopColor="#818cf8" />
                   </linearGradient>
                 </defs>
 
@@ -345,7 +345,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                         y1={y}
                         x2={svgWidth - paddingX}
                         y2={y}
-                        stroke="rgba(255, 255, 255, 0.06)"
+                        stroke="rgba(147, 197, 253, 0.15)"
                         strokeDasharray="4 4"
                       />
                       <text
@@ -353,8 +353,9 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                         y={y + 3}
                         textAnchor="end"
                         fontSize="9"
-                        fill="rgba(148, 163, 184, 0.6)"
+                        fill="rgba(186, 230, 253, 0.75)"
                         fontFamily="monospace"
+                        fontWeight="600"
                       >
                         {gridVal}
                       </text>
@@ -385,7 +386,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                         y1={paddingY}
                         x2={pt.x}
                         y2={svgHeight - paddingY}
-                        stroke="rgba(56, 189, 248, 0.4)"
+                        stroke="rgba(56, 189, 248, 0.6)"
                         strokeDasharray="2 2"
                       />
                     )}
@@ -395,8 +396,8 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                       cy={pt.y}
                       r={hoveredIndex === i ? 6.5 : 4}
                       className="transition-all duration-150 cursor-pointer"
-                      fill="#0f172a"
-                      stroke={pt.val > 0 ? '#38bdf8' : '#64748b'}
+                      fill="#071b36"
+                      stroke={pt.val > 0 ? '#38bdf8' : '#60a5fa'}
                       strokeWidth="2.5"
                       onMouseEnter={() => setHoveredIndex(i)}
                       onMouseLeave={() => setHoveredIndex(null)}
@@ -408,34 +409,34 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               {/* Floating Tooltip with Status Breakdown from Backend */}
               {hoveredIndex !== null && (
                 <div
-                  className="absolute top-0 left-1/2 -translate-x-1/2 bg-slate-900 border border-sky-500/40 rounded-xl p-3 shadow-2xl z-30 pointer-events-none text-xs flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 animate-in fade-in duration-100 backdrop-blur-md"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#061730] border border-sky-400/40 rounded-xl p-3 shadow-2xl z-30 pointer-events-none text-xs flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 animate-in fade-in duration-100 backdrop-blur-md"
                 >
                   <div>
-                    <p className="text-slate-400 font-medium">
+                    <p className="text-sky-200 font-medium">
                       {points[hoveredIndex].raw.monthName} {selectedYear}
                     </p>
                     <p className="text-white font-extrabold text-sm flex items-center gap-1.5">
                       <span>{points[hoveredIndex].val} Inquiries</span>
                       {points[hoveredIndex].raw.winRatePercentage > 0 && (
-                        <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/20 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-400/30">
                           {points[hoveredIndex].raw.winRatePercentage}% Won
                         </span>
                       )}
                     </p>
                   </div>
 
-                  <div className="border-t sm:border-t-0 sm:border-l border-white/10 pt-2 sm:pt-0 sm:pl-3 text-[11px] text-slate-300 grid grid-cols-2 gap-x-3 gap-y-1">
-                    <div>New: <span className="text-sky-400 font-bold">{(points[hoveredIndex].raw.statusBreakdown as Record<string, number>)?.['new'] ?? 0}</span></div>
-                    <div>In Review: <span className="text-amber-400 font-bold">{(points[hoveredIndex].raw.statusBreakdown as Record<string, number>)?.['in_review'] ?? 0}</span></div>
-                    <div>Won: <span className="text-emerald-400 font-bold">{points[hoveredIndex].raw.wonLeads}</span></div>
-                    <div>In Progress: <span className="text-indigo-400 font-bold">{points[hoveredIndex].raw.inProgressLeads}</span></div>
+                  <div className="border-t sm:border-t-0 sm:border-l border-blue-400/20 pt-2 sm:pt-0 sm:pl-3 text-[11px] text-sky-100 grid grid-cols-2 gap-x-3 gap-y-1">
+                    <div>New: <span className="text-sky-300 font-bold">{(points[hoveredIndex].raw.statusBreakdown as Record<string, number>)?.['new'] ?? 0}</span></div>
+                    <div>In Review: <span className="text-amber-300 font-bold">{(points[hoveredIndex].raw.statusBreakdown as Record<string, number>)?.['in_review'] ?? 0}</span></div>
+                    <div>Won: <span className="text-emerald-300 font-bold">{points[hoveredIndex].raw.wonLeads}</span></div>
+                    <div>In Progress: <span className="text-indigo-300 font-bold">{points[hoveredIndex].raw.inProgressLeads}</span></div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* X-Axis Month Labels */}
-            <div className="flex justify-between px-2 sm:px-6 pt-2 text-[10px] sm:text-[11px] text-slate-400 font-semibold border-t border-white/10 min-w-[580px]">
+            <div className="flex justify-between px-2 sm:px-6 pt-2 text-[10px] sm:text-[11px] text-sky-200/80 font-semibold border-t border-blue-400/20 min-w-[580px]">
               {trendsData.map((d, i) => (
                 <span 
                   key={i} 
@@ -457,10 +458,10 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
       {activeTab === 'funnel' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-400 font-medium">
+            <span className="text-sky-200 font-medium">
               Pipeline Stage Progression & Dwell Time ({funnelAnalytics?.totalLeadsInFunnel ?? 0} total leads)
             </span>
-            <span className="text-[11px] text-sky-400 font-semibold">
+            <span className="text-[11px] text-sky-300 font-semibold">
               Live Funnel Conversion
             </span>
           </div>
@@ -472,7 +473,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 return (
                   <div
                     key={stage.slug}
-                    className="p-3 rounded-xl bg-slate-900/60 border border-white/5 hover:border-white/15 transition-all space-y-2"
+                    className="p-3 rounded-xl office-blue-inner-card border border-blue-400/20 hover:border-sky-400/40 transition-all space-y-2"
                   >
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
@@ -485,12 +486,12 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
 
                       <div className="flex items-center gap-3 font-mono">
                         <span className="text-white font-bold">{stage.leadCount} leads</span>
-                        <span className="text-sky-400 font-semibold">{pct}%</span>
+                        <span className="text-sky-300 font-semibold">{pct}%</span>
                       </div>
                     </div>
 
                     {/* Funnel Stage Bar */}
-                    <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-[#061730] border border-blue-400/20 overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-300"
                         style={{
@@ -501,7 +502,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                     </div>
 
                     {/* Drop-off rate & dwell time */}
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+                    <div className="flex items-center justify-between text-[10px] text-sky-200/80 pt-0.5">
                       <span>Drop-off: {stage.dropOffRatePercentage}%</span>
                       <span>Avg Dwell: {stage.avgDwellTimeHours > 0 ? `${stage.avgDwellTimeHours} hrs` : 'Immediate'}</span>
                     </div>
@@ -509,7 +510,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 );
               })
             ) : (
-              <div className="p-8 text-center text-xs text-slate-400 bg-white/2 rounded-xl">
+              <div className="p-8 text-center text-xs text-sky-200/70 bg-blue-950/30 rounded-xl border border-blue-400/15">
                 No pipeline funnel metrics available yet.
               </div>
             )}
@@ -523,10 +524,10 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
       {activeTab === 'services' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-400 font-medium">
+            <span className="text-sky-200 font-medium">
               Inquiry Share & Performance by Service Offering
             </span>
-            <span className="text-[11px] text-emerald-400 font-semibold">
+            <span className="text-[11px] text-emerald-300 font-semibold">
               Demand Distribution
             </span>
           </div>
@@ -536,38 +537,38 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               serviceAnalytics.services.map((svc) => (
                 <div
                   key={svc.service}
-                  className="p-3.5 rounded-xl bg-slate-900/60 border border-white/10 hover:border-emerald-500/30 transition-all space-y-2.5"
+                  className="p-3.5 rounded-xl office-blue-inner-card border border-blue-400/20 hover:border-emerald-400/40 transition-all space-y-2.5"
                 >
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-white truncate max-w-[200px]">
                       {svc.service}
                     </span>
-                    <span className="text-emerald-400 font-bold font-mono">
+                    <span className="text-emerald-300 font-bold font-mono">
                       {svc.sharePercentage}% share
                     </span>
                   </div>
 
                   {/* Share Progress Bar */}
-                  <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div className="w-full h-2 rounded-full bg-[#061730] border border-blue-400/20 overflow-hidden">
                     <div
-                      className="h-full bg-linear-to-r from-sky-500 to-emerald-500 rounded-full transition-all duration-300"
+                      className="h-full bg-linear-to-r from-sky-400 to-emerald-400 rounded-full transition-all duration-300"
                       style={{ width: `${Math.max(svc.sharePercentage, 3)}%` }}
                     />
                   </div>
 
                   {/* Volume Metrics */}
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-white/5">
+                  <div className="flex items-center justify-between text-[11px] text-sky-200/80 pt-1 border-t border-blue-400/15">
                     <span>{svc.totalInquiries} total inquiries</span>
                     <span className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-semibold">{svc.wonCount} won</span>
+                      <span className="text-emerald-300 font-semibold">{svc.wonCount} won</span>
                       <span>•</span>
-                      <span className="text-indigo-300 font-semibold">{svc.inProgressCount} active</span>
+                      <span className="text-sky-200 font-semibold">{svc.inProgressCount} active</span>
                     </span>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="col-span-2 p-8 text-center text-xs text-slate-400 bg-white/2 rounded-xl">
+              <div className="col-span-2 p-8 text-center text-xs text-sky-200/70 bg-blue-950/30 rounded-xl border border-blue-400/15">
                 No service offering breakdown available yet.
               </div>
             )}

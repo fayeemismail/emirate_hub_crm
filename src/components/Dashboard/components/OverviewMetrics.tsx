@@ -28,8 +28,8 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
 
   const growthStyle = 
     momGrowth !== null && momGrowth !== undefined && momGrowth < 0
-      ? 'text-rose-400'
-      : 'text-emerald-400';
+      ? 'text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-400/30'
+      : 'text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-400/30';
 
   const winRateText = 
     winRate !== null && winRate !== undefined
@@ -42,7 +42,7 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       <MetricCard
         label="Total Inquiries"
         icon={Inbox}
-        iconContainerStyle="bg-sky-500/10 text-sky-400 border border-sky-500/20"
+        iconContainerStyle="bg-blue-500/20 text-sky-300 border border-blue-400/30 shadow-sm"
         value={totalCount}
         badgeText={growthText}
         badgeStyle={growthStyle}
@@ -53,10 +53,10 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       <MetricCard
         label="Pending Review"
         icon={AlertCircle}
-        iconContainerStyle="bg-amber-500/10 text-amber-400 border border-amber-500/20"
+        iconContainerStyle="bg-amber-500/20 text-amber-300 border border-amber-400/30 shadow-sm"
         value={pendingCount}
         badgeText="Action Required"
-        badgeStyle="text-amber-400"
+        badgeStyle="text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-400/30"
         subtext="Awaiting advisor triage"
       />
 
@@ -64,10 +64,10 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       <MetricCard
         label="In Progress"
         icon={Clock}
-        iconContainerStyle="bg-sky-500/10 text-sky-400 border border-sky-500/20"
+        iconContainerStyle="bg-sky-500/20 text-sky-300 border border-sky-400/30 shadow-sm"
         value={inProgressCount}
         badgeText="Assigned"
-        badgeStyle="text-sky-400"
+        badgeStyle="text-sky-200 bg-sky-500/20 px-2 py-0.5 rounded-full border border-sky-400/30"
         subtext="Under active engagement"
       />
 
@@ -75,10 +75,10 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       <MetricCard
         label="Resolved Rate"
         icon={CheckCircle2}
-        iconContainerStyle="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+        iconContainerStyle="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 shadow-sm"
         value={resolvedCount}
         badgeText={winRateText}
-        badgeStyle="text-emerald-400"
+        badgeStyle="text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-400/30"
         subtext="Completed inquiries"
       />
     </div>

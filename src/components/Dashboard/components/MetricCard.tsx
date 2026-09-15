@@ -21,18 +21,18 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   subtext,
 }) => {
   return (
-    <div className="formal-card formal-card-hover rounded-2xl p-5 border border-white/10">
+    <div className="office-blue-card office-blue-card-hover rounded-2xl p-5 border border-blue-400/25 relative overflow-hidden">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{label}</span>
+        <span className="text-xs font-semibold text-sky-200 uppercase tracking-wider">{label}</span>
         <div className={`p-2 rounded-xl ${iconContainerStyle}`}>
           <Icon className="w-4 h-4" />
         </div>
       </div>
-      <div className="flex items-baseline gap-2">
+      <div className="flex items-baseline gap-2 flex-wrap">
         <span className="text-3xl font-extrabold text-white tracking-tight">{value}</span>
         <span className={`text-xs font-bold ${badgeStyle}`}>{badgeText}</span>
       </div>
-      <p className="text-[11px] text-slate-400 mt-1">{subtext}</p>
+      <p className="text-[11px] text-sky-100/75 mt-1 font-medium">{subtext}</p>
     </div>
   );
 };

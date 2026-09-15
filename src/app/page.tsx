@@ -341,8 +341,8 @@ export default function Home() {
 
   if (authLoading || (!isAuthenticated && typeof window !== 'undefined')) {
     return (
-      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-slate-400">
+      <div className="min-h-screen office-blue-bg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-sky-200">
           <div className="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
           <span className="text-xs font-medium">Authenticating Emirate Hub session...</span>
         </div>
@@ -351,7 +351,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 flex font-sans antialiased selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen office-blue-bg text-slate-100 flex font-sans antialiased selection:bg-blue-500 selection:text-white">
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
@@ -382,6 +382,7 @@ export default function Home() {
           }}
           onOpenMobileMenu={() => setIsOpenMobileSidebar(true)}
           unreadCount={pendingCount}
+          isOfficeBlue={true}
         />
 
         {/* Page Content Body */}
@@ -415,8 +416,8 @@ export default function Home() {
         </main>
 
         {/* Footer */}
-        <footer className="px-8 py-4 border-t border-white/10 text-center text-xs text-slate-400 font-medium">
-          Emirate Hub Business Consultancy Admin Portal • Executive Slate Theme
+        <footer className="px-8 py-4 border-t border-blue-400/20 text-center text-xs font-medium text-sky-200/70 bg-[#061426]/80">
+          Emirate Hub Business Consultancy Admin Portal • Executive Office Blue Theme
         </footer>
       </div>
 
