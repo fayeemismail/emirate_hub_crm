@@ -8,8 +8,10 @@ import {
   ServiceAnalyticsResponse,
   FunnelAnalyticsResponse
 } from '../../types';
+import { SanityDashboardConfig, SanityService } from '../../sanity';
 import { MessagesGraph } from './MessagesGraph';
-import { PortalBanner } from './components/PortalBanner';
+import { SanityPortalBanner } from '../../sanity/components/SanityPortalBanner';
+import { SanityServicesShowcase } from '../../sanity/components/SanityServicesShowcase';
 import { OverviewMetrics } from './components/OverviewMetrics';
 import { RecentInquiries } from './components/RecentInquiries';
 import { DemandBreakdown } from './components/DemandBreakdown';
@@ -21,6 +23,8 @@ interface DashboardOverviewProps {
   serviceAnalytics?: ServiceAnalyticsResponse | null;
   funnelAnalytics?: FunnelAnalyticsResponse | null;
   isLoadingAnalytics?: boolean;
+  dashboardConfig?: SanityDashboardConfig | null;
+  services?: SanityService[] | null;
   onNavigateToRequests: () => void;
   onSelectRequest: (req: ServiceRequest) => void;
   onOpenSimulateModal: () => void;
@@ -33,6 +37,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   serviceAnalytics,
   funnelAnalytics,
   isLoadingAnalytics = false,
+  dashboardConfig = null,
+  services = null,
   onNavigateToRequests,
   onSelectRequest,
   onOpenSimulateModal,
@@ -45,8 +51,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Banner Notice */}
-      <PortalBanner onOpenSimulateModal={onOpenSimulateModal} />
+      {/* Top Banner Notice: Rendered from Sanity CMS if incoming, otherwise omitted */}
+      <SanityPortalBanner
+        dashboardConfig={dashboardConfig}
+        onOpenSimulateModal={onOpenSimulateModal}
+        showFallbackIfMissing={false}
+      />
 
       {/* Metrics Row */}
       <OverviewMetrics
@@ -65,6 +75,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         funnelAnalytics={funnelAnalytics}
         overviewKpi={overviewKpi}
         isLoading={isLoadingAnalytics}
+      />
+
+      {/* Sanity Services Integration: Only displays when incoming data exists; shows fallback error message if no records found */}
+      <SanityServicesShowcase
+        services={services}
+        showFallbackIfEmpty={true}
       />
 
       {/* Bottom Grid: Recent Activity & Categories */}
