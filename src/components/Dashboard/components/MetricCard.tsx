@@ -5,34 +5,75 @@ interface MetricCardProps {
   label: string;
   value: number | string;
   badgeText: string;
-  badgeStyle: string;
+  badgeTextColor?: string;
+  badgeBgColor?: string;
+  badgeBorderColor?: string;
   icon: LucideIcon;
-  iconContainerStyle: string;
+  iconColor?: string;
+  iconBgColor?: string;
+  iconBorderColor?: string;
   subtext: string;
+  cardBgColor?: string;
+  cardBorderColor?: string;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
   label,
   value,
   badgeText,
-  badgeStyle,
+  badgeTextColor = '#7dd3fc',
+  badgeBgColor = '#0284c726',
+  badgeBorderColor = '#38bdf84d',
   icon: Icon,
-  iconContainerStyle,
+  iconColor = '#38bdf8',
+  iconBgColor = '#3b82f633',
+  iconBorderColor = '#60a5fa4d',
   subtext,
+  cardBgColor = '#0d284ce6',
+  cardBorderColor = '#93c5fd38',
 }) => {
   return (
-    <div className="office-blue-card office-blue-card-hover rounded-2xl p-5 border border-blue-400/25 relative overflow-hidden">
+    <div 
+      className="rounded-2xl p-5 border relative overflow-hidden backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5"
+      style={{
+        backgroundColor: cardBgColor,
+        borderColor: cardBorderColor,
+        boxShadow: '0 10px 30px #040f1eb3',
+      }}
+    >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold text-sky-200 uppercase tracking-wider">{label}</span>
-        <div className={`p-2 rounded-xl ${iconContainerStyle}`}>
-          <Icon className="w-4 h-4" />
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#bae6fd' }}>
+          {label}
+        </span>
+        <div 
+          className="p-2 rounded-xl border shadow-sm"
+          style={{
+            backgroundColor: iconBgColor,
+            borderColor: iconBorderColor,
+            color: iconColor,
+          }}
+        >
+          <Icon className="w-4 h-4" style={{ color: iconColor }} />
         </div>
       </div>
       <div className="flex items-baseline gap-2 flex-wrap">
-        <span className="text-3xl font-extrabold text-white tracking-tight">{value}</span>
-        <span className={`text-xs font-bold ${badgeStyle}`}>{badgeText}</span>
+        <span className="text-3xl font-extrabold tracking-tight" style={{ color: '#ffffff' }}>
+          {value}
+        </span>
+        <span 
+          className="text-xs font-bold px-2 py-0.5 rounded-full border"
+          style={{
+            color: badgeTextColor,
+            backgroundColor: badgeBgColor,
+            borderColor: badgeBorderColor,
+          }}
+        >
+          {badgeText}
+        </span>
       </div>
-      <p className="text-[11px] text-sky-100/75 mt-1 font-medium">{subtext}</p>
+      <p className="text-[11px] mt-1 font-medium" style={{ color: '#bae6fdbf' }}>
+        {subtext}
+      </p>
     </div>
   );
 };

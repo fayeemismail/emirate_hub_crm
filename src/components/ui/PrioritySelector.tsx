@@ -17,7 +17,6 @@ const PRIORITIES: {
   id: RequestPriority;
   label: string;
   dotColor: string;
-  ringColor: string;
   activeBg: string;
   activeText: string;
   activeBorder: string;
@@ -25,29 +24,26 @@ const PRIORITIES: {
   {
     id: 'High',
     label: 'High Priority',
-    dotColor: 'bg-rose-500',
-    ringColor: 'ring-rose-500/30',
-    activeBg: 'bg-rose-500/15',
-    activeText: 'text-rose-300',
-    activeBorder: 'border-rose-500/30',
+    dotColor: '#f43f5e',
+    activeBg: '#f43f5e26',
+    activeText: '#fca5a5',
+    activeBorder: '#fb71854d',
   },
   {
     id: 'Medium',
     label: 'Medium Priority',
-    dotColor: 'bg-amber-500',
-    ringColor: 'ring-amber-500/30',
-    activeBg: 'bg-amber-500/15',
-    activeText: 'text-amber-300',
-    activeBorder: 'border-amber-500/30',
+    dotColor: '#f59e0b',
+    activeBg: '#f59e0b26',
+    activeText: '#fcd34d',
+    activeBorder: '#fbbf244d',
   },
   {
     id: 'Low',
     label: 'Low Priority',
-    dotColor: 'bg-sky-500',
-    ringColor: 'ring-sky-500/30',
-    activeBg: 'bg-sky-500/15',
-    activeText: 'text-sky-300',
-    activeBorder: 'border-sky-500/30',
+    dotColor: '#38bdf8',
+    activeBg: '#0284c726',
+    activeText: '#bae6fd',
+    activeBorder: '#38bdf84d',
   },
 ];
 
@@ -118,13 +114,20 @@ export const PrioritySelector: React.FC<PrioritySelectorProps> = ({
         aria-expanded={isOpen}
         className={`
           inline-flex items-center gap-1.5 rounded-full font-semibold border transition-all duration-150 cursor-pointer
-          ${activeConfig.activeBg} ${activeConfig.activeText} ${activeConfig.activeBorder}
-          hover:brightness-125 focus:outline-none focus:ring-2 focus:ring-sky-500/30 active:scale-95
+          hover:brightness-125 focus:outline-none active:scale-95
           ${sizeClasses}
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         `}
+        style={{
+          backgroundColor: activeConfig.activeBg,
+          color: activeConfig.activeText,
+          borderColor: activeConfig.activeBorder,
+        }}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${activeConfig.dotColor} shadow-[0_0_6px_currentColor] shrink-0`} />
+        <span 
+          className="w-1.5 h-1.5 rounded-full shrink-0" 
+          style={{ backgroundColor: activeConfig.dotColor, boxShadow: `0 0 6px ${activeConfig.dotColor}` }} 
+        />
         <span>{priority}</span>
         <ChevronDown 
           className={`w-3 h-3 transition-transform duration-200 opacity-70 ${isOpen ? 'rotate-180 opacity-100' : ''}`} 
@@ -137,13 +140,23 @@ export const PrioritySelector: React.FC<PrioritySelectorProps> = ({
           role="menu"
           onClick={(e) => e.stopPropagation()}
           className={`
-            absolute top-full mt-1.5 z-50 min-w-[155px] p-1.5 rounded-xl
-            bg-slate-900/95 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/80
-            animate-in fade-in zoom-in-95 duration-150 origin-top
+            absolute top-full mt-1.5 z-50 min-w-[155px] p-1.5 rounded-xl border shadow-2xl
+            animate-in fade-in zoom-in-95 duration-150 origin-top backdrop-blur-xl
             ${align === 'right' ? 'right-0' : 'left-0'}
           `}
+          style={{
+            backgroundColor: '#081e3af5',
+            borderColor: '#93c5fd40',
+            boxShadow: '0 20px 40px #020617cc',
+          }}
         >
-          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-white/5 mb-1">
+          <div 
+            className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider border-b mb-1"
+            style={{
+              borderColor: '#93c5fd26',
+              color: '#7dd3fc',
+            }}
+          >
             Set Priority
           </div>
 
@@ -156,21 +169,32 @@ export const PrioritySelector: React.FC<PrioritySelectorProps> = ({
                   type="button"
                   role="menuitem"
                   onClick={(e) => handleSelect(e, item.id)}
-                  className={`
-                    w-full px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between gap-2.5 transition-all cursor-pointer text-left
-                    ${isSelected 
-                      ? `${item.activeBg} ${item.activeText} font-semibold shadow-inner` 
-                      : 'text-slate-300 hover:text-white hover:bg-white/5'
-                    }
-                  `}
+                  className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between gap-2.5 transition-all cursor-pointer text-left border"
+                  style={
+                    isSelected
+                      ? {
+                          backgroundColor: item.activeBg,
+                          color: item.activeText,
+                          borderColor: item.activeBorder,
+                          fontWeight: 600,
+                        }
+                      : {
+                          backgroundColor: 'transparent',
+                          color: '#bae6fde6',
+                          borderColor: 'transparent',
+                        }
+                  }
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${item.dotColor} ring-2 ${item.ringColor}`} />
+                    <span 
+                      className="w-2 h-2 rounded-full" 
+                      style={{ backgroundColor: item.dotColor, boxShadow: `0 0 4px ${item.dotColor}` }}
+                    />
                     <span>{item.label}</span>
                   </div>
 
                   {isSelected && (
-                    <Check className="w-3.5 h-3.5 text-current shrink-0" />
+                    <Check className="w-3.5 h-3.5 shrink-0" style={{ color: item.activeText }} />
                   )}
                 </button>
               );

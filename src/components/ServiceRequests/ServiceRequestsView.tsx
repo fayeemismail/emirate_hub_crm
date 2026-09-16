@@ -8,7 +8,6 @@ import { PrioritySelector } from '../ui/PrioritySelector';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { 
   Search, 
-  Filter, 
   Inbox, 
   Mail, 
   Calendar, 
@@ -62,13 +61,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
 
   // Filter requests
   const filteredRequests = requests.filter(r => {
-    // Status filter
     if (activeTab !== 'All' && r.status !== activeTab) return false;
-    
-    // Service category filter
     if (selectedService !== 'All' && r.service !== selectedService) return false;
 
-    // Search query filter
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       const clientName = (r.name || `${r.firstName} ${r.lastName}`).toLowerCase();
@@ -89,35 +84,62 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
     return true;
   });
 
-  // Always sort high priority on top, then newest date
   const sortedRequests = [...filteredRequests].sort(sortByPriorityDesc);
 
   const getStatusBadge = (status: RequestStatus) => {
     switch (status) {
       case 'Pending':
         return (
-          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1.5 w-max">
+          <span 
+            className="px-2.5 py-1 text-xs font-semibold rounded-full border flex items-center gap-1.5 w-max"
+            style={{
+              backgroundColor: '#f59e0b26',
+              color: '#fbbf24',
+              borderColor: '#f59e0b4d',
+            }}
+          >
             <AlertCircle className="w-3.5 h-3.5" />
             Pending
           </span>
         );
       case 'In Progress':
         return (
-          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center gap-1.5 w-max">
+          <span 
+            className="px-2.5 py-1 text-xs font-semibold rounded-full border flex items-center gap-1.5 w-max"
+            style={{
+              backgroundColor: '#0284c726',
+              color: '#38bdf8',
+              borderColor: '#0284c74d',
+            }}
+          >
             <Clock className="w-3.5 h-3.5" />
             In Progress
           </span>
         );
       case 'Resolved':
         return (
-          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5 w-max">
+          <span 
+            className="px-2.5 py-1 text-xs font-semibold rounded-full border flex items-center gap-1.5 w-max"
+            style={{
+              backgroundColor: '#10b98126',
+              color: '#34d399',
+              borderColor: '#10b9814d',
+            }}
+          >
             <CheckCircle2 className="w-3.5 h-3.5" />
             Resolved
           </span>
         );
       default:
         return (
-          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/20 w-max">
+          <span 
+            className="px-2.5 py-1 text-xs font-semibold rounded-full border w-max"
+            style={{
+              backgroundColor: '#64748b26',
+              color: '#94a3b8',
+              borderColor: '#64748b4d',
+            }}
+          >
             {status}
           </span>
         );
@@ -129,18 +151,25 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
       {/* View Header & Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Inbox className="w-5 h-5 text-sky-400 shrink-0" />
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight flex items-center gap-2" style={{ color: '#ffffff' }}>
+            <Inbox className="w-5 h-5 shrink-0" style={{ color: '#38bdf8' }} />
             Service Requests
           </h2>
-          <p className="text-xs text-sky-200/80">
+          <p className="text-xs" style={{ color: '#bae6fdcc' }}>
             Client inquiries prioritized with High priority on top • Live sync with Jira board and Table view
           </p>
         </div>
       </div>
 
       {/* Filter Toolbar & View Mode Switcher */}
-      <div className="office-blue-card rounded-2xl p-3.5 sm:p-4 border border-blue-400/25 space-y-4">
+      <div 
+        className="rounded-2xl p-3.5 sm:p-4 border space-y-4 backdrop-blur-md"
+        style={{
+          backgroundColor: '#0d284ce6',
+          borderColor: '#93c5fd40',
+          boxShadow: '0 10px 30px #040f1eb3',
+        }}
+      >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           {/* Status Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
@@ -155,16 +184,41 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`
-                    px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer
-                    ${isActive 
-                      ? 'bg-blue-600 text-white border border-blue-400/40 shadow-md shadow-blue-900/40 font-semibold' 
-                      : 'text-sky-200 hover:text-white hover:bg-blue-800/30 border border-transparent'
-                    }
-                  `}
+                  className="px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border"
+                  style={
+                    isActive
+                      ? {
+                          backgroundColor: '#2563eb',
+                          color: '#ffffff',
+                          borderColor: '#60a5fa66',
+                          boxShadow: '0 4px 12px #1e3a8a66',
+                          fontWeight: 600,
+                        }
+                      : {
+                          backgroundColor: 'transparent',
+                          color: '#bae6fd',
+                          borderColor: 'transparent',
+                        }
+                  }
                 >
                   <span>{tab}</span>
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${isActive ? 'bg-white text-blue-950 font-bold' : 'bg-blue-500/20 text-sky-200 border border-blue-400/30'}`}>
+                  <span 
+                    className="px-1.5 py-0.2 rounded-full text-[10px] border"
+                    style={
+                      isActive
+                        ? {
+                            backgroundColor: '#ffffff',
+                            color: '#0f172a',
+                            borderColor: '#ffffff',
+                            fontWeight: 700,
+                          }
+                        : {
+                            backgroundColor: '#3b82f633',
+                            color: '#bae6fd',
+                            borderColor: '#60a5fa4d',
+                          }
+                    }
+                  >
                     {count}
                   </span>
                 </button>
@@ -180,27 +234,49 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 value={selectedService}
                 onChange={(e) => setSelectedService(e.target.value)}
                 aria-label="Filter by Service Category"
-                className="w-full appearance-none pl-3 pr-8 py-1.5 bg-[#061834] border border-blue-400/30 rounded-xl text-xs text-white focus:outline-none focus:border-sky-400 cursor-pointer"
+                className="w-full appearance-none pl-3 pr-8 py-1.5 border rounded-xl text-xs focus:outline-none cursor-pointer"
+                style={{
+                  backgroundColor: '#061834',
+                  borderColor: '#93c5fd4d',
+                  color: '#ffffff',
+                }}
               >
-                <option value="All" className="bg-[#061834] text-white">All Services</option>
+                <option value="All" style={{ backgroundColor: '#061834', color: '#ffffff' }}>All Services</option>
                 {servicesList.map((svc) => (
-                  <option key={svc} value={svc} className="bg-[#061834] text-white">
+                  <option key={svc} value={svc} style={{ backgroundColor: '#061834', color: '#ffffff' }}>
                     {svc}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-sky-300 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#7dd3fc' }} />
             </div>
 
             {/* View Mode Switcher (Jira Board, Table) */}
-            <div className="flex items-center bg-[#061834] p-1 rounded-xl border border-blue-400/30">
+            <div 
+              className="flex items-center p-1 rounded-xl border"
+              style={{
+                backgroundColor: '#061834',
+                borderColor: '#93c5fd4d',
+              }}
+            >
               <button
                 onClick={() => setViewMode('kanban')}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer ${
-                  viewMode === 'kanban' 
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-900/50 font-semibold border border-blue-400/30' 
-                    : 'text-sky-200 hover:text-white'
-                }`}
+                className="px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer border"
+                style={
+                  viewMode === 'kanban'
+                    ? {
+                        backgroundColor: '#2563eb',
+                        color: '#ffffff',
+                        borderColor: '#60a5fa4d',
+                        fontWeight: 600,
+                        boxShadow: '0 4px 12px #1e3a8a80',
+                      }
+                    : {
+                        backgroundColor: 'transparent',
+                        color: '#bae6fd',
+                        borderColor: 'transparent',
+                      }
+                }
               >
                 <Kanban className="w-3.5 h-3.5" />
                 <span>Jira Board</span>
@@ -208,11 +284,22 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
 
               <button
                 onClick={() => setViewMode('table')}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer ${
-                  viewMode === 'table' 
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-900/50 font-semibold border border-blue-400/30' 
-                    : 'text-sky-200 hover:text-white'
-                }`}
+                className="px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer border"
+                style={
+                  viewMode === 'table'
+                    ? {
+                        backgroundColor: '#2563eb',
+                        color: '#ffffff',
+                        borderColor: '#60a5fa4d',
+                        fontWeight: 600,
+                        boxShadow: '0 4px 12px #1e3a8a80',
+                      }
+                    : {
+                        backgroundColor: 'transparent',
+                        color: '#bae6fd',
+                        borderColor: 'transparent',
+                      }
+                }
               >
                 <TableIcon className="w-3.5 h-3.5" />
                 <span>Table</span>
@@ -224,22 +311,35 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
 
       {/* Main Content Area */}
       {isLoading ? (
-        <div className="office-blue-card rounded-2xl p-6 sm:p-8 border border-blue-400/20 space-y-4 animate-pulse">
-          <div className="flex items-center justify-between pb-3 border-b border-blue-400/10">
-            <div className="h-5 bg-blue-400/15 rounded w-44" />
-            <div className="h-5 bg-blue-400/15 rounded w-20" />
+        <div 
+          className="rounded-2xl p-6 sm:p-8 border space-y-4 animate-pulse backdrop-blur-md"
+          style={{
+            backgroundColor: '#0d284ce6',
+            borderColor: '#93c5fd33',
+          }}
+        >
+          <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: '#93c5fd1a' }}>
+            <div className="h-5 rounded w-44" style={{ backgroundColor: '#93c5fd26' }} />
+            <div className="h-5 rounded w-20" style={{ backgroundColor: '#93c5fd26' }} />
           </div>
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-16 bg-blue-900/20 border border-blue-400/15 rounded-xl flex items-center justify-between px-4">
+              <div 
+                key={i} 
+                className="h-16 border rounded-xl flex items-center justify-between px-4"
+                style={{
+                  backgroundColor: '#081d394d',
+                  borderColor: '#93c5fd26',
+                }}
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-400/15" />
+                  <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: '#93c5fd26' }} />
                   <div className="space-y-1.5">
-                    <div className="h-3.5 bg-blue-400/15 rounded w-28" />
-                    <div className="h-2.5 bg-blue-400/10 rounded w-36" />
+                    <div className="h-3.5 rounded w-28" style={{ backgroundColor: '#93c5fd26' }} />
+                    <div className="h-2.5 rounded w-36" style={{ backgroundColor: '#93c5fd1a' }} />
                   </div>
                 </div>
-                <div className="h-6 bg-blue-400/15 rounded-full w-20" />
+                <div className="h-6 rounded-full w-20" style={{ backgroundColor: '#93c5fd26' }} />
               </div>
             ))}
           </div>
@@ -247,25 +347,53 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
       ) : sortedRequests.length === 0 ? (
         requests.length === 0 ? (
           /* Zero Total Requests Empty State */
-          <div className="office-blue-card rounded-2xl p-10 sm:p-16 text-center border border-blue-400/25 space-y-4 max-w-xl mx-auto my-6">
-            <div className="w-16 h-16 rounded-3xl bg-blue-500/20 border border-blue-400/30 text-sky-300 flex items-center justify-center mx-auto shadow-xl shadow-blue-950/40">
-              <Inbox className="w-8 h-8 text-sky-400" />
+          <div 
+            className="rounded-2xl p-10 sm:p-16 text-center border space-y-4 max-w-xl mx-auto my-6 backdrop-blur-md"
+            style={{
+              backgroundColor: '#0d284ce6',
+              borderColor: '#93c5fd40',
+              boxShadow: '0 10px 30px #040f1eb3',
+            }}
+          >
+            <div 
+              className="w-16 h-16 rounded-3xl border flex items-center justify-center mx-auto shadow-xl"
+              style={{
+                backgroundColor: '#0284c733',
+                borderColor: '#38bdf84d',
+                color: '#38bdf8',
+                boxShadow: '0 10px 25px #02061766',
+              }}
+            >
+              <Inbox className="w-8 h-8" style={{ color: '#38bdf8' }} />
             </div>
             <div className="space-y-1.5">
-              <h3 className="text-lg font-bold text-white tracking-tight">No Service Requests Yet</h3>
-              <p className="text-xs text-sky-200/80 max-w-md mx-auto leading-relaxed">
+              <h3 className="text-lg font-bold tracking-tight" style={{ color: '#ffffff' }}>No Service Requests Yet</h3>
+              <p className="text-xs max-w-md mx-auto leading-relaxed" style={{ color: '#bae6fdcc' }}>
                 There are currently no customer inquiries. When visitors submit the inquiry form on the website, incoming requests will appear here in real time.
               </p>
             </div>
           </div>
         ) : (
           /* Filtered Results Empty State */
-          <div className="office-blue-card rounded-2xl p-8 sm:p-12 text-center border border-blue-400/25 space-y-3 max-w-md mx-auto my-6">
-            <div className="w-12 h-12 rounded-2xl bg-blue-900/30 border border-blue-400/25 text-sky-300 flex items-center justify-center mx-auto">
-              <Search className="w-5 h-5 text-sky-300" />
+          <div 
+            className="rounded-2xl p-8 sm:p-12 text-center border space-y-3 max-w-md mx-auto my-6 backdrop-blur-md"
+            style={{
+              backgroundColor: '#0d284ce6',
+              borderColor: '#93c5fd40',
+            }}
+          >
+            <div 
+              className="w-12 h-12 rounded-2xl border flex items-center justify-center mx-auto"
+              style={{
+                backgroundColor: '#081d3966',
+                borderColor: '#93c5fd40',
+                color: '#7dd3fc',
+              }}
+            >
+              <Search className="w-5 h-5" style={{ color: '#7dd3fc' }} />
             </div>
-            <h3 className="text-base font-semibold text-white">No Matching Inquiries Found</h3>
-            <p className="text-xs text-sky-200/80 max-w-sm mx-auto">
+            <h3 className="text-base font-semibold" style={{ color: '#ffffff' }}>No Matching Inquiries Found</h3>
+            <p className="text-xs max-w-sm mx-auto" style={{ color: '#bae6fdcc' }}>
               No inquiries match your current filters {searchTerm ? `for "${searchTerm}"` : ''}. Try resetting your search or category filter.
             </p>
             <button
@@ -274,7 +402,11 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 setActiveTab('All');
                 setSelectedService('All');
               }}
-              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs text-white font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5 mt-2 shadow-md shadow-blue-950/50"
+              className="px-3.5 py-1.5 rounded-xl text-xs text-white font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5 mt-2 shadow-md"
+              style={{
+                backgroundColor: '#2563eb',
+                boxShadow: '0 4px 12px #02061780',
+              }}
             >
               <span>Clear Filters</span>
             </button>
@@ -291,11 +423,25 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
         />
       ) : (
         /* Table View with responsive overflow and Priority Sorting */
-        <div className="office-blue-card rounded-2xl border border-blue-400/25 overflow-hidden">
+        <div 
+          className="rounded-2xl border overflow-hidden backdrop-blur-md"
+          style={{
+            backgroundColor: '#0d284ce6',
+            borderColor: '#93c5fd40',
+            boxShadow: '0 10px 30px #040f1eb3',
+          }}
+        >
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-140">
               <thead>
-                <tr className="border-b border-blue-400/20 text-[11px] font-semibold text-sky-300/80 uppercase tracking-wider bg-[#061834]/90">
+                <tr 
+                  className="border-b text-[11px] font-semibold uppercase tracking-wider"
+                  style={{
+                    backgroundColor: '#061834e6',
+                    borderColor: '#93c5fd33',
+                    color: '#bae6fdcc',
+                  }}
+                >
                   <th className="py-3.5 px-4">User Details</th>
                   <th className="py-3.5 px-4">Service</th>
                   <th className="py-3.5 px-4">Priority</th>
@@ -304,7 +450,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                   <th className="py-3.5 px-4 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-blue-400/15 text-xs">
+              <tbody className="divide-y text-xs" style={{ borderColor: '#93c5fd26' }}>
                 {sortedRequests.map((req) => {
                   const clientName = req.name || `${req.firstName} ${req.lastName}`.trim() || 'Client';
                   const initials = clientName
@@ -318,19 +464,27 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                     <tr 
                       key={req.id} 
                       onClick={() => onSelectRequest(req)}
-                      className="hover:bg-blue-600/10 cursor-pointer transition-colors group"
+                      className="hover:bg-[#2563eb1a] cursor-pointer transition-colors group"
+                      style={{ borderBottomColor: '#93c5fd26' }}
                     >
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-400/35 flex items-center justify-center font-bold text-sky-200 text-[11px] shrink-0">
+                          <div 
+                            className="w-7 h-7 rounded-lg border flex items-center justify-center font-bold text-[11px] shrink-0"
+                            style={{
+                              backgroundColor: '#0284c733',
+                              borderColor: '#38bdf859',
+                              color: '#bae6fd',
+                            }}
+                          >
                             {initials}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-white truncate group-hover:text-sky-300 transition-colors">
+                            <p className="font-semibold transition-colors group-hover:text-[#38bdf8]" style={{ color: '#ffffff' }}>
                               {clientName}
                             </p>
-                            <p className="text-[11px] text-sky-200/75 truncate flex items-center gap-1">
-                              <Mail className="w-3 h-3 text-sky-400/70 shrink-0" />
+                            <p className="text-[11px] truncate flex items-center gap-1" style={{ color: '#bae6fdbf' }}>
+                              <Mail className="w-3 h-3 shrink-0" style={{ color: '#38bdf8b3' }} />
                               {req.email}
                             </p>
                           </div>
@@ -338,7 +492,14 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-900/40 border border-blue-400/30 text-sky-100">
+                        <span 
+                          className="px-2.5 py-0.5 rounded-full text-[11px] font-medium border"
+                          style={{
+                            backgroundColor: '#081d3980',
+                            borderColor: '#93c5fd4d',
+                            color: '#bae6fd',
+                          }}
+                        >
                           {req.service}
                         </span>
                       </td>
@@ -362,9 +523,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                         />
                       </td>
 
-                      <td className="py-3.5 px-4 text-sky-200/70 whitespace-nowrap text-[11px]">
+                      <td className="py-3.5 px-4 whitespace-nowrap text-[11px]" style={{ color: '#bae6fdb3' }}>
                         <span className="flex items-center gap-1.5">
-                          <Calendar className="w-3 h-3 text-sky-400/70 shrink-0" />
+                          <Calendar className="w-3 h-3 shrink-0" style={{ color: '#38bdf8b3' }} />
                           {new Date(req.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                         </span>
                       </td>
@@ -377,7 +538,12 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => onSelectRequest(req)}
-                            className="px-2.5 py-1 rounded-lg text-sky-300 hover:text-white hover:bg-blue-600/25 border border-blue-400/25 text-xs font-semibold transition-all inline-flex items-center gap-1 cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all inline-flex items-center gap-1 cursor-pointer hover:text-white"
+                            style={{
+                              color: '#7dd3fc',
+                              borderColor: '#93c5fd40',
+                              backgroundColor: '#0284c71a',
+                            }}
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>View</span>
@@ -397,9 +563,10 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                                 });
                               }}
                               title="Soft delete inquiry"
-                              className="p-1 rounded-lg text-sky-300/60 hover:text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer"
+                              className="p-1 rounded-lg transition-colors cursor-pointer hover:bg-[#f43f5e33]"
+                              style={{ color: '#bae6fd80' }}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3.5 h-3.5 hover:text-[#f43f5e]" />
                             </button>
                           )}
                         </div>

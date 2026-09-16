@@ -21,15 +21,11 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
   momGrowth,
   winRate,
 }) => {
+  const isNegativeGrowth = momGrowth !== null && momGrowth !== undefined && momGrowth < 0;
   const growthText = 
     momGrowth !== null && momGrowth !== undefined 
       ? `${momGrowth >= 0 ? '+' : ''}${momGrowth}% MoM`
       : '+0% MoM';
-
-  const growthStyle = 
-    momGrowth !== null && momGrowth !== undefined && momGrowth < 0
-      ? 'text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-400/30'
-      : 'text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-400/30';
 
   const winRateText = 
     winRate !== null && winRate !== undefined
@@ -42,10 +38,14 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       <MetricCard
         label="Total Inquiries"
         icon={Inbox}
-        iconContainerStyle="bg-blue-500/20 text-sky-300 border border-blue-400/30 shadow-sm"
+        iconColor="#38bdf8"
+        iconBgColor="#38bdf826"
+        iconBorderColor="#38bdf84d"
         value={totalCount}
         badgeText={growthText}
-        badgeStyle={growthStyle}
+        badgeTextColor={isNegativeGrowth ? '#fca5a5' : '#6ee7b7'}
+        badgeBgColor={isNegativeGrowth ? '#f43f5e33' : '#10b98133'}
+        badgeBorderColor={isNegativeGrowth ? '#fb71854d' : '#34d3994d'}
         subtext="From company website forms"
       />
 
@@ -53,10 +53,14 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       <MetricCard
         label="Pending Review"
         icon={AlertCircle}
-        iconContainerStyle="bg-amber-500/20 text-amber-300 border border-amber-400/30 shadow-sm"
+        iconColor="#fbbf24"
+        iconBgColor="#f59e0b26"
+        iconBorderColor="#f59e0b4d"
         value={pendingCount}
         badgeText="Action Required"
-        badgeStyle="text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-400/30"
+        badgeTextColor="#fcd34d"
+        badgeBgColor="#f59e0b33"
+        badgeBorderColor="#fbbf244d"
         subtext="Awaiting advisor triage"
       />
 
@@ -64,10 +68,14 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       <MetricCard
         label="In Progress"
         icon={Clock}
-        iconContainerStyle="bg-sky-500/20 text-sky-300 border border-sky-400/30 shadow-sm"
+        iconColor="#60a5fa"
+        iconBgColor="#3b82f626"
+        iconBorderColor="#3b82f64d"
         value={inProgressCount}
         badgeText="Assigned"
-        badgeStyle="text-sky-200 bg-sky-500/20 px-2 py-0.5 rounded-full border border-sky-400/30"
+        badgeTextColor="#93c5fd"
+        badgeBgColor="#3b82f633"
+        badgeBorderColor="#60a5fa4d"
         subtext="Under active engagement"
       />
 
@@ -75,10 +83,14 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       <MetricCard
         label="Resolved Rate"
         icon={CheckCircle2}
-        iconContainerStyle="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 shadow-sm"
+        iconColor="#34d399"
+        iconBgColor="#10b98126"
+        iconBorderColor="#10b9814d"
         value={resolvedCount}
         badgeText={winRateText}
-        badgeStyle="text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-400/30"
+        badgeTextColor="#6ee7b7"
+        badgeBgColor="#10b98133"
+        badgeBorderColor="#34d3994d"
         subtext="Completed inquiries"
       />
     </div>

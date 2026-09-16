@@ -32,7 +32,6 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
   serviceAnalytics,
   funnelAnalytics,
   overviewKpi,
-  isLoading: isParentLoading = false,
 }) => {
   // Chart Display Mode
   const [activeTab, setActiveTab] = useState<'monthly' | 'funnel' | 'services'>('monthly');
@@ -152,22 +151,42 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
   const momGrowth = overviewKpi?.momGrowthPercentage ?? null;
 
   return (
-    <div className="office-blue-card rounded-2xl p-4 sm:p-6 border border-blue-400/25 relative overflow-hidden space-y-5">
+    <div 
+      className="rounded-2xl p-4 sm:p-6 border relative overflow-hidden space-y-5 backdrop-blur-md"
+      style={{
+        backgroundColor: '#0d284ce6',
+        borderColor: '#93c5fd40',
+        boxShadow: '0 10px 30px #040f1eb3',
+      }}
+    >
       {/* Background Ambient Glow */}
-      <div className="absolute -top-24 -right-24 w-72 h-72 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div 
+        className="absolute -top-24 -right-24 w-72 h-72 rounded-full blur-3xl pointer-events-none"
+        style={{ backgroundColor: '#0284c726' }}
+      />
 
       {/* Chart Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-blue-400/20 pb-4">
+      <div 
+        className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4"
+        style={{ borderColor: '#93c5fd33' }}
+      >
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-blue-500/20 border border-blue-400/30 text-sky-300 shrink-0">
+            <div 
+              className="p-2 rounded-xl border shrink-0"
+              style={{
+                backgroundColor: '#0284c733',
+                borderColor: '#38bdf84d',
+                color: '#38bdf8',
+              }}
+            >
               <BarChart3 className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">
+              <h2 className="text-base font-bold tracking-tight" style={{ color: '#ffffff' }}>
                 Inquiry Analytics & Pipeline Trends
               </h2>
-              <p className="text-xs text-sky-200/80">
+              <p className="text-xs" style={{ color: '#bae6fdcc' }}>
                 Inquiry volume, pipeline progression, and service demand metrics
               </p>
             </div>
@@ -175,15 +194,30 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
         </div>
 
         {/* View Mode Tabs */}
-        <div className="flex items-center gap-1 bg-[#061730] p-1 rounded-xl border border-blue-400/25 text-xs self-start md:self-auto shrink-0 flex-wrap">
+        <div 
+          className="flex items-center gap-1 p-1 rounded-xl border text-xs self-start md:self-auto shrink-0 flex-wrap"
+          style={{
+            backgroundColor: '#061730',
+            borderColor: '#93c5fd40',
+          }}
+        >
           <button
             type="button"
             onClick={() => setActiveTab('monthly')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+            className="px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5"
+            style={
               activeTab === 'monthly'
-                ? 'bg-blue-600 text-white font-semibold shadow-md shadow-blue-900/50'
-                : 'text-sky-200 hover:text-white hover:bg-blue-800/30'
-            }`}
+                ? {
+                    backgroundColor: '#2563eb',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px #1e3a8a80',
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: '#bae6fd',
+                  }
+            }
           >
             <Calendar className="w-3.5 h-3.5" />
             <span>Monthly Trends</span>
@@ -192,11 +226,20 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('funnel')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+            className="px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5"
+            style={
               activeTab === 'funnel'
-                ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-900/50'
-                : 'text-sky-200 hover:text-white hover:bg-blue-800/30'
-            }`}
+                ? {
+                    backgroundColor: '#4f46e5',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px #312e8180',
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: '#bae6fd',
+                  }
+            }
           >
             <GitCommit className="w-3.5 h-3.5" />
             <span>Pipeline Funnel</span>
@@ -205,11 +248,20 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('services')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+            className="px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5"
+            style={
               activeTab === 'services'
-                ? 'bg-teal-600 text-white font-semibold shadow-md shadow-teal-900/50'
-                : 'text-sky-200 hover:text-white hover:bg-blue-800/30'
-            }`}
+                ? {
+                    backgroundColor: '#0d9488',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px #134e4a80',
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: '#bae6fd',
+                  }
+            }
           >
             <Layers className="w-3.5 h-3.5" />
             <span>Service Demand</span>
@@ -226,19 +278,30 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* KPI Summary Headline */}
             <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-              <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: '#ffffff' }}>
                 {totalYearVolume}
               </span>
-              <span className="text-xs text-sky-200/80 font-medium">
+              <span className="text-xs font-medium" style={{ color: '#bae6fdcc' }}>
                 total inquiries in {selectedYear}
               </span>
 
               {momGrowth !== null && (
-                <span className={`text-xs font-bold flex items-center gap-1 px-2.5 py-1 rounded-md border ml-auto sm:ml-0 ${
-                  momGrowth >= 0 
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40' 
-                    : 'bg-rose-500/20 text-rose-300 border-rose-400/40'
-                }`}>
+                <span 
+                  className="text-xs font-bold flex items-center gap-1 px-2.5 py-1 rounded-md border ml-auto sm:ml-0"
+                  style={
+                    momGrowth >= 0
+                      ? {
+                          backgroundColor: '#10b98133',
+                          color: '#6ee7b7',
+                          borderColor: '#34d39966',
+                        }
+                      : {
+                          backgroundColor: '#f43f5e33',
+                          color: '#fca5a5',
+                          borderColor: '#fb718566',
+                        }
+                  }
+                >
                   {momGrowth >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {momGrowth >= 0 ? `+${momGrowth}%` : `${momGrowth}%`} MoM
                 </span>
@@ -248,18 +311,23 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
             {/* Filter Dropdown & Year Selection */}
             <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
               {isFilterLoading && (
-                <Loader2 className="w-3.5 h-3.5 text-sky-400 animate-spin mr-1" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" style={{ color: '#38bdf8' }} />
               )}
 
-              <span className="text-xs text-sky-200 font-medium flex items-center gap-1">
-                <Filter className="w-3 h-3 text-sky-400" />
+              <span className="text-xs font-medium flex items-center gap-1" style={{ color: '#bae6fd' }}>
+                <Filter className="w-3 h-3" style={{ color: '#38bdf8' }} />
                 Service:
               </span>
               <select
                 value={selectedService}
                 onChange={(e) => handleServiceChange(e.target.value)}
                 aria-label="Filter Trends by Service"
-                className="bg-[#061834] border border-blue-400/30 rounded-xl px-2.5 py-1 text-xs text-white focus:outline-none focus:border-sky-400 cursor-pointer"
+                className="border rounded-xl px-2.5 py-1 text-xs focus:outline-none cursor-pointer"
+                style={{
+                  backgroundColor: '#061834',
+                  borderColor: '#93c5fd4d',
+                  color: '#ffffff',
+                }}
               >
                 <option value="all">All Service Categories</option>
                 {availableServices.map((svc) => (
@@ -273,7 +341,12 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 value={selectedYear}
                 onChange={(e) => handleYearChange(Number(e.target.value))}
                 aria-label="Select Year for Analytics"
-                className="bg-[#061834] border border-blue-400/30 rounded-xl px-2.5 py-1 text-xs text-white focus:outline-none focus:border-sky-400 cursor-pointer font-mono"
+                className="border rounded-xl px-2.5 py-1 text-xs focus:outline-none cursor-pointer font-mono"
+                style={{
+                  backgroundColor: '#061834',
+                  borderColor: '#93c5fd4d',
+                  color: '#ffffff',
+                }}
               >
                 {[currentYear, currentYear - 1, currentYear - 2].map((yr) => (
                   <option key={yr} value={yr}>
@@ -290,11 +363,21 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               <button
                 type="button"
                 onClick={() => handleServiceChange('all')}
-                className={`px-2.5 py-1 rounded-lg transition-all text-[11px] whitespace-nowrap cursor-pointer ${
+                className="px-2.5 py-1 rounded-lg transition-all text-[11px] whitespace-nowrap cursor-pointer border"
+                style={
                   selectedService === 'all'
-                    ? 'bg-blue-600 text-white border border-blue-400/50 font-semibold shadow-sm'
-                    : 'text-sky-200 hover:text-white bg-blue-950/40 border border-blue-400/25'
-                }`}
+                    ? {
+                        backgroundColor: '#2563eb',
+                        color: '#ffffff',
+                        borderColor: '#60a5fa80',
+                        fontWeight: 600,
+                      }
+                    : {
+                        backgroundColor: '#071b3866',
+                        color: '#bae6fd',
+                        borderColor: '#93c5fd40',
+                      }
+                }
               >
                 All Services
               </button>
@@ -303,11 +386,21 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                   key={svc}
                   type="button"
                   onClick={() => handleServiceChange(svc)}
-                  className={`px-2.5 py-1 rounded-lg transition-all text-[11px] whitespace-nowrap cursor-pointer ${
+                  className="px-2.5 py-1 rounded-lg transition-all text-[11px] whitespace-nowrap cursor-pointer border"
+                  style={
                     selectedService === svc
-                      ? 'bg-blue-600 text-white border border-blue-400/50 font-semibold shadow-sm'
-                      : 'text-sky-200 hover:text-white bg-blue-950/40 border border-blue-400/25'
-                  }`}
+                      ? {
+                          backgroundColor: '#2563eb',
+                          color: '#ffffff',
+                          borderColor: '#60a5fa80',
+                          fontWeight: 600,
+                        }
+                      : {
+                          backgroundColor: '#071b3866',
+                          color: '#bae6fd',
+                          borderColor: '#93c5fd40',
+                        }
+                  }
                 >
                   {svc}
                 </button>
@@ -345,7 +438,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                         y1={y}
                         x2={svgWidth - paddingX}
                         y2={y}
-                        stroke="rgba(147, 197, 253, 0.15)"
+                        stroke="#93c5fd26"
                         strokeDasharray="4 4"
                       />
                       <text
@@ -353,7 +446,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                         y={y + 3}
                         textAnchor="end"
                         fontSize="9"
-                        fill="rgba(186, 230, 253, 0.75)"
+                        fill="#bae6fdc0"
                         fontFamily="monospace"
                         fontWeight="600"
                       >
@@ -386,7 +479,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                         y1={paddingY}
                         x2={pt.x}
                         y2={svgHeight - paddingY}
-                        stroke="rgba(56, 189, 248, 0.6)"
+                        stroke="#38bdf899"
                         strokeDasharray="2 2"
                       />
                     )}
@@ -409,40 +502,66 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               {/* Floating Tooltip with Status Breakdown from Backend */}
               {hoveredIndex !== null && (
                 <div
-                  className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#061730] border border-sky-400/40 rounded-xl p-3 shadow-2xl z-30 pointer-events-none text-xs flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 animate-in fade-in duration-100 backdrop-blur-md"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 rounded-xl p-3 shadow-2xl z-30 pointer-events-none text-xs flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 animate-in fade-in duration-100 backdrop-blur-md border"
+                  style={{
+                    backgroundColor: '#061730f2',
+                    borderColor: '#38bdf866',
+                    boxShadow: '0 10px 25px #020617cc',
+                  }}
                 >
                   <div>
-                    <p className="text-sky-200 font-medium">
+                    <p className="font-medium" style={{ color: '#bae6fd' }}>
                       {points[hoveredIndex].raw.monthName} {selectedYear}
                     </p>
-                    <p className="text-white font-extrabold text-sm flex items-center gap-1.5">
+                    <p className="font-extrabold text-sm flex items-center gap-1.5" style={{ color: '#ffffff' }}>
                       <span>{points[hoveredIndex].val} Inquiries</span>
                       {points[hoveredIndex].raw.winRatePercentage > 0 && (
-                        <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-400/30">
+                        <span 
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded border"
+                          style={{
+                            color: '#6ee7b7',
+                            backgroundColor: '#10b98133',
+                            borderColor: '#34d3994d',
+                          }}
+                        >
                           {points[hoveredIndex].raw.winRatePercentage}% Won
                         </span>
                       )}
                     </p>
                   </div>
 
-                  <div className="border-t sm:border-t-0 sm:border-l border-blue-400/20 pt-2 sm:pt-0 sm:pl-3 text-[11px] text-sky-100 grid grid-cols-2 gap-x-3 gap-y-1">
-                    <div>New: <span className="text-sky-300 font-bold">{(points[hoveredIndex].raw.statusBreakdown as Record<string, number>)?.['new'] ?? 0}</span></div>
-                    <div>In Review: <span className="text-amber-300 font-bold">{(points[hoveredIndex].raw.statusBreakdown as Record<string, number>)?.['in_review'] ?? 0}</span></div>
-                    <div>Won: <span className="text-emerald-300 font-bold">{points[hoveredIndex].raw.wonLeads}</span></div>
-                    <div>In Progress: <span className="text-indigo-300 font-bold">{points[hoveredIndex].raw.inProgressLeads}</span></div>
+                  <div 
+                    className="border-t sm:border-t-0 sm:border-l pt-2 sm:pt-0 sm:pl-3 text-[11px] grid grid-cols-2 gap-x-3 gap-y-1"
+                    style={{
+                      borderColor: '#93c5fd33',
+                      color: '#e0f2fee6',
+                    }}
+                  >
+                    <div>New: <span className="font-bold" style={{ color: '#38bdf8' }}>{(points[hoveredIndex].raw.statusBreakdown as Record<string, number>)?.['new'] ?? 0}</span></div>
+                    <div>In Review: <span className="font-bold" style={{ color: '#fbbf24' }}>{(points[hoveredIndex].raw.statusBreakdown as Record<string, number>)?.['in_review'] ?? 0}</span></div>
+                    <div>Won: <span className="font-bold" style={{ color: '#34d399' }}>{points[hoveredIndex].raw.wonLeads}</span></div>
+                    <div>In Progress: <span className="font-bold" style={{ color: '#818cf8' }}>{points[hoveredIndex].raw.inProgressLeads}</span></div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* X-Axis Month Labels */}
-            <div className="flex justify-between px-2 sm:px-6 pt-2 text-[10px] sm:text-[11px] text-sky-200/80 font-semibold border-t border-blue-400/20 min-w-[580px]">
+            <div 
+              className="flex justify-between px-2 sm:px-6 pt-2 text-[10px] sm:text-[11px] font-semibold border-t min-w-[580px]"
+              style={{
+                borderColor: '#93c5fd33',
+                color: '#bae6fdcc',
+              }}
+            >
               {trendsData.map((d, i) => (
                 <span 
                   key={i} 
-                  className={`text-center transition-colors ${
-                    hoveredIndex === i ? 'text-sky-300 font-bold' : ''
-                  }`}
+                  className="text-center transition-colors"
+                  style={{
+                    color: hoveredIndex === i ? '#38bdf8' : '#bae6fdcc',
+                    fontWeight: hoveredIndex === i ? 700 : 600,
+                  }}
                 >
                   {d.monthName.slice(0, 3)}
                 </span>
@@ -458,10 +577,10 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
       {activeTab === 'funnel' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-sky-200 font-medium">
+            <span className="font-medium" style={{ color: '#bae6fd' }}>
               Pipeline Stage Progression & Dwell Time ({funnelAnalytics?.totalLeadsInFunnel ?? 0} total leads)
             </span>
-            <span className="text-[11px] text-sky-300 font-semibold">
+            <span className="font-semibold" style={{ color: '#38bdf8' }}>
               Live Funnel Conversion
             </span>
           </div>
@@ -473,7 +592,11 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 return (
                   <div
                     key={stage.slug}
-                    className="p-3 rounded-xl office-blue-inner-card border border-blue-400/20 hover:border-sky-400/40 transition-all space-y-2"
+                    className="p-3 rounded-xl border transition-all space-y-2"
+                    style={{
+                      backgroundColor: '#07162dbf',
+                      borderColor: '#93c5fd33',
+                    }}
                   >
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
@@ -481,17 +604,23 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                           className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
                           style={{ backgroundColor: stage.color || '#38bdf8' }}
                         />
-                        <span className="font-semibold text-white">{stage.title}</span>
+                        <span className="font-semibold" style={{ color: '#ffffff' }}>{stage.title}</span>
                       </div>
 
                       <div className="flex items-center gap-3 font-mono">
-                        <span className="text-white font-bold">{stage.leadCount} leads</span>
-                        <span className="text-sky-300 font-semibold">{pct}%</span>
+                        <span className="font-bold" style={{ color: '#ffffff' }}>{stage.leadCount} leads</span>
+                        <span className="font-semibold" style={{ color: '#38bdf8' }}>{pct}%</span>
                       </div>
                     </div>
 
                     {/* Funnel Stage Bar */}
-                    <div className="w-full h-2 rounded-full bg-[#061730] border border-blue-400/20 overflow-hidden">
+                    <div 
+                      className="w-full h-2 rounded-full border overflow-hidden"
+                      style={{
+                        backgroundColor: '#061730',
+                        borderColor: '#93c5fd33',
+                      }}
+                    >
                       <div
                         className="h-full rounded-full transition-all duration-300"
                         style={{
@@ -502,7 +631,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                     </div>
 
                     {/* Drop-off rate & dwell time */}
-                    <div className="flex items-center justify-between text-[10px] text-sky-200/80 pt-0.5">
+                    <div className="flex items-center justify-between text-[10px] pt-0.5" style={{ color: '#bae6fdcc' }}>
                       <span>Drop-off: {stage.dropOffRatePercentage}%</span>
                       <span>Avg Dwell: {stage.avgDwellTimeHours > 0 ? `${stage.avgDwellTimeHours} hrs` : 'Immediate'}</span>
                     </div>
@@ -510,7 +639,14 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 );
               })
             ) : (
-              <div className="p-8 text-center text-xs text-sky-200/70 bg-blue-950/30 rounded-xl border border-blue-400/15">
+              <div 
+                className="p-8 text-center text-xs rounded-xl border"
+                style={{
+                  backgroundColor: '#07162d99',
+                  borderColor: '#93c5fd26',
+                  color: '#bae6fdb3',
+                }}
+              >
                 No pipeline funnel metrics available yet.
               </div>
             )}
@@ -524,10 +660,10 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
       {activeTab === 'services' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-sky-200 font-medium">
+            <span className="font-medium" style={{ color: '#bae6fd' }}>
               Inquiry Share & Performance by Service Offering
             </span>
-            <span className="text-[11px] text-emerald-300 font-semibold">
+            <span className="font-semibold" style={{ color: '#34d399' }}>
               Demand Distribution
             </span>
           </div>
@@ -537,38 +673,64 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               serviceAnalytics.services.map((svc) => (
                 <div
                   key={svc.service}
-                  className="p-3.5 rounded-xl office-blue-inner-card border border-blue-400/20 hover:border-emerald-400/40 transition-all space-y-2.5"
+                  className="p-3.5 rounded-xl border transition-all space-y-2.5"
+                  style={{
+                    backgroundColor: '#07162dbf',
+                    borderColor: '#93c5fd33',
+                  }}
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-white truncate max-w-[200px]">
+                    <span className="font-bold truncate max-w-[200px]" style={{ color: '#ffffff' }}>
                       {svc.service}
                     </span>
-                    <span className="text-emerald-300 font-bold font-mono">
+                    <span className="font-bold font-mono" style={{ color: '#34d399' }}>
                       {svc.sharePercentage}% share
                     </span>
                   </div>
 
                   {/* Share Progress Bar */}
-                  <div className="w-full h-2 rounded-full bg-[#061730] border border-blue-400/20 overflow-hidden">
+                  <div 
+                    className="w-full h-2 rounded-full border overflow-hidden"
+                    style={{
+                      backgroundColor: '#061730',
+                      borderColor: '#93c5fd33',
+                    }}
+                  >
                     <div
-                      className="h-full bg-linear-to-r from-sky-400 to-emerald-400 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.max(svc.sharePercentage, 3)}%` }}
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${Math.max(svc.sharePercentage, 3)}%`,
+                        background: 'linear-gradient(90deg, #38bdf8 0%, #34d399 100%)',
+                      }}
                     />
                   </div>
 
                   {/* Volume Metrics */}
-                  <div className="flex items-center justify-between text-[11px] text-sky-200/80 pt-1 border-t border-blue-400/15">
+                  <div 
+                    className="flex items-center justify-between text-[11px] pt-1 border-t"
+                    style={{
+                      borderColor: '#93c5fd26',
+                      color: '#bae6fdcc',
+                    }}
+                  >
                     <span>{svc.totalInquiries} total inquiries</span>
                     <span className="flex items-center gap-2">
-                      <span className="text-emerald-300 font-semibold">{svc.wonCount} won</span>
+                      <span className="font-semibold" style={{ color: '#34d399' }}>{svc.wonCount} won</span>
                       <span>•</span>
-                      <span className="text-sky-200 font-semibold">{svc.inProgressCount} active</span>
+                      <span className="font-semibold" style={{ color: '#bae6fd' }}>{svc.inProgressCount} active</span>
                     </span>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="col-span-2 p-8 text-center text-xs text-sky-200/70 bg-blue-950/30 rounded-xl border border-blue-400/15">
+              <div 
+                className="col-span-2 p-8 text-center text-xs rounded-xl border"
+                style={{
+                  backgroundColor: '#07162d99',
+                  borderColor: '#93c5fd26',
+                  color: '#bae6fdb3',
+                }}
+              >
                 No service offering breakdown available yet.
               </div>
             )}
