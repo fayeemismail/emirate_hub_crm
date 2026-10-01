@@ -17,6 +17,8 @@ interface CustomSelectProps<T extends string = string> {
   className?: string;
   align?: 'left' | 'right';
   minWidth?: number;
+  /** `field` matches form inputs (taller, full-width friendly). */
+  size?: 'sm' | 'field';
 }
 
 export function CustomSelect<T extends string = string>({
@@ -28,11 +30,13 @@ export function CustomSelect<T extends string = string>({
   className = '',
   align = 'right',
   minWidth = 140,
+  size = 'sm',
 }: CustomSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find((o) => o.value === value) ?? options[0];
+  const isField = size === 'field';
 
   useEffect(() => {
     if (!isOpen) return;
@@ -66,14 +70,18 @@ export function CustomSelect<T extends string = string>({
         onClick={() => {
           if (!disabled) setIsOpen((prev) => !prev);
         }}
-        className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`inline-flex items-center gap-2 border text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+          isField
+            ? 'w-full rounded-xl px-3 py-2.5'
+            : 'rounded-lg px-3 py-1.5'
+        }`}
         style={{
           minWidth,
           borderColor: isOpen
             ? 'var(--sanity-accent-primary, #E02126)'
             : 'var(--sanity-card-border, #E7E5E4)',
           color: 'var(--sanity-text-primary, #1C1917)',
-          backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+          backgroundColor: isField ? '#FAF9F6' : 'var(--sanity-card-bg, #FFFFFF)',
         }}
       >
         <span className="truncate flex-1 text-left">{selected?.label}</span>
@@ -87,8 +95,8 @@ export function CustomSelect<T extends string = string>({
         <ul
           role="listbox"
           aria-label={ariaLabel}
-          className={`absolute z-40 mt-1.5 max-h-56 overflow-auto rounded-xl border py-1 shadow-lg ${
-            align === 'right' ? 'right-0' : 'left-0'
+          className={`absolute z-50 mt-1.5 max-h-56 overflow-auto rounded-xl border py-1 shadow-lg ${
+            isField ? 'w-full left-0' : align === 'right' ? 'right-0' : 'left-0'
           }`}
           style={{
             minWidth: Math.max(minWidth, 160),

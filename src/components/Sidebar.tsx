@@ -6,12 +6,12 @@ import {
   Inbox, 
   ChevronRight, 
   X, 
-  Briefcase, 
   LogOut 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { SanitySiteSettings } from '../sanity';
 import { ConfirmModal } from './ui/ConfirmModal';
+import { BrandMark } from './BrandMark';
 
 interface SidebarProps {
   activeTab: 'dashboard' | 'requests';
@@ -81,15 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }}
           >
             <div className="flex items-center gap-3">
-              <div 
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-white border"
-                style={{
-                  backgroundColor: 'var(--sanity-accent-primary, #E02126)',
-                  borderColor: 'var(--sanity-card-border, #E7E5E4)',
-                }}
-              >
-                <Briefcase className="w-4 h-4 text-white" />
-              </div>
+              <BrandMark size="sm" />
               <span 
                 className="font-extrabold text-base tracking-tight uppercase font-mono"
                 style={{ color: 'var(--sanity-text-primary, #1C1917)' }}

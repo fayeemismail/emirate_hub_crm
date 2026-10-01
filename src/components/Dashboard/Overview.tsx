@@ -12,6 +12,13 @@ import { MessagesGraph } from './MessagesGraph';
 import { OverviewMetrics } from './components/OverviewMetrics';
 import { RecentInquiries } from './components/RecentInquiries';
 import { DemandBreakdown } from './components/DemandBreakdown';
+import {
+  MetricsSkeleton,
+  ChartSkeleton,
+  RecentInquiriesSkeleton,
+  DemandSkeleton,
+  LoadingOverlay,
+} from '../ui/loading';
 
 interface DashboardOverviewProps {
   requests: ServiceRequest[];
@@ -19,7 +26,8 @@ interface DashboardOverviewProps {
   monthlyTrends?: MonthlyTrendsResponse | null;
   serviceAnalytics?: ServiceAnalyticsResponse | null;
   funnelAnalytics?: FunnelAnalyticsResponse | null;
-  isLoadingAnalytics?: boolean;
+  isInitialLoading?: boolean;
+  isRefreshing?: boolean;
   onNavigateToRequests: () => void;
   onSelectRequest: (req: ServiceRequest) => void;
 }
@@ -30,7 +38,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   monthlyTrends,
   serviceAnalytics,
   funnelAnalytics,
-  isLoadingAnalytics = false,
+  isInitialLoading = false,
+  isRefreshing = false,
   onNavigateToRequests,
   onSelectRequest,
 }) => {
@@ -42,8 +51,23 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
+  if (isInitialLoading) {
+    return (
+      <div className="space-y-6" aria-busy="true" aria-label="Loading dashboard">
+        <MetricsSkeleton />
+        <ChartSkeleton />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <RecentInquiriesSkeleton />
+          <DemandSkeleton />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      <LoadingOverlay visible={isRefreshing} label="Refreshing dashboard…" />
+
       <OverviewMetrics
         totalCount={overviewKpi?.totalLeads ?? requests.length}
         pendingCount={pendingCount}
@@ -58,7 +82,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         serviceAnalytics={serviceAnalytics}
         funnelAnalytics={funnelAnalytics}
         overviewKpi={overviewKpi}
-        isLoading={isLoadingAnalytics}
+        isLoading={false}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -70,7 +94,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
         <DemandBreakdown
           services={serviceAnalytics?.services}
-          isLoading={isLoadingAnalytics}
+          isLoading={false}
         />
       </div>
     </div>

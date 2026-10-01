@@ -3,12 +3,16 @@
 import React, { useState } from 'react';
 import { ServiceRequest } from '../../types';
 import { COMPANY_SERVICES } from '../../data/mockData';
-import { X, Plus, CheckCircle2, ChevronDown } from 'lucide-react';
+import { X, Plus, CheckCircle2 } from 'lucide-react';
+import { Spinner } from '../ui/loading';
+import { CustomSelect } from '../ui/CustomSelect';
 
 interface SimulateFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmitNewRequest: (req: Omit<ServiceRequest, 'id' | 'createdAt' | 'status' | 'priority'>) => void;
+  onSubmitNewRequest: (
+    req: Omit<ServiceRequest, 'id' | 'createdAt' | 'status' | 'priority'>
+  ) => void | Promise<void>;
 }
 
 const labelStyle: React.CSSProperties = {
@@ -32,13 +36,16 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
   const [phone, setPhone] = useState('');
   const [requestText, setRequestText] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const serviceOptions = COMPANY_SERVICES.map((s) => ({ value: s, label: s }));
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim() || !email.trim()) {
+    if (!name.trim() || !email.trim() || isSubmitting) {
       return;
     }
 
@@ -46,25 +53,30 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
     const firstName = nameParts[0] || 'Client';
     const lastName = nameParts.slice(1).join(' ') || '';
 
-    onSubmitNewRequest({
-      firstName,
-      lastName,
-      email: email.trim(),
-      phone: phone.trim() ? phone.trim() : undefined,
-      service,
-      message: requestText.trim() || 'Service request submitted',
-    });
+    setIsSubmitting(true);
+    try {
+      await onSubmitNewRequest({
+        firstName,
+        lastName,
+        email: email.trim(),
+        phone: phone.trim() ? phone.trim() : undefined,
+        service,
+        message: requestText.trim() || 'Service request submitted',
+      });
 
-    setIsSuccess(true);
-    setTimeout(() => {
-      setIsSuccess(false);
-      setService(COMPANY_SERVICES[0]);
-      setName('');
-      setEmail('');
-      setPhone('');
-      setRequestText('');
-      onClose();
-    }, 1800);
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        setName('');
+        setEmail('');
+        setPhone('');
+        setRequestText('');
+        setService(COMPANY_SERVICES[0]);
+        onClose();
+      }, 1600);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -122,24 +134,17 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
               <label className="block text-sm font-medium" style={labelStyle}>
                 Service <span style={{ color: '#E02126' }}>*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                  className="w-full appearance-none rounded-xl border px-3 py-2.5 pr-10 text-sm focus:outline-none cursor-pointer"
-                  style={fieldStyle}
-                >
-                  {COMPANY_SERVICES.map((s) => (
-                    <option key={s} value={s} style={{ backgroundColor: '#FFFFFF', color: '#1C1917' }}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2"
-                  style={{ color: '#A8A29E' }}
-                />
-              </div>
+              <CustomSelect
+                value={service}
+                options={serviceOptions}
+                onChange={setService}
+                ariaLabel="Select service"
+                align="left"
+                size="field"
+                disabled={isSubmitting}
+                className="w-full"
+                minWidth={200}
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -209,7 +214,8 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl border px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors hover:bg-[#F5F5F4]"
+                disabled={isSubmitting}
+                className="rounded-xl border px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors hover:bg-[#F5F5F4] disabled:opacity-50"
                 style={{
                   borderColor: '#E7E5E4',
                   color: '#57534E',
@@ -220,11 +226,21 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white cursor-pointer"
+                disabled={isSubmitting}
+                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 style={{ backgroundColor: '#E02126' }}
               >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Create lead</span>
+                {isSubmitting ? (
+                  <>
+                    <Spinner size="xs" color="#FFFFFF" />
+                    <span>Creating…</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Create lead</span>
+                  </>
+                )}
               </button>
             </div>
           </form>

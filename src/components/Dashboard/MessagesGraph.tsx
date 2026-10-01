@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import {
   MonthlyTrendsResponse,
   ServiceAnalyticsResponse,
@@ -10,6 +10,7 @@ import {
 } from '../../types';
 import { analyticsApi } from '../../lib/api';
 import { CustomSelect } from '../ui/CustomSelect';
+import { Spinner, ChartSkeleton, LoadingOverlay } from '../ui/loading';
 
 interface MessagesGraphProps {
   monthlyTrends?: MonthlyTrendsResponse | null;
@@ -30,6 +31,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
   serviceAnalytics,
   funnelAnalytics,
   overviewKpi,
+  isLoading = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'monthly' | 'funnel' | 'services'>('monthly');
   const currentYear = new Date().getFullYear();
@@ -157,14 +159,20 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     [availableServices]
   );
 
+  if (isLoading) {
+    return <ChartSkeleton />;
+  }
+
   return (
     <div
-      className="rounded-2xl border px-5 py-5 sm:px-6 sm:py-6 space-y-6"
+      className="relative rounded-2xl border px-5 py-5 sm:px-6 sm:py-6 space-y-6"
       style={{
         backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
         borderColor: 'var(--sanity-card-border, #E7E5E4)',
       }}
     >
+      <LoadingOverlay visible={isFilterLoading} label="Updating chart…" />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2
@@ -245,9 +253,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              {isFilterLoading && (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: '#A8A29E' }} />
-              )}
+              {isFilterLoading && <Spinner size="xs" color="#A8A29E" />}
               {availableServices.length > 0 && (
                 <CustomSelect
                   value={selectedService}

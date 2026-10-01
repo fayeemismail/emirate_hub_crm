@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { authApi, UserProfile, getStoredToken, clearStoredToken } from '../lib/api';
 
 interface AuthContextType {
@@ -19,11 +19,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
-  // Load user profile on startup if token is available
   const refreshUser = useCallback(async () => {
     const storedToken = getStoredToken();
     if (!storedToken) {
@@ -36,14 +34,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setToken(storedToken);
       const res = await authApi.getMe();
-      if (res.data) {
+      if (res.success && res.data) {
         setUser(res.data);
       } else {
         clearStoredToken();
         setUser(null);
         setToken(null);
       }
-    } catch (error) {
+    } catch {
       clearStoredToken();
       setUser(null);
       setToken(null);
@@ -58,22 +56,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     const res = await authApi.login(email, password);
-    if (res.data) {
-      setUser(res.data.user);
-      setToken(res.data.accessToken);
+    if (!res.success || !res.data?.accessToken || !res.data?.user) {
+      clearStoredToken();
+      throw new Error(res.message || 'Authentication failed. Please verify credentials.');
     }
+
+    setToken(res.data.accessToken);
+    setUser(res.data.user);
   };
 
   const logout = async () => {
     try {
       await authApi.logout();
     } catch {
-      // Still proceed with local logout
+      // Always clear local session even if the API call fails
     } finally {
       clearStoredToken();
       setUser(null);
       setToken(null);
-      router.push('/login');
+      router.replace('/login');
     }
   };
 
@@ -82,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         token,
-        isAuthenticated: !!user,
+        isAuthenticated: Boolean(user && token),
         isLoading,
         login,
         logout,

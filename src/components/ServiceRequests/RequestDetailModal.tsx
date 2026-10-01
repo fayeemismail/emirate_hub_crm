@@ -12,14 +12,15 @@ import {
   Send,
   CheckCircle2,
 } from 'lucide-react';
+import { Spinner } from '../ui/loading';
 
 interface RequestDetailModalProps {
   request: ServiceRequest | null;
   onClose: () => void;
-  onUpdateStatus: (id: string, newStatus: RequestStatus) => void;
-  onUpdatePriority?: (id: string, newPriority: RequestPriority) => void;
-  onDeleteRequest?: (id: string) => void;
-  onAddNote?: (id: string, note: string) => void;
+  onUpdateStatus: (id: string, newStatus: RequestStatus) => void | Promise<void | boolean>;
+  onUpdatePriority?: (id: string, newPriority: RequestPriority) => void | Promise<void>;
+  onDeleteRequest?: (id: string) => void | Promise<void>;
+  onAddNote?: (id: string, note: string) => void | Promise<void>;
 }
 
 const STATUS_OPTIONS = [
@@ -41,6 +42,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [noteSaved, setNoteSaved] = useState(false);
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   const [confirmAction, setConfirmAction] = useState<{
     isOpen: boolean;
@@ -48,7 +50,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     message: string;
     confirmText: string;
     variant: 'danger' | 'warning' | 'info';
-    onConfirm: () => void;
+    onConfirm: () => void | Promise<void>;
   }>({
     isOpen: false,
     title: '',
@@ -70,28 +72,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     timeStyle: 'short',
   });
 
-  const handleStatusChangeRequest = (newStatus: RequestStatus) => {
+  const handleStatusChange = (newStatus: RequestStatus) => {
     if (newStatus === request.status) return;
-    setConfirmAction({
-      isOpen: true,
-      title: 'Update status?',
-      message: `Change this lead from “${request.status}” to “${newStatus}”.`,
-      confirmText: `Set ${newStatus}`,
-      variant: 'info',
-      onConfirm: () => onUpdateStatus(request.id, newStatus),
-    });
+    void onUpdateStatus(request.id, newStatus);
   };
 
-  const handlePriorityChangeRequest = (newPriority: RequestPriority) => {
+  const handlePriorityChange = (newPriority: RequestPriority) => {
     if (newPriority === request.priority) return;
-    setConfirmAction({
-      isOpen: true,
-      title: 'Update priority?',
-      message: `Set priority for ${displayName} to ${newPriority}.`,
-      confirmText: `Set ${newPriority}`,
-      variant: newPriority === 'High' ? 'danger' : 'warning',
-      onConfirm: () => onUpdatePriority?.(request.id, newPriority),
-    });
+    void onUpdatePriority?.(request.id, newPriority);
   };
 
   const handleDeleteChangeRequest = () => {
@@ -101,8 +89,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
       message: `Archive the inquiry from ${displayName}. It will be hidden from active views.`,
       confirmText: 'Delete',
       variant: 'danger',
-      onConfirm: () => {
-        onDeleteRequest?.(request.id);
+      onConfirm: async () => {
+        await onDeleteRequest?.(request.id);
         onClose();
       },
     });
@@ -114,13 +102,18 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleAddNote = (e: React.FormEvent) => {
+  const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!noteText.trim()) return;
-    onAddNote?.(request.id, noteText.trim());
-    setNoteSaved(true);
-    setNoteText('');
-    setTimeout(() => setNoteSaved(false), 2000);
+    if (!noteText.trim() || isSavingNote) return;
+    setIsSavingNote(true);
+    try {
+      await onAddNote?.(request.id, noteText.trim());
+      setNoteSaved(true);
+      setNoteText('');
+      setTimeout(() => setNoteSaved(false), 2000);
+    } finally {
+      setIsSavingNote(false);
+    }
   };
 
   return (
@@ -256,7 +249,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 <CustomSelect
                   value={request.status as 'Pending' | 'In Progress' | 'Resolved'}
                   options={STATUS_OPTIONS}
-                  onChange={(v) => handleStatusChangeRequest(v)}
+                  onChange={(v) => handleStatusChange(v)}
                   ariaLabel="Update status"
                   align="left"
                   minWidth={120}
@@ -278,7 +271,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                       <button
                         key={p}
                         type="button"
-                        onClick={() => handlePriorityChangeRequest(p)}
+                        onClick={() => handlePriorityChange(p)}
                         className="rounded-md py-1.5 text-xs font-medium transition-colors cursor-pointer"
                         style={{
                           backgroundColor: selected ? '#FEE2E2' : 'transparent',
@@ -335,37 +328,29 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   Note added
                 </div>
               ) : (
-                <form onSubmit={handleAddNote} className="space-y-2">
-                  <textarea
-                    rows={3}
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Add an internal note…"
-                    className="w-full rounded-xl border px-3 py-2.5 text-sm leading-relaxed focus:outline-none resize-none"
-                    style={{
-                      backgroundColor: '#FAF9F6',
-                      borderColor: '#E7E5E4',
-                      color: '#1C1917',
-                    }}
-                  />
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={!noteText.trim()}
-                      className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold text-white transition-opacity cursor-pointer disabled:opacity-40 hover:opacity-90"
-                      style={{ backgroundColor: '#E02126' }}
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      Add note
-                    </button>
-                  </div>
-                </form>
+                <textarea
+                  id="lead-note-input"
+                  form="lead-note-form"
+                  rows={3}
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Add an internal note…"
+                  disabled={isSavingNote}
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm leading-relaxed focus:outline-none resize-none disabled:opacity-60"
+                  style={{
+                    backgroundColor: '#FAF9F6',
+                    borderColor: '#E7E5E4',
+                    color: '#1C1917',
+                  }}
+                />
               )}
             </section>
           </div>
 
           {/* Footer */}
-          <div
+          <form
+            id="lead-note-form"
+            onSubmit={handleAddNote}
             className="flex items-center justify-between gap-3 px-5 py-4 sm:px-6 border-t"
             style={{ borderColor: '#E7E5E4' }}
           >
@@ -384,21 +369,42 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <Trash2 className="w-3.5 h-3.5" />
               Delete
             </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer"
-              style={{ color: '#78716C' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#F5F5F4';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              Close
-            </button>
-          </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer"
+                style={{ color: '#78716C' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F5F5F4';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                Close
+              </button>
+              <button
+                type="submit"
+                disabled={!noteText.trim() || isSavingNote || noteSaved}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold text-white transition-opacity cursor-pointer disabled:opacity-40 hover:opacity-90"
+                style={{ backgroundColor: '#E02126' }}
+              >
+                {isSavingNote ? (
+                  <>
+                    <Spinner size="xs" color="#FFFFFF" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    Add note
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 

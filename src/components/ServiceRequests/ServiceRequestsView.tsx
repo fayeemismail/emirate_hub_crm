@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ServiceRequest, RequestStatus, RequestPriority } from '../../types';
 import { sortByPriorityDesc, sortByBoardOrder } from '../../lib/adapters';
 import { KanbanBoard } from './KanbanBoard';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { CustomSelect } from '../ui/CustomSelect';
 import { RequestStatusBadge } from '../ui/RequestStatusBadge';
+import { KanbanSkeleton, TableSkeleton, LoadingOverlay } from '../ui/loading';
 import {
   Search,
   Inbox,
@@ -16,9 +17,44 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
+type InquiriesViewMode = 'kanban' | 'table';
+
+const VIEW_STORAGE_KEY = 'emirate_inquiries_view';
+
+function readStoredViewMode(): InquiriesViewMode {
+  if (typeof window === 'undefined') return 'kanban';
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('view');
+    if (fromUrl === 'table' || fromUrl === 'kanban') return fromUrl;
+    const fromStorage = localStorage.getItem(VIEW_STORAGE_KEY);
+    if (fromStorage === 'table' || fromStorage === 'kanban') return fromStorage;
+  } catch {
+    // ignore
+  }
+  return 'kanban';
+}
+
+function persistViewMode(mode: InquiriesViewMode) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(VIEW_STORAGE_KEY, mode);
+    const url = new URL(window.location.href);
+    if (mode === 'table') {
+      url.searchParams.set('view', 'table');
+    } else {
+      url.searchParams.delete('view');
+    }
+    window.history.replaceState({}, '', url.toString());
+  } catch {
+    // ignore
+  }
+}
+
 interface ServiceRequestsViewProps {
   requests: ServiceRequest[];
   isLoading?: boolean;
+  isRefreshing?: boolean;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   onSelectRequest: (req: ServiceRequest) => void;
@@ -39,6 +75,7 @@ const PRIORITY_DOT: Record<RequestPriority, string> = {
 export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
   requests,
   isLoading = false,
+  isRefreshing = false,
   searchTerm,
   setSearchTerm,
   onSelectRequest,
@@ -47,7 +84,15 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
   onDeleteRequest,
 }) => {
   const [selectedService, setSelectedService] = useState<string>('All');
-  const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
+  const [viewMode, setViewModeState] = useState<InquiriesViewMode>(() => readStoredViewMode());
+
+  useEffect(() => {
+    persistViewMode(viewMode);
+  }, [viewMode]);
+
+  const setViewMode = useCallback((mode: InquiriesViewMode) => {
+    setViewModeState(mode);
+  }, []);
 
   const [confirmAction, setConfirmAction] = useState<{
     isOpen: boolean;
@@ -95,7 +140,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="relative space-y-5">
+      <LoadingOverlay visible={isRefreshing && !isLoading} label="Refreshing inquiries…" />
+
       <div>
         <h2
           className="text-lg font-semibold tracking-tight"
@@ -104,7 +151,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           Service inquiries
         </h2>
         <p className="mt-1 text-sm" style={{ color: '#78716C' }}>
-          {requests.length} total · High priority first
+          {requests.length} total
         </p>
       </div>
 
@@ -196,15 +243,11 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
       </div>
 
       {isLoading ? (
-        <div className="space-y-3 animate-pulse">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-24 rounded-2xl border"
-              style={{ backgroundColor: '#F5F5F4', borderColor: '#E7E5E4' }}
-            />
-          ))}
-        </div>
+        viewMode === 'kanban' ? (
+          <KanbanSkeleton />
+        ) : (
+          <TableSkeleton />
+        )
       ) : sortedRequests.length === 0 ? (
         <div className="py-16 text-center">
           <Inbox className="mx-auto h-8 w-8" style={{ color: '#D6D3D1' }} />

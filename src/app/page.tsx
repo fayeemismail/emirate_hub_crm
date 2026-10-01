@@ -40,7 +40,8 @@ export default function Home() {
     monthlyTrends,
     serviceAnalytics,
     funnelAnalytics,
-    isDataLoading,
+    isInitialLoading,
+    isRefreshing,
     handleUpdateStatus,
     handleKanbanSync,
     handleUpdatePriority,
@@ -55,7 +56,7 @@ export default function Home() {
   // Redirect to login if unauthenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [isAuthenticated, authLoading, router]);
 
@@ -112,7 +113,8 @@ export default function Home() {
               monthlyTrends={monthlyTrends}
               serviceAnalytics={serviceAnalytics}
               funnelAnalytics={funnelAnalytics}
-              isLoadingAnalytics={isDataLoading}
+              isInitialLoading={isInitialLoading}
+              isRefreshing={isRefreshing}
               onNavigateToRequests={() => setActiveTab('requests')}
               onSelectRequest={(req) => setSelectedRequestModal(req)}
             />
@@ -121,7 +123,8 @@ export default function Home() {
           {activeTab === 'requests' && (
             <ServiceRequestsView
               requests={requests}
-              isLoading={isDataLoading}
+              isLoading={isInitialLoading}
+              isRefreshing={isRefreshing}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               onSelectRequest={(req) => setSelectedRequestModal(req)}

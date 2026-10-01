@@ -30,6 +30,7 @@ export function useDashboardData({ isAuthenticated, onModalRequestUpdate }: UseD
   const [serviceAnalytics, setServiceAnalytics] = useState<ServiceAnalyticsResponse | null>(null);
   const [funnelAnalytics, setFunnelAnalytics] = useState<FunnelAnalyticsResponse | null>(null);
   const [isDataLoading, setIsDataLoading] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Fetch leads and analytics from backend
   const loadBackendData = useCallback(async () => {
@@ -72,6 +73,7 @@ export function useDashboardData({ isAuthenticated, onModalRequestUpdate }: UseD
       setRequests([]);
     } finally {
       setIsDataLoading(false);
+      setHasLoadedOnce(true);
     }
   }, [isAuthenticated]);
 
@@ -300,6 +302,8 @@ export function useDashboardData({ isAuthenticated, onModalRequestUpdate }: UseD
     serviceAnalytics,
     funnelAnalytics,
     isDataLoading,
+    isInitialLoading: isDataLoading && !hasLoadedOnce,
+    isRefreshing: isDataLoading && hasLoadedOnce,
     loadBackendData,
     handleUpdateStatus,
     handleKanbanSync,

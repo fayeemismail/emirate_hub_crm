@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { ServicePerformanceItem } from '../../../types';
+import { DemandSkeleton } from '../../ui/loading';
 
 interface DemandBreakdownProps {
   services?: ServicePerformanceItem[];
@@ -19,6 +20,10 @@ export const DemandBreakdown: React.FC<DemandBreakdownProps> = ({
 
   const top = ranked[0];
   const rest = ranked.slice(1);
+
+  if (isLoading) {
+    return <DemandSkeleton />;
+  }
 
   return (
     <div
@@ -38,13 +43,7 @@ export const DemandBreakdown: React.FC<DemandBreakdownProps> = ({
         Share of inquiries by service
       </p>
 
-      {isLoading ? (
-        <div className="mt-6 space-y-3">
-          <div className="h-10 rounded-lg animate-pulse" style={{ backgroundColor: '#F5F5F4' }} />
-          <div className="h-4 rounded animate-pulse w-5/6" style={{ backgroundColor: '#F5F5F4' }} />
-          <div className="h-4 rounded animate-pulse w-2/3" style={{ backgroundColor: '#F5F5F4' }} />
-        </div>
-      ) : ranked.length === 0 ? (
+      {ranked.length === 0 ? (
         <p className="mt-8 py-4 text-center text-sm" style={{ color: '#A8A29E' }}>
           No demand data yet
         </p>

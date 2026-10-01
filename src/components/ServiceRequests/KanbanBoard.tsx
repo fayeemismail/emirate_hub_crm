@@ -26,6 +26,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ServiceRequest, RequestStatus, RequestPriority } from '../../types';
 import { sortByBoardOrder } from '../../lib/adapters';
 import { ConfirmModal } from '../ui/ConfirmModal';
+import { Spinner, LoadingOverlay } from '../ui/loading';
 import { GripVertical, Trash2, AlertTriangle, X } from 'lucide-react';
 
 interface KanbanBoardProps {
@@ -450,11 +451,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs" style={{ color: '#A8A29E' }}>
+    <div className="relative space-y-3">
+      <LoadingOverlay visible={isSyncing} label="Saving board…" />
+
+      <div className="inline-flex items-center gap-1.5 text-xs" style={{ color: '#A8A29E' }}>
         Drag cards to reorder or move between columns
-        {isSyncing ? ' · Saving…' : ''}
-      </p>
+        {isSyncing ? (
+          <>
+            <span>·</span>
+            <Spinner size="xs" color="#A8A29E" />
+            <span>Saving…</span>
+          </>
+        ) : null}
+      </div>
 
       {syncError && (
         <div

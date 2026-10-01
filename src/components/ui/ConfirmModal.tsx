@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Spinner } from './loading';
 
 export interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title: string;
   message: string;
   confirmText?: string;
@@ -23,14 +24,19 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelText = 'Cancel',
   variant = 'warning',
 }) => {
+  const [isConfirming, setIsConfirming] = useState(false);
+
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setIsConfirming(false);
+      return;
+    }
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && !isConfirming) onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isConfirming]);
 
   if (!isOpen) return null;
 
@@ -41,11 +47,24 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         ? 'var(--sanity-accent-primary, #E02126)'
         : '#B45309';
 
+  const handleConfirm = async () => {
+    if (isConfirming) return;
+    setIsConfirming(true);
+    try {
+      await onConfirm();
+      onClose();
+    } catch {
+      setIsConfirming(false);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-[70] flex items-center justify-center p-4 animate-in fade-in duration-150"
       style={{ backgroundColor: 'rgba(28, 25, 23, 0.28)' }}
-      onClick={onClose}
+      onClick={() => {
+        if (!isConfirming) onClose();
+      }}
     >
       <div
         className="w-full max-w-sm rounded-2xl p-6 animate-in zoom-in-95 duration-150"
@@ -72,10 +91,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            disabled={isConfirming}
+            className="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ color: 'var(--sanity-text-secondary, #78716C)' }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#F5F5F4';
+              if (!isConfirming) e.currentTarget.style.backgroundColor = '#F5F5F4';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
@@ -85,14 +105,19 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            className="px-3.5 py-2 rounded-lg text-sm font-semibold text-white transition-opacity cursor-pointer hover:opacity-90"
+            onClick={handleConfirm}
+            disabled={isConfirming}
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold text-white transition-opacity cursor-pointer hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed min-w-[5.5rem]"
             style={{ backgroundColor: confirmBg }}
           >
-            {confirmText}
+            {isConfirming ? (
+              <>
+                <Spinner size="xs" color="#FFFFFF" />
+                <span>Working…</span>
+              </>
+            ) : (
+              confirmText
+            )}
           </button>
         </div>
       </div>
