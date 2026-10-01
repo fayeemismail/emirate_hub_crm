@@ -17,7 +17,7 @@ interface SanityApiResponse<T> {
 // In-memory cache for zero-latency local retrieval
 const memoryCache = new Map<string, { data: any; timestamp: number }>();
 const pendingPromises = new Map<string, Promise<any>>();
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+const CACHE_TTL_MS = 5 * 1000; // 5 seconds for rapid studio updates
 
 /**
  * Execute GROQ Query against Sanity Global Edge CDN
@@ -25,7 +25,7 @@ const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 export async function sanityFetch<T>(
   query: string,
   params: Record<string, string | number | boolean> = {},
-  revalidateSeconds: number = 60
+  revalidateSeconds: number = 5
 ): Promise<T | null> {
   const cacheKey = `${query}_${JSON.stringify(params)}`;
 
@@ -56,6 +56,7 @@ export async function sanityFetch<T>(
         headers: {
           'Accept': 'application/json',
         },
+        cache: 'no-cache',
         next: {
           revalidate: revalidateSeconds,
         },

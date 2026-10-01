@@ -154,21 +154,21 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     <div 
       className="rounded-2xl p-4 sm:p-6 border relative overflow-hidden space-y-5 backdrop-blur-md"
       style={{
-        backgroundColor: '#0d284ce6',
-        borderColor: '#93c5fd40',
+        backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
+        borderColor: 'var(--sanity-card-border, #93c5fd40)',
         boxShadow: '0 10px 30px #040f1eb3',
       }}
     >
       {/* Background Ambient Glow */}
       <div 
         className="absolute -top-24 -right-24 w-72 h-72 rounded-full blur-3xl pointer-events-none"
-        style={{ backgroundColor: '#0284c726' }}
+        style={{ backgroundColor: 'var(--sanity-accent-primary, #0284c726)' }}
       />
 
       {/* Chart Top Header */}
       <div 
         className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4"
-        style={{ borderColor: '#93c5fd33' }}
+        style={{ borderColor: 'var(--sanity-card-border, #93c5fd33)' }}
       >
         <div>
           <div className="flex items-center gap-2">

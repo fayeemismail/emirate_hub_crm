@@ -18,27 +18,27 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
     <div 
       className="lg:col-span-2 rounded-2xl p-5 border backdrop-blur-md"
       style={{
-        backgroundColor: '#0d284ce6',
-        borderColor: '#93c5fd40',
+        backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
+        borderColor: 'var(--sanity-card-border, #93c5fd40)',
         boxShadow: '0 10px 30px #040f1eb3',
       }}
     >
       <div 
         className="flex items-center justify-between mb-4 pb-3 border-b"
-        style={{ borderColor: '#93c5fd33' }}
+        style={{ borderColor: 'var(--sanity-card-border, #93c5fd33)' }}
       >
         <div>
-          <h3 className="text-sm font-bold tracking-tight" style={{ color: '#ffffff' }}>
+          <h3 className="text-sm font-bold tracking-tight" style={{ color: 'var(--sanity-text-primary, #ffffff)' }}>
             Recent Business Inquiries
           </h3>
-          <p className="text-xs" style={{ color: '#bae6fdcc' }}>
+          <p className="text-xs" style={{ color: 'var(--sanity-text-secondary, #bae6fdcc)' }}>
             Latest user messages from website visitors
           </p>
         </div>
         <button
           onClick={onNavigateToRequests}
           className="text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer hover:text-white"
-          style={{ color: '#7dd3fc' }}
+          style={{ color: 'var(--sanity-accent-sky, #7dd3fc)' }}
         >
           <span>View All</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -49,22 +49,22 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
         <div 
           className="py-10 text-center space-y-2 border border-dashed rounded-xl"
           style={{
-            backgroundColor: '#081d394d',
-            borderColor: '#93c5fd40',
+            backgroundColor: 'var(--sanity-inner-card-bg, #081d394d)',
+            borderColor: 'var(--sanity-card-border, #93c5fd40)',
           }}
         >
-          <p className="text-xs font-medium" style={{ color: '#bae6fd' }}>No client inquiries yet</p>
-          <p className="text-[11px]" style={{ color: '#93c5fdb3' }}>Live inquiries submitted from the website form will appear here.</p>
+          <p className="text-xs font-medium" style={{ color: 'var(--sanity-text-secondary, #bae6fd)' }}>No client inquiries yet</p>
+          <p className="text-[11px]" style={{ color: 'var(--sanity-text-muted, #93c5fdb3)' }}>Live inquiries submitted from the website form will appear here.</p>
         </div>
       ) : (
         <div className="space-y-2.5">
           {recentRequests.map((req) => {
             const isHigh = req.priority === 'High';
             const isMed = req.priority === 'Medium';
-            const priorityBg = isHigh ? '#f43f5e33' : isMed ? '#f59e0b33' : '#0284c733';
-            const priorityTxt = isHigh ? '#fca5a5' : isMed ? '#fcd34d' : '#bae6fd';
+            const priorityBg = isHigh ? 'var(--sanity-priority-high-bg, #f43f5e33)' : isMed ? 'var(--sanity-priority-med-bg, #f59e0b33)' : 'var(--sanity-priority-low-bg, #0284c733)';
+            const priorityTxt = isHigh ? 'var(--sanity-priority-high-color, #fca5a5)' : isMed ? 'var(--sanity-priority-med-color, #fcd34d)' : 'var(--sanity-priority-low-color, #bae6fd)';
             const priorityBorder = isHigh ? '#fb718566' : isMed ? '#fbbf2466' : '#38bdf859';
-            const dotBg = isHigh ? '#f43f5e' : isMed ? '#f59e0b' : '#38bdf8';
+            const dotBg = isHigh ? 'var(--sanity-danger, #f43f5e)' : isMed ? 'var(--sanity-warning, #f59e0b)' : 'var(--sanity-accent-sky, #38bdf8)';
 
             return (
               <div
@@ -72,8 +72,8 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
                 onClick={() => onSelectRequest(req)}
                 className="p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 group"
                 style={{
-                  backgroundColor: '#07162dbf',
-                  borderColor: '#93c5fd29',
+                  backgroundColor: 'var(--sanity-inner-card-bg, #07162dbf)',
+                  borderColor: 'var(--sanity-card-border, #93c5fd29)',
                 }}
               >
                 <div className="space-y-1.5 min-w-0">

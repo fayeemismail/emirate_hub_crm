@@ -165,8 +165,8 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
       <div 
         className="rounded-2xl p-3.5 sm:p-4 border space-y-4 backdrop-blur-md"
         style={{
-          backgroundColor: '#0d284ce6',
-          borderColor: '#93c5fd40',
+          backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
+          borderColor: 'var(--sanity-card-border, #93c5fd40)',
           boxShadow: '0 10px 30px #040f1eb3',
         }}
       >
@@ -314,8 +314,8 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
         <div 
           className="rounded-2xl p-6 sm:p-8 border space-y-4 animate-pulse backdrop-blur-md"
           style={{
-            backgroundColor: '#0d284ce6',
-            borderColor: '#93c5fd33',
+            backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
+            borderColor: 'var(--sanity-card-border, #93c5fd33)',
           }}
         >
           <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: '#93c5fd1a' }}>
@@ -350,8 +350,8 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           <div 
             className="rounded-2xl p-10 sm:p-16 text-center border space-y-4 max-w-xl mx-auto my-6 backdrop-blur-md"
             style={{
-              backgroundColor: '#0d284ce6',
-              borderColor: '#93c5fd40',
+              backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
+              borderColor: 'var(--sanity-card-border, #93c5fd40)',
               boxShadow: '0 10px 30px #040f1eb3',
             }}
           >
@@ -378,8 +378,8 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           <div 
             className="rounded-2xl p-8 sm:p-12 text-center border space-y-3 max-w-md mx-auto my-6 backdrop-blur-md"
             style={{
-              backgroundColor: '#0d284ce6',
-              borderColor: '#93c5fd40',
+              backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
+              borderColor: 'var(--sanity-card-border, #93c5fd40)',
             }}
           >
             <div 
@@ -426,8 +426,8 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
         <div 
           className="rounded-2xl border overflow-hidden backdrop-blur-md"
           style={{
-            backgroundColor: '#0d284ce6',
-            borderColor: '#93c5fd40',
+            backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
+            borderColor: 'var(--sanity-card-border, #93c5fd40)',
             boxShadow: '0 10px 30px #040f1eb3',
           }}
         >

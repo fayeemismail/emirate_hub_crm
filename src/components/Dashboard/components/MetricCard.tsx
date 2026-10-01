@@ -29,8 +29,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   iconBgColor = '#3b82f633',
   iconBorderColor = '#60a5fa4d',
   subtext,
-  cardBgColor = '#0d284ce6',
-  cardBorderColor = '#93c5fd38',
+  cardBgColor = 'var(--sanity-card-bg, #0d284ce6)',
+  cardBorderColor = 'var(--sanity-card-border, #93c5fd38)',
 }) => {
   return (
     <div 

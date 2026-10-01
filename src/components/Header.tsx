@@ -36,8 +36,8 @@ export const Header: React.FC<HeaderProps> = ({
     <header 
       className="h-16 px-3 sm:px-6 lg:px-8 backdrop-blur-md flex items-center justify-between sticky top-0 z-30 transition-all border-b shadow-sm"
       style={{
-        backgroundColor: '#081e3af2',
-        borderColor: '#93c5fd33',
+        backgroundColor: 'var(--sanity-header-bg, #081e3af2)',
+        borderColor: 'var(--sanity-sidebar-border, #93c5fd33)',
         boxShadow: '0 4px 20px #02061733',
       }}
     >
@@ -46,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onOpenMobileMenu}
           aria-label="Open Mobile Menu"
           className="lg:hidden p-2 rounded-xl transition-colors shrink-0 cursor-pointer"
-          style={{ color: '#bae6fd' }}
+          style={{ color: 'var(--sanity-text-secondary, #bae6fd)' }}
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -54,15 +54,15 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="min-w-0">
           <h1 
             className="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 truncate"
-            style={{ color: '#ffffff' }}
+            style={{ color: 'var(--sanity-text-primary, #ffffff)' }}
           >
-            <Briefcase className="w-4 h-4 shrink-0 hidden xs:inline-block" style={{ color: '#7dd3fc' }} />
+            <Briefcase className="w-4 h-4 shrink-0 hidden xs:inline-block" style={{ color: 'var(--sanity-accent-sky, #7dd3fc)' }} />
             <span className="truncate">{title}</span>
           </h1>
           {subtitle && (
             <p 
               className="text-[11px] hidden md:block truncate"
-              style={{ color: '#bae6fdcc' }}
+              style={{ color: 'var(--sanity-text-secondary, #bae6fdcc)' }}
             >
               {subtitle}
             </p>
@@ -75,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="relative w-32 xs:w-40 sm:w-56 md:w-64">
           <Search 
             className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2" 
-            style={{ color: '#7dd3fc' }}
+            style={{ color: 'var(--sanity-accent-sky, #7dd3fc)' }}
           />
           <input
             type="text"
@@ -84,9 +84,9 @@ export const Header: React.FC<HeaderProps> = ({
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-8 pr-2.5 py-1.5 rounded-xl text-xs transition-all focus:outline-none border"
             style={{
-              backgroundColor: '#061834',
-              borderColor: '#93c5fd4d',
-              color: '#ffffff',
+              backgroundColor: 'var(--sanity-inner-card-bg, #061834)',
+              borderColor: 'var(--sanity-card-border, #93c5fd4d)',
+              color: 'var(--sanity-text-primary, #ffffff)',
             }}
           />
         </div>
@@ -97,8 +97,8 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setShowUserDropdown(!showUserDropdown)}
             className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shadow-md border hover:ring-2 transition-all cursor-pointer"
             style={{
-              background: 'linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%)',
-              borderColor: '#93c5fd4d',
+              background: 'linear-gradient(135deg, var(--sanity-accent-primary, #2563eb) 0%, var(--sanity-accent-sky, #0ea5e9) 100%)',
+              borderColor: 'var(--sanity-card-border, #93c5fd4d)',
               boxShadow: '0 4px 14px #1e3a8a80',
             }}
             title={user?.email || 'Admin Profile'}
@@ -115,19 +115,19 @@ export const Header: React.FC<HeaderProps> = ({
               <div 
                 className="absolute right-0 mt-2 w-56 p-2 rounded-2xl backdrop-blur-xl border shadow-2xl z-50 text-xs"
                 style={{
-                  backgroundColor: '#081e3afa',
-                  borderColor: '#93c5fd40',
+                  backgroundColor: 'var(--sanity-card-bg, #081e3afa)',
+                  borderColor: 'var(--sanity-card-border, #93c5fd40)',
                   boxShadow: '0 20px 40px #020617cc',
                 }}
               >
                 <div 
                   className="px-3 py-2 border-b mb-1"
-                  style={{ borderColor: '#93c5fd33' }}
+                  style={{ borderColor: 'var(--sanity-sidebar-border, #93c5fd33)' }}
                 >
-                  <div className="font-bold truncate" style={{ color: '#ffffff' }}>
+                  <div className="font-bold truncate" style={{ color: 'var(--sanity-text-primary, #ffffff)' }}>
                     {user?.name || 'Emirate Hub Admin'}
                   </div>
-                  <div className="text-[10px] truncate" style={{ color: '#bae6fdcc' }}>
+                  <div className="text-[10px] truncate" style={{ color: 'var(--sanity-text-secondary, #bae6fdcc)' }}>
                     {user?.email || 'admin@emirate.com'}
                   </div>
                   <span 

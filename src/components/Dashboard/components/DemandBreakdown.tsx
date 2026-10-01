@@ -67,14 +67,14 @@ export const DemandBreakdown: React.FC<DemandBreakdownProps> = ({
     <div 
       className="rounded-2xl p-5 border relative overflow-hidden backdrop-blur-md"
       style={{
-        backgroundColor: '#0d284ce6',
-        borderColor: '#93c5fd40',
+        backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
+        borderColor: 'var(--sanity-card-border, #93c5fd40)',
         boxShadow: '0 10px 30px #040f1eb3',
       }}
     >
       <div 
         className="flex items-center justify-between gap-2 mb-4 pb-3 border-b"
-        style={{ borderColor: '#93c5fd33' }}
+        style={{ borderColor: 'var(--sanity-card-border, #93c5fd33)' }}
       >
         <div className="flex items-center gap-2">
           <Layers className="w-4 h-4" style={{ color: '#38bdf8' }} />

@@ -153,8 +153,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               onDrop={(e) => handleDrop(e, column.id)}
               className="rounded-2xl p-4 border transition-all duration-200 min-h-120 sm:min-h-130 flex flex-col justify-between w-[85vw] sm:w-[320px] md:w-auto shrink-0 snap-center backdrop-blur-md"
               style={{
-                backgroundColor: isOver ? '#0c2e59e6' : '#0d284ce6',
-                borderColor: isOver ? '#38bdf8' : '#93c5fd40',
+                backgroundColor: isOver ? 'var(--sanity-header-bg, #0c2e59e6)' : 'var(--sanity-card-bg, #0d284ce6)',
+                borderColor: isOver ? 'var(--sanity-accent-sky, #38bdf8)' : 'var(--sanity-card-border, #93c5fd40)',
                 boxShadow: isOver ? '0 0 25px #0284c766' : '0 10px 30px #040f1eb3',
               }}
             >
@@ -214,8 +214,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         onClick={() => onSelectRequest(req)}
                         className="rounded-xl p-3.5 sm:p-4 border transition-all cursor-grab active:cursor-grabbing group relative space-y-3"
                         style={{
-                          backgroundColor: '#07162dbf',
-                          borderColor: isBeingDragged ? '#38bdf8' : '#93c5fd33',
+                          backgroundColor: 'var(--sanity-inner-card-bg, #07162dbf)',
+                          borderColor: isBeingDragged ? 'var(--sanity-accent-sky, #38bdf8)' : 'var(--sanity-card-border, #93c5fd33)',
                           opacity: isBeingDragged ? 0.4 : 1,
                           boxShadow: '0 4px 12px #02061766',
                         }}

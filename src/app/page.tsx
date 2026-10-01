@@ -62,6 +62,13 @@ export default function Home() {
     }
   }, [isAuthenticated, authLoading, router]);
 
+  // Set browser tab title dynamically from Sanity siteSettings
+  useEffect(() => {
+    if (siteSettings?.siteTitle) {
+      document.title = `${siteSettings.siteTitle} • Business Consultancy CRM`;
+    }
+  }, [siteSettings?.siteTitle]);
+
   // Derived counts
   const pendingCount = requests.filter((r) => r.status === 'Pending').length;
 
@@ -82,8 +89,9 @@ export default function Home() {
     <div 
       className="min-h-screen flex font-sans antialiased selection:bg-[#2563eb] selection:text-white"
       style={{ 
-        background: 'linear-gradient(180deg, #081d39 0%, #0b2548 40%, #061326 100%)',
-        color: '#f8fafc' 
+        backgroundColor: 'var(--sanity-bg-main, #07172e)',
+        background: 'var(--sanity-page-bg, linear-gradient(180deg, #081d39 0%, #0b2548 40%, #061326 100%))',
+        color: 'var(--sanity-text-primary, #f8fafc)' 
       }}
     >
       {/* Live Sanity Dynamic Theme Injector */}
@@ -96,6 +104,7 @@ export default function Home() {
         pendingCount={pendingCount}
         isOpenMobile={isOpenMobileSidebar}
         setIsOpenMobile={setIsOpenMobileSidebar}
+        siteSettings={siteSettings}
       />
 
       {/* Main Content Workspace */}
