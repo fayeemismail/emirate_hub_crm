@@ -48,7 +48,7 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
           className="text-base font-semibold tracking-tight"
           style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
         >
-          Inbox
+          Recent inquiries
         </h3>
         <button
           type="button"
@@ -64,7 +64,7 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
       {recentRequests.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-sm" style={{ color: '#78716C' }}>
-            No messages yet
+            No inquiries yet
           </p>
         </div>
       ) : (

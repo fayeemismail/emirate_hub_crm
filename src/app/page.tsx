@@ -127,7 +127,6 @@ export default function Home() {
               onSelectRequest={(req) => setSelectedRequestModal(req)}
               onUpdateStatus={handleUpdateStatus}
               onKanbanSync={handleKanbanSync}
-              onUpdatePriority={handleUpdatePriority}
               onDeleteRequest={handleDeleteRequest}
             />
           )}

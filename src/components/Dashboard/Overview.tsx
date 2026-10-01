@@ -38,7 +38,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const inProgressCount = requests.filter(r => r.status === 'In Progress').length;
   const resolvedCount = requests.filter(r => r.status === 'Resolved').length;
 
-  const recentRequests = requests.slice(0, 4);
+  const recentRequests = [...requests]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">

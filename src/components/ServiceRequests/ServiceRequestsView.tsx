@@ -27,11 +27,14 @@ interface ServiceRequestsViewProps {
     next: ServiceRequest[],
     previous: ServiceRequest[]
   ) => Promise<boolean>;
-  onUpdatePriority?: (id: string, newPriority: RequestPriority) => void;
   onDeleteRequest?: (id: string) => void;
 }
 
-const PRIORITIES: RequestPriority[] = ['High', 'Medium', 'Low'];
+const PRIORITY_DOT: Record<RequestPriority, string> = {
+  High: '#E02126',
+  Medium: '#D97706',
+  Low: '#A8A29E',
+};
 
 export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
   requests,
@@ -41,7 +44,6 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
   onSelectRequest,
   onUpdateStatus,
   onKanbanSync,
-  onUpdatePriority,
   onDeleteRequest,
 }) => {
   const [selectedService, setSelectedService] = useState<string>('All');
@@ -296,41 +298,18 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                       <td className="py-3.5 px-4">
                         <RequestStatusBadge status={req.status} />
                       </td>
-                      <td
-                        className="py-3.5 px-4"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div
-                          className="inline-grid grid-cols-3 gap-0.5 rounded-lg border p-0.5"
-                          style={{ borderColor: '#E7E5E4' }}
-                        >
-                          {PRIORITIES.map((p) => {
-                            const selected = req.priority === p;
-                            return (
-                              <button
-                                key={p}
-                                type="button"
-                                onClick={() => {
-                                  if (p === req.priority) return;
-                                  setConfirmAction({
-                                    isOpen: true,
-                                    title: 'Update priority?',
-                                    message: `Set priority for ${clientName} to ${p}.`,
-                                    confirmText: `Set ${p}`,
-                                    variant: p === 'High' ? 'danger' : 'warning',
-                                    onConfirm: () => onUpdatePriority?.(req.id, p),
-                                  });
-                                }}
-                                className="rounded-md px-2 py-1 text-[11px] font-medium cursor-pointer"
-                                style={{
-                                  backgroundColor: selected ? '#FEE2E2' : 'transparent',
-                                  color: selected ? '#E02126' : '#78716C',
-                                }}
-                              >
-                                {p}
-                              </button>
-                            );
-                          })}
+                      <td className="py-3.5 px-4">
+                        <div className="inline-flex items-center gap-1.5">
+                          <span
+                            className="h-1.5 w-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: PRIORITY_DOT[req.priority] }}
+                          />
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: '#78716C' }}
+                          >
+                            {req.priority}
+                          </span>
                         </div>
                       </td>
                       {onDeleteRequest ? (
