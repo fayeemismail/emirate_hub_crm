@@ -42,6 +42,7 @@ export default function Home() {
     funnelAnalytics,
     isDataLoading,
     handleUpdateStatus,
+    handleKanbanSync,
     handleUpdatePriority,
     handleDeleteRequest,
     handleAddNote,
@@ -125,6 +126,7 @@ export default function Home() {
               setSearchTerm={setSearchTerm}
               onSelectRequest={(req) => setSelectedRequestModal(req)}
               onUpdateStatus={handleUpdateStatus}
+              onKanbanSync={handleKanbanSync}
               onUpdatePriority={handleUpdatePriority}
               onDeleteRequest={handleDeleteRequest}
             />

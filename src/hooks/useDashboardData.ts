@@ -14,7 +14,7 @@ import { leadsApi, analyticsApi } from '../lib/api';
 import { 
   leadToServiceRequest, 
   requestStatusToBackendSlug, 
-  sortByPriorityDesc, 
+  sortByBoardOrder, 
   requestPriorityToBackendEnum 
 } from '../lib/adapters';
 
@@ -49,7 +49,7 @@ export function useDashboardData({ isAuthenticated, onModalRequestUpdate }: UseD
         const mapped = rawList
           .filter((l: any) => !l.isDeleted)
           .map(leadToServiceRequest)
-          .sort(sortByPriorityDesc);
+          .sort(sortByBoardOrder);
         setRequests(mapped);
       } else {
         setRequests([]);
@@ -81,41 +81,88 @@ export function useDashboardData({ isAuthenticated, onModalRequestUpdate }: UseD
     }
   }, [isAuthenticated, loadBackendData]);
 
-  // Handle request status change with live backend sync
-  const handleUpdateStatus = useCallback(async (id: string, newStatus: RequestStatus) => {
-    setRequests(prev => prev.map(req => {
-      if (req.id === id) {
-        return { ...req, status: newStatus };
-      }
-      return req;
-    }));
+  // Optimistic status change with rollback on failure
+  const handleUpdateStatus = useCallback(async (id: string, newStatus: RequestStatus, boardOrder = 0) => {
+    let snapshot: ServiceRequest | undefined;
+    setRequests(prev => {
+      snapshot = prev.find(r => r.id === id);
+      return prev.map(req =>
+        req.id === id ? { ...req, status: newStatus, boardOrder } : req
+      );
+    });
 
     if (onModalRequestUpdate) {
-      onModalRequestUpdate(prev => (prev?.id === id ? { ...prev, status: newStatus } : prev));
+      onModalRequestUpdate(prev =>
+        prev?.id === id ? { ...prev, status: newStatus, boardOrder } : prev
+      );
     }
 
     const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
-    if (!isMongoId) return;
+    if (!isMongoId) return true;
 
     try {
       const backendSlug = requestStatusToBackendSlug(newStatus);
-      await leadsApi.updateLeadStatus(id, backendSlug, 0, `Status moved to ${newStatus}`);
-      loadBackendData();
+      await leadsApi.updateLeadStatus(id, backendSlug, boardOrder, `Status moved to ${newStatus}`);
+      return true;
     } catch (err: any) {
       console.warn(`Could not sync status to backend for lead ${id}:`, err?.message || err);
-    }
-  }, [loadBackendData, onModalRequestUpdate]);
-
-  // Handle admin changing priority with live backend sync and priority re-sort
-  const handleUpdatePriority = useCallback(async (id: string, newPriority: RequestPriority) => {
-    setRequests(prev => {
-      const updated = prev.map(req => {
-        if (req.id === id) {
-          return { ...req, priority: newPriority };
+      if (snapshot) {
+        const rollback = snapshot;
+        setRequests(prev => prev.map(req => (req.id === id ? rollback : req)));
+        if (onModalRequestUpdate) {
+          onModalRequestUpdate(prev => (prev?.id === id ? rollback : prev));
         }
-        return req;
-      });
-      return updated.sort(sortByPriorityDesc);
+      }
+      return false;
+    }
+  }, [onModalRequestUpdate]);
+
+  /**
+   * Persist a full kanban column snapshot (status + boardOrder) with optimistic UI + rollback.
+   */
+  const handleKanbanSync = useCallback(async (
+    nextRequests: ServiceRequest[],
+    previousRequests: ServiceRequest[]
+  ): Promise<boolean> => {
+    setRequests(nextRequests);
+
+    const changed = nextRequests.filter((next) => {
+      const prev = previousRequests.find((p) => p.id === next.id);
+      if (!prev) return false;
+      return prev.status !== next.status || (prev.boardOrder ?? 0) !== (next.boardOrder ?? 0);
+    });
+
+    if (changed.length === 0) return true;
+
+    try {
+      await Promise.all(
+        changed.map(async (req) => {
+          if (!/^[0-9a-fA-F]{24}$/.test(req.id)) return;
+          const slug = requestStatusToBackendSlug(req.status);
+          await leadsApi.updateLeadStatus(
+            req.id,
+            slug,
+            req.boardOrder ?? 0,
+            `Board sync → ${req.status}`
+          );
+        })
+      );
+      return true;
+    } catch (err: any) {
+      console.warn('Kanban sync failed, rolling back:', err?.message || err);
+      setRequests(previousRequests);
+      return false;
+    }
+  }, []);
+
+  // Handle admin changing priority with live backend sync
+  const handleUpdatePriority = useCallback(async (id: string, newPriority: RequestPriority) => {
+    let snapshot: ServiceRequest | undefined;
+    setRequests(prev => {
+      snapshot = prev.find(r => r.id === id);
+      return prev.map(req =>
+        req.id === id ? { ...req, priority: newPriority } : req
+      );
     });
 
     if (onModalRequestUpdate) {
@@ -128,11 +175,14 @@ export function useDashboardData({ isAuthenticated, onModalRequestUpdate }: UseD
     try {
       const backendPriority = requestPriorityToBackendEnum(newPriority);
       await leadsApi.updateLeadDetails(id, { priority: backendPriority });
-      loadBackendData();
     } catch (err: any) {
       console.warn(`Could not sync priority to backend for lead ${id}:`, err?.message || err);
+      if (snapshot) {
+        const rollback = snapshot;
+        setRequests(prev => prev.map(req => (req.id === id ? rollback : req)));
+      }
     }
-  }, [loadBackendData, onModalRequestUpdate]);
+  }, [onModalRequestUpdate]);
 
   // Handle soft delete with live backend sync
   const handleDeleteRequest = useCallback(async (id: string) => {
@@ -205,7 +255,7 @@ export function useDashboardData({ isAuthenticated, onModalRequestUpdate }: UseD
 
       if (res.data) {
         const mappedNewLead = leadToServiceRequest(res.data);
-        setRequests(prev => [mappedNewLead, ...prev].sort(sortByPriorityDesc));
+        setRequests(prev => [mappedNewLead, ...prev].sort(sortByBoardOrder));
         loadBackendData();
       } else {
         const newId = `REQ-2026-${String(requests.length + 1).padStart(3, '0')}`;
@@ -216,10 +266,11 @@ export function useDashboardData({ isAuthenticated, onModalRequestUpdate }: UseD
           createdAt: new Date().toISOString(),
           status: 'Pending',
           priority: 'High',
-          notes: ['Submitted via website form simulator.'],
+          boardOrder: Date.now(),
+          notes: [],
           isDeleted: false,
         };
-        setRequests(prev => [newRequest, ...prev].sort(sortByPriorityDesc));
+        setRequests(prev => [newRequest, ...prev].sort(sortByBoardOrder));
       }
     } catch (err) {
       console.warn('Backend submission failed, saving locally:', err);
@@ -232,10 +283,11 @@ export function useDashboardData({ isAuthenticated, onModalRequestUpdate }: UseD
         createdAt: new Date().toISOString(),
         status: 'Pending',
         priority: 'High',
-        notes: ['Submitted via website form simulator.'],
+        boardOrder: Date.now(),
+        notes: [],
         isDeleted: false,
       };
-      setRequests(prev => [newRequest, ...prev].sort(sortByPriorityDesc));
+      setRequests(prev => [newRequest, ...prev].sort(sortByBoardOrder));
     }
 
     loadBackendData();
@@ -250,6 +302,7 @@ export function useDashboardData({ isAuthenticated, onModalRequestUpdate }: UseD
     isDataLoading,
     loadBackendData,
     handleUpdateStatus,
+    handleKanbanSync,
     handleUpdatePriority,
     handleDeleteRequest,
     handleAddNote,

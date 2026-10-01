@@ -13,6 +13,7 @@ export interface ServiceRequest {
   createdAt: string; // ISO string or relative time
   status: RequestStatus;
   priority: RequestPriority;
+  boardOrder?: number;
   notes?: string[];
   assignedTo?: string;
   companyName?: string;

@@ -1,393 +1,517 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+  useDroppable,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+  type UniqueIdentifier,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { ServiceRequest, RequestStatus, RequestPriority } from '../../types';
-import { sortByPriorityDesc } from '../../lib/adapters';
-import { PrioritySelector } from '../ui/PrioritySelector';
+import { sortByBoardOrder } from '../../lib/adapters';
 import { ConfirmModal } from '../ui/ConfirmModal';
-import { 
-  AlertCircle, 
-  Clock, 
-  CheckCircle2, 
-  Mail, 
-  Phone, 
-  PhoneOff, 
-  Eye, 
-  GripVertical,
-  Trash2
-} from 'lucide-react';
+import { GripVertical, Trash2, AlertTriangle, X } from 'lucide-react';
 
 interface KanbanBoardProps {
   requests: ServiceRequest[];
   onSelectRequest: (req: ServiceRequest) => void;
-  onUpdateStatus: (id: string, newStatus: RequestStatus) => void;
-  onUpdatePriority?: (id: string, newPriority: RequestPriority) => void;
+  onKanbanSync: (
+    next: ServiceRequest[],
+    previous: ServiceRequest[]
+  ) => Promise<boolean>;
   onDeleteRequest?: (id: string) => void;
 }
 
-const COLUMNS: { id: RequestStatus; title: string; color: string; bg: string; border: string; icon: React.ElementType }[] = [
-  {
-    id: 'Pending',
-    title: 'Pending Review',
-    color: '#fbbf24',
-    bg: '#f59e0b26',
-    border: '#f59e0b4d',
-    icon: AlertCircle,
-  },
-  {
-    id: 'In Progress',
-    title: 'In Progress',
-    color: '#E02126',
-    bg: '#FEE2E2',
-    border: '#FECACA',
-    icon: Clock,
-  },
-  {
-    id: 'Resolved',
-    title: 'Resolved',
-    color: '#34d399',
-    bg: '#10b98126',
-    border: '#10b9814d',
-    icon: CheckCircle2,
-  },
+const COLUMNS: { id: RequestStatus; title: string }[] = [
+  { id: 'Pending', title: 'Pending' },
+  { id: 'In Progress', title: 'In Progress' },
+  { id: 'Resolved', title: 'Resolved' },
 ];
+
+const COLUMN_IDS = new Set<string>(COLUMNS.map((c) => c.id));
+
+const PRIORITY_DOT: Record<RequestPriority, string> = {
+  High: '#E02126',
+  Medium: '#D97706',
+  Low: '#A8A29E',
+};
+
+type ConfirmState = {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmText?: string;
+  variant?: 'danger' | 'warning' | 'info';
+  onConfirm: () => void;
+};
+
+type ItemsState = Record<RequestStatus, string[]>;
+
+function clientNameOf(req: ServiceRequest) {
+  return req.name || `${req.firstName} ${req.lastName}`.trim() || 'Client';
+}
+
+function buildItems(requests: ServiceRequest[]): ItemsState {
+  const items: ItemsState = {
+    Pending: [],
+    'In Progress': [],
+    Resolved: [],
+    Archived: [],
+  };
+  const sorted = [...requests].sort(sortByBoardOrder);
+  for (const req of sorted) {
+    if (req.status === 'Archived') continue;
+    if (items[req.status]) items[req.status].push(req.id);
+    else items.Pending.push(req.id);
+  }
+  return items;
+}
+
+function findContainer(items: ItemsState, id: UniqueIdentifier): RequestStatus | null {
+  const sid = String(id);
+  if (COLUMN_IDS.has(sid)) return sid as RequestStatus;
+  for (const col of COLUMNS) {
+    if (items[col.id].includes(sid)) return col.id;
+  }
+  return null;
+}
+
+function itemsToRequests(
+  items: ItemsState,
+  byId: Map<string, ServiceRequest>
+): ServiceRequest[] {
+  const next: ServiceRequest[] = [];
+  for (const col of COLUMNS) {
+    items[col.id].forEach((id, index) => {
+      const base = byId.get(id);
+      if (!base) return;
+      next.push({ ...base, status: col.id, boardOrder: index });
+    });
+  }
+  // keep archived / unknown
+  for (const req of byId.values()) {
+    if (req.status === 'Archived' || !COLUMN_IDS.has(req.status)) {
+      if (!next.some((r) => r.id === req.id)) next.push(req);
+    }
+  }
+  return next;
+}
+
+function CardChrome({
+  req,
+  onSelectRequest,
+  onDeleteRequest,
+  setConfirmAction,
+  dragHandleProps,
+  isDragging,
+  isOverlay,
+}: {
+  req: ServiceRequest;
+  onSelectRequest: (req: ServiceRequest) => void;
+  onDeleteRequest?: (id: string) => void;
+  setConfirmAction: (v: ConfirmState | null) => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
+  isDragging?: boolean;
+  isOverlay?: boolean;
+}) {
+  const clientName = clientNameOf(req);
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelectRequest(req)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelectRequest(req);
+        }
+      }}
+      className="rounded-xl border p-3 text-left cursor-pointer space-y-2.5"
+      style={{
+        backgroundColor: '#FAF9F6',
+        borderColor: isDragging ? '#E02126' : '#E7E5E4',
+        opacity: isDragging && !isOverlay ? 0.35 : 1,
+        boxShadow: isOverlay ? '0 12px 32px rgba(28,25,23,0.18)' : undefined,
+      }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-1.5 min-w-0">
+          <button
+            type="button"
+            {...dragHandleProps}
+            className="mt-0.5 p-1 -ml-1 rounded-md cursor-grab active:cursor-grabbing shrink-0 touch-none"
+            style={{ color: '#A8A29E' }}
+            title="Drag card"
+            aria-label="Drag card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+
+          <div className="min-w-0">
+            <p className="font-medium truncate text-sm" style={{ color: '#1C1917' }}>
+              {clientName}
+            </p>
+            <p className="mt-0.5 truncate text-xs" style={{ color: '#78716C' }}>
+              {req.service}
+            </p>
+          </div>
+        </div>
+
+        {onDeleteRequest && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmAction({
+                isOpen: true,
+                title: 'Delete inquiry?',
+                message: `Archive the inquiry from ${clientName}.`,
+                confirmText: 'Delete',
+                variant: 'danger',
+                onConfirm: () => onDeleteRequest(req.id),
+              });
+            }}
+            className="p-1 rounded-md cursor-pointer shrink-0"
+            style={{ color: '#B91C1C' }}
+            aria-label="Delete"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      <div className="pl-7 space-y-1 text-xs">
+        <p className="truncate" style={{ color: '#78716C' }}>
+          <span style={{ color: '#A8A29E' }}>Email </span>
+          {req.email}
+        </p>
+        <p className="truncate" style={{ color: '#78716C' }}>
+          <span style={{ color: '#A8A29E' }}>Phone </span>
+          {req.phone || 'Not provided'}
+        </p>
+      </div>
+
+      <div className="pl-7 flex items-center gap-1.5">
+        <span
+          className="h-1.5 w-1.5 rounded-full shrink-0"
+          style={{ backgroundColor: PRIORITY_DOT[req.priority] }}
+        />
+        <span className="text-[11px] font-medium" style={{ color: '#78716C' }}>
+          {req.priority} priority
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SortableCard(props: {
+  req: ServiceRequest;
+  onSelectRequest: (req: ServiceRequest) => void;
+  onDeleteRequest?: (id: string) => void;
+  setConfirmAction: (v: ConfirmState | null) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: props.req.id,
+    data: { type: 'card', status: props.req.status },
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <CardChrome
+        {...props}
+        dragHandleProps={{ ...attributes, ...listeners }}
+        isDragging={isDragging}
+      />
+    </div>
+  );
+}
+
+function Column({
+  column,
+  ids,
+  byId,
+  isOver,
+  onSelectRequest,
+  onDeleteRequest,
+  setConfirmAction,
+}: {
+  column: { id: RequestStatus; title: string };
+  ids: string[];
+  byId: Map<string, ServiceRequest>;
+  isOver: boolean;
+  onSelectRequest: (req: ServiceRequest) => void;
+  onDeleteRequest?: (id: string) => void;
+  setConfirmAction: (v: ConfirmState | null) => void;
+}) {
+  const { setNodeRef } = useDroppable({ id: column.id });
+
+  return (
+    <div
+      className="flex flex-col rounded-2xl border min-h-[20rem]"
+      style={{
+        backgroundColor: '#FFFFFF',
+        borderColor: isOver ? '#E02126' : '#E7E5E4',
+      }}
+    >
+      <div className="flex items-baseline justify-between gap-2 px-4 pt-4 pb-2 shrink-0">
+        <h3 className="text-sm font-semibold" style={{ color: '#1C1917' }}>
+          {column.title}
+        </h3>
+        <span className="text-sm tabular-nums" style={{ color: '#A8A29E' }}>
+          {ids.length}
+        </span>
+      </div>
+
+      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+        <div ref={setNodeRef} className="flex-1 px-3 pb-4 space-y-3 min-h-[12rem]">
+          {ids.length === 0 && (
+            <p
+              className="py-8 text-center text-xs rounded-xl border border-dashed"
+              style={{ color: '#D6D3D1', borderColor: isOver ? '#FECACA' : '#E7E5E4' }}
+            >
+              {isOver ? 'Drop here' : 'No inquiries'}
+            </p>
+          )}
+
+          {ids.map((id) => {
+            const req = byId.get(id);
+            if (!req) return null;
+            return (
+              <SortableCard
+                key={id}
+                req={req}
+                onSelectRequest={onSelectRequest}
+                onDeleteRequest={onDeleteRequest}
+                setConfirmAction={setConfirmAction}
+              />
+            );
+          })}
+        </div>
+      </SortableContext>
+    </div>
+  );
+}
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   requests,
   onSelectRequest,
-  onUpdateStatus,
-  onUpdatePriority,
+  onKanbanSync,
   onDeleteRequest,
 }) => {
-  const [draggedRequestId, setDraggedRequestId] = useState<string | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<RequestStatus | null>(null);
+  const [items, setItems] = useState<ItemsState>(() => buildItems(requests));
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmState | null>(null);
 
-  // Confirmation Alert Dialog state
-  const [confirmAction, setConfirmAction] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    confirmText?: string;
-    variant?: 'danger' | 'warning' | 'info';
-    onConfirm: () => void;
-  } | null>(null);
+  useEffect(() => {
+    setItems(buildItems(requests));
+  }, [requests]);
 
-  // Drag handlers
-  const handleDragStart = (e: React.DragEvent, reqId: string) => {
-    e.dataTransfer.setData('text/plain', reqId);
-    e.dataTransfer.effectAllowed = 'move';
-    setDraggedRequestId(reqId);
-  };
+  const byId = useMemo(() => {
+    const map = new Map<string, ServiceRequest>();
+    for (const req of requests) map.set(req.id, req);
+    return map;
+  }, [requests]);
 
-  const handleDragEnd = () => {
-    setDraggedRequestId(null);
-    setDragOverColumn(null);
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
+    useSensor(KeyboardSensor)
+  );
 
-  const handleDragOver = (e: React.DragEvent, status: RequestStatus) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if (dragOverColumn !== status) {
-      setDragOverColumn(status);
+  const activeRequest = activeId ? byId.get(activeId) ?? null : null;
+  const overColumnId = activeId ? findContainer(items, activeId) : null;
+
+  const persistItems = async (nextItems: ItemsState, previousRequests: ServiceRequest[]) => {
+    const nextRequests = itemsToRequests(nextItems, byId);
+    setIsSyncing(true);
+    setSyncError(null);
+    const ok = await onKanbanSync(nextRequests, previousRequests);
+    setIsSyncing(false);
+    if (!ok) {
+      setItems(buildItems(previousRequests));
+      setSyncError('Could not save board changes. Your last move was reverted.');
     }
   };
 
-  const handleDragLeave = (e: React.DragEvent, status: RequestStatus) => {
-    e.preventDefault();
-    if (dragOverColumn === status) {
-      setDragOverColumn(null);
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
+    setSyncError(null);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeContainer = findContainer(items, active.id);
+    const overContainer = findContainer(items, over.id);
+    if (!activeContainer || !overContainer || activeContainer === overContainer) return;
+
+    setItems((prev) => {
+      const activeItems = [...prev[activeContainer]];
+      const overItems = [...prev[overContainer]];
+      const activeIndex = activeItems.indexOf(String(active.id));
+      if (activeIndex === -1) return prev;
+
+      let newIndex: number;
+      if (COLUMN_IDS.has(String(over.id))) {
+        newIndex = overItems.length;
+      } else {
+        const overIndex = overItems.indexOf(String(over.id));
+        newIndex = overIndex >= 0 ? overIndex : overItems.length;
+      }
+
+      const movingId = String(active.id);
+      const nextActive = activeItems.filter((id) => id !== movingId);
+      const cleanedOver = overItems.filter((id) => id !== movingId);
+      cleanedOver.splice(newIndex, 0, movingId);
+
+      return {
+        ...prev,
+        [activeContainer]: nextActive,
+        [overContainer]: cleanedOver,
+      };
+    });
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over) {
+      setItems(buildItems(requests));
+      return;
+    }
+
+    const activeContainer = findContainer(items, active.id);
+    const overContainer = findContainer(items, over.id);
+    if (!activeContainer || !overContainer) {
+      setItems(buildItems(requests));
+      return;
+    }
+
+    let nextItems = items;
+
+    if (activeContainer === overContainer) {
+      const colItems = [...items[activeContainer]];
+      const oldIndex = colItems.indexOf(String(active.id));
+      const newIndex = COLUMN_IDS.has(String(over.id))
+        ? colItems.length - 1
+        : colItems.indexOf(String(over.id));
+
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        nextItems = {
+          ...items,
+          [activeContainer]: arrayMove(colItems, oldIndex, newIndex),
+        };
+        setItems(nextItems);
+      }
+    }
+
+    const previous = requests;
+    const projected = itemsToRequests(nextItems, byId);
+    const changed = projected.some((n) => {
+      const p = previous.find((x) => x.id === n.id);
+      return !p || p.status !== n.status || (p.boardOrder ?? 0) !== (n.boardOrder ?? 0);
+    });
+
+    if (changed) {
+      await persistItems(nextItems, previous);
     }
   };
 
-  const handleDrop = (e: React.DragEvent, targetStatus: RequestStatus) => {
-    e.preventDefault();
-    const reqId = e.dataTransfer.getData('text/plain') || draggedRequestId;
-    if (reqId) {
-      onUpdateStatus(reqId, targetStatus);
-    }
-    setDraggedRequestId(null);
-    setDragOverColumn(null);
+  const handleDragCancel = () => {
+    setActiveId(null);
+    setItems(buildItems(requests));
   };
 
   return (
-    <div className="space-y-4">
-      {/* Helper Guidance Banner */}
-      <div 
-        className="p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm"
-        style={{
-          backgroundColor: '#0c244799',
-          borderColor: '#E7E5E4',
-          color: '#78716C',
-        }}
-      >
-        <span className="flex items-center gap-2">
-          <GripVertical className="w-4 h-4 shrink-0" style={{ color: '#E02126' }} />
-          <span><strong>Jira Drag & Drop Board:</strong> Drag cards between columns on desktop, or swipe across columns on mobile. Leads are sorted with High Priority on top.</span>
-        </span>
-        <span 
-          className="text-[10px] font-mono font-bold border px-2 py-0.5 rounded uppercase self-start sm:self-auto shrink-0"
-          style={{
-            backgroundColor: '#FEE2E2',
-            borderColor: '#FECACA',
-            color: '#78716C',
-          }}
+    <div className="space-y-3">
+      <p className="text-xs" style={{ color: '#A8A29E' }}>
+        Drag cards to reorder or move between columns
+        {isSyncing ? ' · Saving…' : ''}
+      </p>
+
+      {syncError && (
+        <div
+          className="flex items-start gap-2 rounded-xl border px-3 py-2.5 text-sm"
+          style={{ borderColor: '#FECACA', backgroundColor: '#FEF2F2', color: '#991B1B' }}
         >
-          Priority Sorted
-        </span>
-      </div>
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span className="flex-1">{syncError}</span>
+          <button
+            type="button"
+            onClick={() => setSyncError(null)}
+            className="shrink-0 cursor-pointer"
+            aria-label="Dismiss"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
-      {/* Kanban Board Columns */}
-      <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-5 overflow-x-auto snap-x snap-mandatory pb-4 md:pb-0 scrollbar-none items-start">
-        {COLUMNS.map((column) => {
-          const columnRequests = requests
-            .filter(r => r.status === column.id)
-            .sort(sortByPriorityDesc);
-          const isOver = dragOverColumn === column.id;
-          const Icon = column.icon;
-
-          return (
-            <div
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+          {COLUMNS.map((column) => (
+            <Column
               key={column.id}
-              onDragOver={(e) => handleDragOver(e, column.id)}
-              onDragLeave={(e) => handleDragLeave(e, column.id)}
-              onDrop={(e) => handleDrop(e, column.id)}
-              className="rounded-2xl p-4 border transition-all duration-200 min-h-120 sm:min-h-130 flex flex-col justify-between w-[85vw] sm:w-[320px] md:w-auto shrink-0 snap-center backdrop-blur-md"
-              style={{
-                backgroundColor: isOver ? 'var(--sanity-header-bg, #FFFFFF)' : 'var(--sanity-card-bg, #FFFFFF)',
-                borderColor: isOver ? 'var(--sanity-accent-sky, #E02126)' : 'var(--sanity-card-border, #E7E5E4)',
-                boxShadow: isOver ? '0 0 25px #0284c766' : '0 10px 30px #1C191715',
-              }}
-            >
-              <div>
-                {/* Column Header */}
-                <div 
-                  className="p-3 rounded-xl border mb-4 flex items-center justify-between shadow-sm"
-                  style={{
-                    backgroundColor: column.bg,
-                    borderColor: column.border,
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4" style={{ color: column.color }} />
-                    <h3 className="text-xs font-bold tracking-tight uppercase" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>
-                      {column.title}
-                    </h3>
-                  </div>
-                  <span 
-                    className="px-2 py-0.5 rounded-full text-xs font-bold border"
-                    style={{
-                      backgroundColor: column.bg,
-                      color: column.color,
-                      borderColor: column.border,
-                    }}
-                  >
-                    {columnRequests.length}
-                  </span>
-                </div>
+              column={column}
+              ids={items[column.id]}
+              byId={byId}
+              isOver={Boolean(activeId && overColumnId === column.id && findContainer(items, activeId) !== column.id)}
+              onSelectRequest={onSelectRequest}
+              onDeleteRequest={onDeleteRequest}
+              setConfirmAction={setConfirmAction}
+            />
+          ))}
+        </div>
 
-                {/* Drop Zone Placeholder */}
-                {isOver && columnRequests.length === 0 && (
-                  <div 
-                    className="p-8 text-center border-2 border-dashed rounded-xl mb-3 text-xs font-medium animate-pulse"
-                    style={{
-                      borderColor: '#E0212666',
-                      backgroundColor: '#FEE2E2',
-                      color: '#78716C',
-                    }}
-                  >
-                    Drop Request Here to set as "{column.title}"
-                  </div>
-                )}
-
-                {/* Cards Container */}
-                <div className="space-y-3">
-                  {columnRequests.map((req) => {
-                    const isBeingDragged = draggedRequestId === req.id;
-                    const clientName = req.name || `${req.firstName} ${req.lastName}`.trim() || 'Client';
-
-                    return (
-                      <div
-                        key={req.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, req.id)}
-                        onDragEnd={handleDragEnd}
-                        onClick={() => onSelectRequest(req)}
-                        className="rounded-xl p-3.5 sm:p-4 border transition-all cursor-grab active:cursor-grabbing group relative space-y-3"
-                        style={{
-                          backgroundColor: 'var(--sanity-inner-card-bg, #FAF9F6)',
-                          borderColor: isBeingDragged ? 'var(--sanity-accent-sky, #E02126)' : 'var(--sanity-card-border, #E7E5E4)',
-                          opacity: isBeingDragged ? 0.4 : 1,
-                          boxShadow: '0 4px 12px #1C191722',
-                        }}
-                      >
-                        {/* Drag Handle, Priority Selector & Soft Delete */}
-                        <div className="flex items-center justify-between gap-2 text-xs">
-                          <div className="flex items-center gap-1.5" style={{ color: '#A8A29E' }}>
-                            <GripVertical className="w-3.5 h-3.5" style={{ color: '#E0212666' }} />
-                            <span className="font-mono text-[10px] font-semibold" style={{ color: '#78716C' }}>{req.id}</span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                            <PrioritySelector
-                              priority={req.priority}
-                              onChange={(newPriority) => {
-                                if (newPriority === req.priority) return;
-                                setConfirmAction({
-                                  isOpen: true,
-                                  title: 'Change Inquiry Priority',
-                                  message: `Are you sure you want to change priority for "${clientName}" from "${req.priority}" to "${newPriority}"? Inquiries will be automatically re-sorted with High priority on top.`,
-                                  confirmText: `Set as ${newPriority}`,
-                                  variant: newPriority === 'High' ? 'danger' : 'warning',
-                                  onConfirm: () => onUpdatePriority?.(req.id, newPriority),
-                                });
-                              }}
-                              align="right"
-                              size="sm"
-                            />
-
-                            {onDeleteRequest && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setConfirmAction({
-                                    isOpen: true,
-                                    title: 'Soft Delete Inquiry',
-                                    message: `Are you sure you want to soft delete the inquiry from "${clientName}" (${req.service})? This record will be archived and hidden from all active views.`,
-                                    confirmText: 'Yes, Delete',
-                                    variant: 'danger',
-                                    onConfirm: () => onDeleteRequest(req.id),
-                                  });
-                                }}
-                                title="Soft delete lead"
-                                className="p-1 rounded transition-colors cursor-pointer hover:bg-[#f43f5e33]"
-                                style={{ color: '#78716C80' }}
-                              >
-                                <Trash2 className="w-3.5 h-3.5 hover:text-[#f43f5e]" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Customer Full Name & Email */}
-                        <div className="space-y-1">
-                          <h4 
-                            className="font-bold text-xs transition-colors flex items-center justify-between group-hover:text-[#E02126]"
-                            style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
-                          >
-                            <span className="truncate">{clientName}</span>
-                          </h4>
-                          <p className="text-[11px] flex items-center gap-1 min-w-0" style={{ color: '#78716C' }}>
-                            <Mail className="w-3 h-3 shrink-0" style={{ color: '#E02126b3' }} />
-                            <span className="truncate">{req.email}</span>
-                          </p>
-                        </div>
-
-                        {/* Optional Phone Field */}
-                        <div 
-                          className="text-[11px] flex items-center gap-1 pt-1 border-t"
-                          style={{
-                            borderColor: '#E7E5E4',
-                            color: '#78716C',
-                          }}
-                        >
-                          {req.phone ? (
-                            <span className="font-mono font-semibold flex items-center gap-1 truncate" style={{ color: '#A8A29E' }}>
-                              <Phone className="w-3 h-3 shrink-0" style={{ color: '#E02126' }} />
-                              {req.phone}
-                            </span>
-                          ) : (
-                            <span className="italic flex items-center gap-1" style={{ color: '#D6D3D1' }}>
-                              <PhoneOff className="w-3 h-3 shrink-0" />
-                              Phone not provided
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Service Category Tag */}
-                        <div>
-                          <span 
-                            className="px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border inline-block truncate max-w-full"
-                            style={{
-                              backgroundColor: '#FEE2E2',
-                              borderColor: '#FECACA',
-                              color: '#78716C',
-                            }}
-                          >
-                            {req.service}
-                          </span>
-                        </div>
-
-                        {/* Message Preview */}
-                        <p 
-                          className="text-xs p-2.5 rounded-lg border line-clamp-2 leading-relaxed italic"
-                          style={{
-                            backgroundColor: '#FAF9F6',
-                            borderColor: '#E7E5E4',
-                            color: '#e0f2fee6',
-                          }}
-                        >
-                          {req.message ? `"${req.message}"` : <span className="italic" style={{ color: '#D6D3D1' }}>No message provided</span>}
-                        </p>
-
-                        {/* Mobile Quick Move Dropdown Options */}
-                        <div 
-                          className="pt-2 border-t flex items-center justify-between text-[10px] font-medium"
-                          style={{
-                            borderColor: '#E7E5E4',
-                            color: '#A8A29E',
-                          }}
-                        >
-                          <span>{new Date(req.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
-                          
-                          <div className="flex items-center gap-2">
-                            {/* Mobile Move Dropdown Button */}
-                            <select
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                if (e.target.value) {
-                                  onUpdateStatus(req.id, e.target.value as RequestStatus);
-                                }
-                              }}
-                              value={req.status}
-                              aria-label="Move Status"
-                              className="md:hidden border text-[10px] rounded px-1.5 py-0.5 focus:outline-none"
-                              style={{
-                                backgroundColor: '#FAF9F6',
-                                borderColor: '#E7E5E4',
-                                color: '#78716C',
-                              }}
-                            >
-                              <option value="Pending">Move: Pending</option>
-                              <option value="In Progress">Move: In Progress</option>
-                              <option value="Resolved">Move: Resolved</option>
-                            </select>
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onSelectRequest(req);
-                              }}
-                              className="font-bold flex items-center gap-1 cursor-pointer hover:text-white"
-                              style={{ color: '#A8A29E' }}
-                            >
-                              <Eye className="w-3 h-3" />
-                              View
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+        <DragOverlay dropAnimation={null}>
+          {activeRequest ? (
+            <div className="w-[min(100vw-2rem,20rem)] pointer-events-none">
+              <CardChrome
+                req={activeRequest}
+                onSelectRequest={() => {}}
+                setConfirmAction={() => {}}
+                isOverlay
+                isDragging
+              />
             </div>
-          );
-        })}
-      </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
-      {/* Confirmation Modal */}
       {confirmAction && (
         <ConfirmModal
           isOpen={confirmAction.isOpen}

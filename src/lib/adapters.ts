@@ -40,7 +40,12 @@ export function leadToServiceRequest(lead: LeadItem): ServiceRequest {
     createdAt: lead.createdAt || new Date().toISOString(),
     status,
     priority,
-    notes: (lead as any).notes || ['Inquiry submitted via Emirate Hub portal.'],
+    boardOrder: typeof (lead as any).boardOrder === 'number' ? (lead as any).boardOrder : 0,
+    notes: ((lead as any).notes || []).filter(
+      (note: string) =>
+        note !== 'Inquiry submitted via Emirate Hub portal.' &&
+        note !== 'Submitted via website form simulator.'
+    ),
     companyName: lead.formData?.companyName as string | undefined,
     isDeleted: (lead as any).isDeleted || false,
   };
@@ -53,15 +58,20 @@ export const getPriorityRank = (priority: RequestPriority): number => {
     case 'Medium':
       return 2;
     case 'Low':
-      return 1;
     default:
-      return 0;
+      return 1;
   }
 };
 
 export const sortByPriorityDesc = (a: ServiceRequest, b: ServiceRequest): number => {
   const rankDiff = getPriorityRank(b.priority) - getPriorityRank(a.priority);
   if (rankDiff !== 0) return rankDiff;
+  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+};
+
+export const sortByBoardOrder = (a: ServiceRequest, b: ServiceRequest): number => {
+  const orderDiff = (a.boardOrder ?? 0) - (b.boardOrder ?? 0);
+  if (orderDiff !== 0) return orderDiff;
   return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 };
 
