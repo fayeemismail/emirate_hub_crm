@@ -2,77 +2,65 @@
 
 import React from 'react';
 import { SanityThemeSettings } from '../types/documents';
-import { isValidThemeSettings } from '../types/typeGuards';
+import { CLEAN_CRM_THEME, buildPageBackground } from '../themeDefaults';
 
 interface SanityThemeStyleProps {
+  /** Reserved for future CMS overlay once themeSettings is republished with the clean palette. */
   themeSettings: SanityThemeSettings | null;
 }
 
 /**
- * Injects dynamic CSS variables ONLY when valid themeSettings data is incoming from Sanity CMS.
- * If no themeSettings data exists, renders nothing and lets base styles apply without mock defaults.
+ * Injects the clean CRM theme CSS variables.
+ * Uses the shared CLEAN_CRM_THEME baseline so the UI stays consistent without
+ * editing dozens of Sanity color fields. Pass-through CMS overlay can be
+ * re-enabled after themeSettings is updated in Studio.
  */
-export const SanityThemeStyle: React.FC<SanityThemeStyleProps> = ({ themeSettings }) => {
-  if (!isValidThemeSettings(themeSettings)) {
-    return null;
-  }
-
-  const isCustomTop = Boolean(themeSettings.bgGradientTop && themeSettings.bgGradientTop.toLowerCase() !== '#081d39');
-  const isCustomMain = Boolean(themeSettings.bgMain && themeSettings.bgMain.toLowerCase() !== '#07172e');
-
-  let pageBg = 'linear-gradient(180deg, #081d39 0%, #0b2548 40%, #061326 100%)';
-  if (isCustomTop) {
-    pageBg = `linear-gradient(180deg, ${themeSettings.bgGradientTop} 0%, ${themeSettings.bgGradientMiddle || themeSettings.bgGradientTop} 40%, ${themeSettings.bgGradientBottom || themeSettings.bgGradientTop} 100%)`;
-  } else if (isCustomMain && themeSettings.bgMain) {
-    pageBg = themeSettings.bgMain;
-  } else if (themeSettings.bgGradientTop) {
-    pageBg = `linear-gradient(180deg, ${themeSettings.bgGradientTop} 0%, ${themeSettings.bgGradientMiddle || themeSettings.bgGradientTop} 40%, ${themeSettings.bgGradientBottom || themeSettings.bgGradientTop} 100%)`;
-  }
+export const SanityThemeStyle: React.FC<SanityThemeStyleProps> = () => {
+  const t = CLEAN_CRM_THEME;
+  const pageBg = buildPageBackground(t);
 
   const cssVariables = `
     :root {
       --sanity-page-bg: ${pageBg};
-      ${themeSettings.bgMain ? `--sanity-bg-main: ${themeSettings.bgMain};` : ''}
-      ${themeSettings.bgGradientTop ? `--sanity-bg-top: ${themeSettings.bgGradientTop};` : ''}
-      ${themeSettings.bgGradientMiddle ? `--sanity-bg-mid: ${themeSettings.bgGradientMiddle};` : ''}
-      ${themeSettings.bgGradientBottom ? `--sanity-bg-bot: ${themeSettings.bgGradientBottom};` : ''}
-      ${themeSettings.headerBg ? `--sanity-header-bg: ${themeSettings.headerBg};` : ''}
-      ${themeSettings.cardBg ? `--sanity-card-bg: ${themeSettings.cardBg};` : ''}
-      ${themeSettings.cardBorder ? `--sanity-card-border: ${themeSettings.cardBorder};` : ''}
-      ${themeSettings.cardHoverBorder ? `--sanity-card-hover-border: ${themeSettings.cardHoverBorder};` : ''}
-      ${themeSettings.innerCardBg ? `--sanity-inner-card-bg: ${themeSettings.innerCardBg};` : ''}
-      ${themeSettings.sidebarBgStart ? `--sanity-sidebar-start: ${themeSettings.sidebarBgStart};` : ''}
-      ${themeSettings.sidebarBgMiddle ? `--sanity-sidebar-mid: ${themeSettings.sidebarBgMiddle};` : ''}
-      ${themeSettings.sidebarBgEnd ? `--sanity-sidebar-end: ${themeSettings.sidebarBgEnd};` : ''}
-      ${themeSettings.sidebarBorder ? `--sanity-sidebar-border: ${themeSettings.sidebarBorder};` : ''}
-      ${themeSettings.sidebarActiveItemBgStart ? `--sanity-sidebar-active-start: ${themeSettings.sidebarActiveItemBgStart};` : ''}
-      ${themeSettings.sidebarActiveItemBgEnd ? `--sanity-sidebar-active-end: ${themeSettings.sidebarActiveItemBgEnd};` : ''}
-      ${themeSettings.textPrimary ? `--sanity-text-primary: ${themeSettings.textPrimary};` : ''}
-      ${themeSettings.textSecondary ? `--sanity-text-secondary: ${themeSettings.textSecondary};` : ''}
-      ${themeSettings.textMuted ? `--sanity-text-muted: ${themeSettings.textMuted};` : ''}
-      ${themeSettings.accentPrimary ? `--sanity-accent-primary: ${themeSettings.accentPrimary};` : ''}
-      ${themeSettings.accentSky ? `--sanity-accent-sky: ${themeSettings.accentSky};` : ''}
-      ${themeSettings.successColor ? `--sanity-success: ${themeSettings.successColor};` : ''}
-      ${themeSettings.warningColor ? `--sanity-warning: ${themeSettings.warningColor};` : ''}
-      ${themeSettings.dangerColor ? `--sanity-danger: ${themeSettings.dangerColor};` : ''}
-      ${themeSettings.primaryButtonBg ? `--sanity-btn-primary-bg: ${themeSettings.primaryButtonBg};` : ''}
-      ${themeSettings.primaryButtonHover ? `--sanity-btn-primary-hover: ${themeSettings.primaryButtonHover};` : ''}
-      ${themeSettings.primaryButtonTxt ? `--sanity-btn-primary-txt: ${themeSettings.primaryButtonTxt};` : ''}
-      ${themeSettings.secondaryButtonBg ? `--sanity-btn-sec-bg: ${themeSettings.secondaryButtonBg};` : ''}
-      ${themeSettings.secondaryButtonTxt ? `--sanity-btn-sec-txt: ${themeSettings.secondaryButtonTxt};` : ''}
-      ${themeSettings.pillBg ? `--sanity-pill-bg: ${themeSettings.pillBg};` : ''}
-      ${themeSettings.pillBorder ? `--sanity-pill-border: ${themeSettings.pillBorder};` : ''}
-      ${themeSettings.pillTxtColor ? `--sanity-pill-txt: ${themeSettings.pillTxtColor};` : ''}
-      ${themeSettings.priorityHighBg ? `--sanity-priority-high-bg: ${themeSettings.priorityHighBg};` : ''}
-      ${themeSettings.priorityHighColor ? `--sanity-priority-high-color: ${themeSettings.priorityHighColor};` : ''}
-      ${themeSettings.priorityMediumBg ? `--sanity-priority-med-bg: ${themeSettings.priorityMediumBg};` : ''}
-      ${themeSettings.priorityMediumColor ? `--sanity-priority-med-color: ${themeSettings.priorityMediumColor};` : ''}
-      ${themeSettings.priorityLowBg ? `--sanity-priority-low-bg: ${themeSettings.priorityLowBg};` : ''}
-      ${themeSettings.priorityLowColor ? `--sanity-priority-low-color: ${themeSettings.priorityLowColor};` : ''}
+      --sanity-bg-main: ${t.bgMain};
+      --sanity-bg-top: ${t.bgGradientTop};
+      --sanity-bg-mid: ${t.bgGradientMiddle};
+      --sanity-bg-bot: ${t.bgGradientBottom};
+      --sanity-header-bg: ${t.headerBg};
+      --sanity-card-bg: ${t.cardBg};
+      --sanity-card-border: ${t.cardBorder};
+      --sanity-card-hover-border: ${t.cardHoverBorder};
+      --sanity-inner-card-bg: ${t.innerCardBg};
+      --sanity-sidebar-start: ${t.sidebarBgStart};
+      --sanity-sidebar-mid: ${t.sidebarBgMiddle};
+      --sanity-sidebar-end: ${t.sidebarBgEnd};
+      --sanity-sidebar-border: ${t.sidebarBorder};
+      --sanity-sidebar-active-start: ${t.sidebarActiveItemBgStart};
+      --sanity-sidebar-active-end: ${t.sidebarActiveItemBgEnd};
+      --sanity-text-primary: ${t.textPrimary};
+      --sanity-text-secondary: ${t.textSecondary};
+      --sanity-text-muted: ${t.textMuted};
+      --sanity-accent-primary: ${t.accentPrimary};
+      --sanity-accent-sky: ${t.accentSky};
+      --sanity-success: ${t.successColor};
+      --sanity-warning: ${t.warningColor};
+      --sanity-danger: ${t.dangerColor};
+      --sanity-btn-primary-bg: ${t.primaryButtonBg};
+      --sanity-btn-primary-hover: ${t.primaryButtonHover};
+      --sanity-btn-primary-txt: ${t.primaryButtonTxt};
+      --sanity-btn-sec-bg: ${t.secondaryButtonBg};
+      --sanity-btn-sec-txt: ${t.secondaryButtonTxt};
+      --sanity-pill-bg: ${t.pillBg};
+      --sanity-pill-border: ${t.pillBorder};
+      --sanity-pill-txt: ${t.pillTxtColor};
+      --sanity-priority-high-bg: ${t.priorityHighBg};
+      --sanity-priority-high-color: ${t.priorityHighColor};
+      --sanity-priority-med-bg: ${t.priorityMediumBg};
+      --sanity-priority-med-color: ${t.priorityMediumColor};
+      --sanity-priority-low-bg: ${t.priorityLowBg};
+      --sanity-priority-low-color: ${t.priorityLowColor};
     }
   `;
 
-  return (
-    <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-  );
+  return <style dangerouslySetInnerHTML={{ __html: cssVariables }} />;
 };

@@ -107,8 +107,8 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           <span 
             className="px-2.5 py-1 text-xs font-semibold rounded-full border flex items-center gap-1.5 w-max"
             style={{
-              backgroundColor: '#0284c726',
-              color: '#38bdf8',
+              backgroundColor: '#FEE2E2',
+              color: '#E02126',
               borderColor: '#0284c74d',
             }}
           >
@@ -151,11 +151,11 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
       {/* View Header & Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold tracking-tight flex items-center gap-2" style={{ color: '#ffffff' }}>
-            <Inbox className="w-5 h-5 shrink-0" style={{ color: '#38bdf8' }} />
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>
+            <Inbox className="w-5 h-5 shrink-0" style={{ color: '#E02126' }} />
             Service Requests
           </h2>
-          <p className="text-xs" style={{ color: '#bae6fdcc' }}>
+          <p className="text-xs" style={{ color: '#78716C' }}>
             Client inquiries prioritized with High priority on top • Live sync with Jira board and Table view
           </p>
         </div>
@@ -165,9 +165,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
       <div 
         className="rounded-2xl p-3.5 sm:p-4 border space-y-4 backdrop-blur-md"
         style={{
-          backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
-          borderColor: 'var(--sanity-card-border, #93c5fd40)',
-          boxShadow: '0 10px 30px #040f1eb3',
+          backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+          borderColor: 'var(--sanity-card-border, #E7E5E4)',
+          boxShadow: '0 10px 30px #1C191715',
         }}
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
@@ -188,15 +188,15 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                   style={
                     isActive
                       ? {
-                          backgroundColor: '#2563eb',
-                          color: '#ffffff',
-                          borderColor: '#60a5fa66',
+                          backgroundColor: '#E02126',
+                          color: 'var(--sanity-text-primary, #1C1917)',
+                          borderColor: '#FECACA',
                           boxShadow: '0 4px 12px #1e3a8a66',
                           fontWeight: 600,
                         }
                       : {
                           backgroundColor: 'transparent',
-                          color: '#bae6fd',
+                          color: '#78716C',
                           borderColor: 'transparent',
                         }
                   }
@@ -213,9 +213,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                             fontWeight: 700,
                           }
                         : {
-                            backgroundColor: '#3b82f633',
-                            color: '#bae6fd',
-                            borderColor: '#60a5fa4d',
+                            backgroundColor: '#FEE2E2',
+                            color: '#78716C',
+                            borderColor: '#FECACA',
                           }
                     }
                   >
@@ -236,27 +236,27 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 aria-label="Filter by Service Category"
                 className="w-full appearance-none pl-3 pr-8 py-1.5 border rounded-xl text-xs focus:outline-none cursor-pointer"
                 style={{
-                  backgroundColor: '#061834',
-                  borderColor: '#93c5fd4d',
-                  color: '#ffffff',
+                  backgroundColor: '#FAF9F6',
+                  borderColor: '#E7E5E4',
+                  color: 'var(--sanity-text-primary, #1C1917)',
                 }}
               >
-                <option value="All" style={{ backgroundColor: '#061834', color: '#ffffff' }}>All Services</option>
+                <option value="All" style={{ backgroundColor: '#FAF9F6', color: 'var(--sanity-text-primary, #1C1917)' }}>All Services</option>
                 {servicesList.map((svc) => (
-                  <option key={svc} value={svc} style={{ backgroundColor: '#061834', color: '#ffffff' }}>
+                  <option key={svc} value={svc} style={{ backgroundColor: '#FAF9F6', color: 'var(--sanity-text-primary, #1C1917)' }}>
                     {svc}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#7dd3fc' }} />
+              <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#A8A29E' }} />
             </div>
 
             {/* View Mode Switcher (Jira Board, Table) */}
             <div 
               className="flex items-center p-1 rounded-xl border"
               style={{
-                backgroundColor: '#061834',
-                borderColor: '#93c5fd4d',
+                backgroundColor: '#FAF9F6',
+                borderColor: '#E7E5E4',
               }}
             >
               <button
@@ -265,15 +265,15 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 style={
                   viewMode === 'kanban'
                     ? {
-                        backgroundColor: '#2563eb',
-                        color: '#ffffff',
-                        borderColor: '#60a5fa4d',
+                        backgroundColor: '#E02126',
+                        color: 'var(--sanity-text-primary, #1C1917)',
+                        borderColor: '#FECACA',
                         fontWeight: 600,
                         boxShadow: '0 4px 12px #1e3a8a80',
                       }
                     : {
                         backgroundColor: 'transparent',
-                        color: '#bae6fd',
+                        color: '#78716C',
                         borderColor: 'transparent',
                       }
                 }
@@ -288,15 +288,15 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 style={
                   viewMode === 'table'
                     ? {
-                        backgroundColor: '#2563eb',
-                        color: '#ffffff',
-                        borderColor: '#60a5fa4d',
+                        backgroundColor: '#E02126',
+                        color: 'var(--sanity-text-primary, #1C1917)',
+                        borderColor: '#FECACA',
                         fontWeight: 600,
                         boxShadow: '0 4px 12px #1e3a8a80',
                       }
                     : {
                         backgroundColor: 'transparent',
-                        color: '#bae6fd',
+                        color: '#78716C',
                         borderColor: 'transparent',
                       }
                 }
@@ -314,13 +314,13 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
         <div 
           className="rounded-2xl p-6 sm:p-8 border space-y-4 animate-pulse backdrop-blur-md"
           style={{
-            backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
-            borderColor: 'var(--sanity-card-border, #93c5fd33)',
+            backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+            borderColor: 'var(--sanity-card-border, #E7E5E4)',
           }}
         >
-          <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: '#93c5fd1a' }}>
-            <div className="h-5 rounded w-44" style={{ backgroundColor: '#93c5fd26' }} />
-            <div className="h-5 rounded w-20" style={{ backgroundColor: '#93c5fd26' }} />
+          <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: '#F5F5F4' }}>
+            <div className="h-5 rounded w-44" style={{ backgroundColor: '#E7E5E4' }} />
+            <div className="h-5 rounded w-20" style={{ backgroundColor: '#E7E5E4' }} />
           </div>
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
@@ -328,18 +328,18 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 key={i} 
                 className="h-16 border rounded-xl flex items-center justify-between px-4"
                 style={{
-                  backgroundColor: '#081d394d',
-                  borderColor: '#93c5fd26',
+                  backgroundColor: '#F5F5F44D',
+                  borderColor: '#E7E5E4',
                 }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: '#93c5fd26' }} />
+                  <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: '#E7E5E4' }} />
                   <div className="space-y-1.5">
-                    <div className="h-3.5 rounded w-28" style={{ backgroundColor: '#93c5fd26' }} />
-                    <div className="h-2.5 rounded w-36" style={{ backgroundColor: '#93c5fd1a' }} />
+                    <div className="h-3.5 rounded w-28" style={{ backgroundColor: '#E7E5E4' }} />
+                    <div className="h-2.5 rounded w-36" style={{ backgroundColor: '#F5F5F4' }} />
                   </div>
                 </div>
-                <div className="h-6 rounded-full w-20" style={{ backgroundColor: '#93c5fd26' }} />
+                <div className="h-6 rounded-full w-20" style={{ backgroundColor: '#E7E5E4' }} />
               </div>
             ))}
           </div>
@@ -350,25 +350,25 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           <div 
             className="rounded-2xl p-10 sm:p-16 text-center border space-y-4 max-w-xl mx-auto my-6 backdrop-blur-md"
             style={{
-              backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
-              borderColor: 'var(--sanity-card-border, #93c5fd40)',
-              boxShadow: '0 10px 30px #040f1eb3',
+              backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+              borderColor: 'var(--sanity-card-border, #E7E5E4)',
+              boxShadow: '0 10px 30px #1C191715',
             }}
           >
             <div 
               className="w-16 h-16 rounded-3xl border flex items-center justify-center mx-auto shadow-xl"
               style={{
-                backgroundColor: '#0284c733',
-                borderColor: '#38bdf84d',
-                color: '#38bdf8',
-                boxShadow: '0 10px 25px #02061766',
+                backgroundColor: '#FEE2E2',
+                borderColor: '#FECACA',
+                color: '#E02126',
+                boxShadow: '0 10px 25px #1C191722',
               }}
             >
-              <Inbox className="w-8 h-8" style={{ color: '#38bdf8' }} />
+              <Inbox className="w-8 h-8" style={{ color: '#E02126' }} />
             </div>
             <div className="space-y-1.5">
-              <h3 className="text-lg font-bold tracking-tight" style={{ color: '#ffffff' }}>No Service Requests Yet</h3>
-              <p className="text-xs max-w-md mx-auto leading-relaxed" style={{ color: '#bae6fdcc' }}>
+              <h3 className="text-lg font-bold tracking-tight" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>No Service Requests Yet</h3>
+              <p className="text-xs max-w-md mx-auto leading-relaxed" style={{ color: '#78716C' }}>
                 There are currently no customer inquiries. When visitors submit the inquiry form on the website, incoming requests will appear here in real time.
               </p>
             </div>
@@ -378,22 +378,22 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           <div 
             className="rounded-2xl p-8 sm:p-12 text-center border space-y-3 max-w-md mx-auto my-6 backdrop-blur-md"
             style={{
-              backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
-              borderColor: 'var(--sanity-card-border, #93c5fd40)',
+              backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+              borderColor: 'var(--sanity-card-border, #E7E5E4)',
             }}
           >
             <div 
               className="w-12 h-12 rounded-2xl border flex items-center justify-center mx-auto"
               style={{
-                backgroundColor: '#081d3966',
-                borderColor: '#93c5fd40',
-                color: '#7dd3fc',
+                backgroundColor: '#F5F5F466',
+                borderColor: '#E7E5E4',
+                color: '#A8A29E',
               }}
             >
-              <Search className="w-5 h-5" style={{ color: '#7dd3fc' }} />
+              <Search className="w-5 h-5" style={{ color: '#A8A29E' }} />
             </div>
-            <h3 className="text-base font-semibold" style={{ color: '#ffffff' }}>No Matching Inquiries Found</h3>
-            <p className="text-xs max-w-sm mx-auto" style={{ color: '#bae6fdcc' }}>
+            <h3 className="text-base font-semibold" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>No Matching Inquiries Found</h3>
+            <p className="text-xs max-w-sm mx-auto" style={{ color: '#78716C' }}>
               No inquiries match your current filters {searchTerm ? `for "${searchTerm}"` : ''}. Try resetting your search or category filter.
             </p>
             <button
@@ -404,7 +404,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
               }}
               className="px-3.5 py-1.5 rounded-xl text-xs text-white font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5 mt-2 shadow-md"
               style={{
-                backgroundColor: '#2563eb',
+                backgroundColor: '#E02126',
                 boxShadow: '0 4px 12px #02061780',
               }}
             >
@@ -426,9 +426,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
         <div 
           className="rounded-2xl border overflow-hidden backdrop-blur-md"
           style={{
-            backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
-            borderColor: 'var(--sanity-card-border, #93c5fd40)',
-            boxShadow: '0 10px 30px #040f1eb3',
+            backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+            borderColor: 'var(--sanity-card-border, #E7E5E4)',
+            boxShadow: '0 10px 30px #1C191715',
           }}
         >
           <div className="overflow-x-auto">
@@ -437,9 +437,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 <tr 
                   className="border-b text-[11px] font-semibold uppercase tracking-wider"
                   style={{
-                    backgroundColor: '#061834e6',
-                    borderColor: '#93c5fd33',
-                    color: '#bae6fdcc',
+                    backgroundColor: '#FAF9F6e6',
+                    borderColor: '#E7E5E4',
+                    color: '#78716C',
                   }}
                 >
                   <th className="py-3.5 px-4">User Details</th>
@@ -450,7 +450,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                   <th className="py-3.5 px-4 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y text-xs" style={{ borderColor: '#93c5fd26' }}>
+              <tbody className="divide-y text-xs" style={{ borderColor: '#E7E5E4' }}>
                 {sortedRequests.map((req) => {
                   const clientName = req.name || `${req.firstName} ${req.lastName}`.trim() || 'Client';
                   const initials = clientName
@@ -464,27 +464,27 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                     <tr 
                       key={req.id} 
                       onClick={() => onSelectRequest(req)}
-                      className="hover:bg-[#2563eb1a] cursor-pointer transition-colors group"
-                      style={{ borderBottomColor: '#93c5fd26' }}
+                      className="hover:bg-[#E021261A] cursor-pointer transition-colors group"
+                      style={{ borderBottomColor: '#E7E5E4' }}
                     >
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2.5">
                           <div 
                             className="w-7 h-7 rounded-lg border flex items-center justify-center font-bold text-[11px] shrink-0"
                             style={{
-                              backgroundColor: '#0284c733',
-                              borderColor: '#38bdf859',
-                              color: '#bae6fd',
+                              backgroundColor: '#FEE2E2',
+                              borderColor: '#E0212633',
+                              color: '#78716C',
                             }}
                           >
                             {initials}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold transition-colors group-hover:text-[#38bdf8]" style={{ color: '#ffffff' }}>
+                            <p className="font-semibold transition-colors group-hover:text-[#E02126]" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>
                               {clientName}
                             </p>
-                            <p className="text-[11px] truncate flex items-center gap-1" style={{ color: '#bae6fdbf' }}>
-                              <Mail className="w-3 h-3 shrink-0" style={{ color: '#38bdf8b3' }} />
+                            <p className="text-[11px] truncate flex items-center gap-1" style={{ color: '#78716C' }}>
+                              <Mail className="w-3 h-3 shrink-0" style={{ color: '#E02126b3' }} />
                               {req.email}
                             </p>
                           </div>
@@ -495,9 +495,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                         <span 
                           className="px-2.5 py-0.5 rounded-full text-[11px] font-medium border"
                           style={{
-                            backgroundColor: '#081d3980',
-                            borderColor: '#93c5fd4d',
-                            color: '#bae6fd',
+                            backgroundColor: '#F5F5F480',
+                            borderColor: '#E7E5E4',
+                            color: '#78716C',
                           }}
                         >
                           {req.service}
@@ -523,9 +523,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                         />
                       </td>
 
-                      <td className="py-3.5 px-4 whitespace-nowrap text-[11px]" style={{ color: '#bae6fdb3' }}>
+                      <td className="py-3.5 px-4 whitespace-nowrap text-[11px]" style={{ color: '#A8A29E' }}>
                         <span className="flex items-center gap-1.5">
-                          <Calendar className="w-3 h-3 shrink-0" style={{ color: '#38bdf8b3' }} />
+                          <Calendar className="w-3 h-3 shrink-0" style={{ color: '#E02126b3' }} />
                           {new Date(req.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                         </span>
                       </td>
@@ -540,9 +540,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                             onClick={() => onSelectRequest(req)}
                             className="px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all inline-flex items-center gap-1 cursor-pointer hover:text-white"
                             style={{
-                              color: '#7dd3fc',
-                              borderColor: '#93c5fd40',
-                              backgroundColor: '#0284c71a',
+                              color: '#A8A29E',
+                              borderColor: '#E7E5E4',
+                              backgroundColor: '#FEE2E2',
                             }}
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -564,7 +564,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                               }}
                               title="Soft delete inquiry"
                               className="p-1 rounded-lg transition-colors cursor-pointer hover:bg-[#f43f5e33]"
-                              style={{ color: '#bae6fd80' }}
+                              style={{ color: '#78716C80' }}
                             >
                               <Trash2 className="w-3.5 h-3.5 hover:text-[#f43f5e]" />
                             </button>

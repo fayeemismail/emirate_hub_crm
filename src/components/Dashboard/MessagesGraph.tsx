@@ -1,23 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  TrendingUp, 
-  TrendingDown,
-  Calendar, 
-  Layers, 
-  GitCommit, 
-  BarChart3, 
-  Filter,
-  Loader2
-} from 'lucide-react';
-import { 
-  MonthlyTrendsResponse, 
-  ServiceAnalyticsResponse, 
-  FunnelAnalyticsResponse, 
-  OverviewKpi 
+import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import {
+  MonthlyTrendsResponse,
+  ServiceAnalyticsResponse,
+  FunnelAnalyticsResponse,
+  OverviewKpi,
 } from '../../types';
 import { analyticsApi } from '../../lib/api';
+import { CustomSelect } from '../ui/CustomSelect';
 
 interface MessagesGraphProps {
   monthlyTrends?: MonthlyTrendsResponse | null;
@@ -27,28 +19,28 @@ interface MessagesGraphProps {
   isLoading?: boolean;
 }
 
+const TABS = [
+  { id: 'monthly' as const, label: 'Trends' },
+  { id: 'funnel' as const, label: 'Pipeline' },
+  { id: 'services' as const, label: 'Services' },
+];
+
 export const MessagesGraph: React.FC<MessagesGraphProps> = ({
   monthlyTrends: initialMonthlyTrends,
   serviceAnalytics,
   funnelAnalytics,
   overviewKpi,
 }) => {
-  // Chart Display Mode
   const [activeTab, setActiveTab] = useState<'monthly' | 'funnel' | 'services'>('monthly');
-
-  // Year and Service filter state
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedService, setSelectedService] = useState<string>('all');
-
-  // Local state for trends
   const [currentTrends, setCurrentTrends] = useState<MonthlyTrendsResponse | null>(
     initialMonthlyTrends || null
   );
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Synchronize when initialMonthlyTrends prop arrives or updates
   useEffect(() => {
     if (initialMonthlyTrends) {
       if (selectedYear === currentYear && selectedService === 'all') {
@@ -58,7 +50,6 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     }
   }, [initialMonthlyTrends, selectedYear, selectedService, currentYear]);
 
-  // Handler to fetch trends when user actively changes year
   const handleYearChange = async (year: number) => {
     setSelectedYear(year);
     setIsFilterLoading(true);
@@ -67,9 +58,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
         year,
         service: selectedService !== 'all' ? selectedService : undefined,
       });
-      if (res.data) {
-        setCurrentTrends(res.data);
-      }
+      if (res.data) setCurrentTrends(res.data);
     } catch (err) {
       console.error('Failed to load filtered monthly trends:', err);
     } finally {
@@ -77,7 +66,6 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     }
   };
 
-  // Handler to fetch trends when user actively changes service
   const handleServiceChange = async (service: string) => {
     setSelectedService(service);
     setIsFilterLoading(true);
@@ -86,9 +74,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
         year: selectedYear,
         service: service !== 'all' ? service : undefined,
       });
-      if (res.data) {
-        setCurrentTrends(res.data);
-      }
+      if (res.data) setCurrentTrends(res.data);
     } catch (err) {
       console.error('Failed to load filtered monthly trends:', err);
     } finally {
@@ -96,12 +82,10 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     }
   };
 
-  // 12-month data array from backend trends
   const trendsData = useMemo(() => {
     if (currentTrends?.trends && currentTrends.trends.length > 0) {
       return currentTrends.trends;
     }
-    // Zero-filled fallback for all 12 calendar months
     const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return MONTHS.map((m, idx) => ({
       month: `${selectedYear}-${String(idx + 1).padStart(2, '0')}`,
@@ -118,15 +102,13 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     }));
   }, [currentTrends, selectedYear]);
 
-  // Metric Computations for Monthly View
   const totalYearVolume = currentTrends?.totalYearLeads ?? trendsData.reduce((acc, t) => acc + t.totalLeads, 0);
   const maxVal = Math.max(...trendsData.map((d) => d.totalLeads), 5);
 
-  // SVG Chart Geometry
   const svgWidth = 720;
-  const svgHeight = 220;
-  const paddingX = 35;
-  const paddingY = 30;
+  const svgHeight = 200;
+  const paddingX = 28;
+  const paddingY = 24;
 
   const points = trendsData.map((d, i) => {
     const val = d.totalLeads;
@@ -139,602 +121,380 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     return i === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`;
   }, '');
 
-  const areaD = `${pathD} L ${points[points.length - 1].x} ${svgHeight - paddingY} L ${points[0].x} ${svgHeight - paddingY} Z`;
+  const areaD =
+    points.length > 0
+      ? `${pathD} L ${points[points.length - 1].x} ${svgHeight - paddingY} L ${points[0].x} ${svgHeight - paddingY} Z`
+      : '';
 
-  // Get active services list from backend service analytics for dynamic filter tabs
+  const peakMonth = useMemo(() => {
+    if (!trendsData.length) return null;
+    return trendsData.reduce((best, cur) =>
+      cur.totalLeads > best.totalLeads ? cur : best
+    );
+  }, [trendsData]);
+
   const availableServices = useMemo(() => {
     if (!serviceAnalytics?.services) return [];
     return serviceAnalytics.services.map((s) => s.service);
   }, [serviceAnalytics]);
 
-  // Overall MoM growth percentage
   const momGrowth = overviewKpi?.momGrowthPercentage ?? null;
 
+  const yearOptions = useMemo(
+    () =>
+      [currentYear, currentYear - 1, currentYear - 2].map((yr) => ({
+        value: String(yr),
+        label: String(yr),
+      })),
+    [currentYear]
+  );
+
+  const serviceOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All services' },
+      ...availableServices.map((svc) => ({ value: svc, label: svc })),
+    ],
+    [availableServices]
+  );
+
   return (
-    <div 
-      className="rounded-2xl p-4 sm:p-6 border relative overflow-hidden space-y-5 backdrop-blur-md"
+    <div
+      className="rounded-2xl border px-5 py-5 sm:px-6 sm:py-6 space-y-6"
       style={{
-        backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
-        borderColor: 'var(--sanity-card-border, #93c5fd40)',
-        boxShadow: '0 10px 30px #040f1eb3',
+        backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+        borderColor: 'var(--sanity-card-border, #E7E5E4)',
       }}
     >
-      {/* Background Ambient Glow */}
-      <div 
-        className="absolute -top-24 -right-24 w-72 h-72 rounded-full blur-3xl pointer-events-none"
-        style={{ backgroundColor: 'var(--sanity-accent-primary, #0284c726)' }}
-      />
-
-      {/* Chart Top Header */}
-      <div 
-        className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4"
-        style={{ borderColor: 'var(--sanity-card-border, #93c5fd33)' }}
-      >
-        <div>
-          <div className="flex items-center gap-2">
-            <div 
-              className="p-2 rounded-xl border shrink-0"
-              style={{
-                backgroundColor: '#0284c733',
-                borderColor: '#38bdf84d',
-                color: '#38bdf8',
-              }}
-            >
-              <BarChart3 className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold tracking-tight" style={{ color: '#ffffff' }}>
-                Inquiry Analytics & Pipeline Trends
-              </h2>
-              <p className="text-xs" style={{ color: '#bae6fdcc' }}>
-                Inquiry volume, pipeline progression, and service demand metrics
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* View Mode Tabs */}
-        <div 
-          className="flex items-center gap-1 p-1 rounded-xl border text-xs self-start md:self-auto shrink-0 flex-wrap"
-          style={{
-            backgroundColor: '#061730',
-            borderColor: '#93c5fd40',
-          }}
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2
+          className="text-base font-semibold tracking-tight"
+          style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
         >
-          <button
-            type="button"
-            onClick={() => setActiveTab('monthly')}
-            className="px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5"
-            style={
-              activeTab === 'monthly'
-                ? {
-                    backgroundColor: '#2563eb',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                    boxShadow: '0 4px 12px #1e3a8a80',
-                  }
-                : {
-                    backgroundColor: 'transparent',
-                    color: '#bae6fd',
-                  }
-            }
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Monthly Trends</span>
-          </button>
+          Analytics
+        </h2>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('funnel')}
-            className="px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5"
-            style={
-              activeTab === 'funnel'
-                ? {
-                    backgroundColor: '#4f46e5',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                    boxShadow: '0 4px 12px #312e8180',
-                  }
-                : {
-                    backgroundColor: 'transparent',
-                    color: '#bae6fd',
-                  }
-            }
-          >
-            <GitCommit className="w-3.5 h-3.5" />
-            <span>Pipeline Funnel</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('services')}
-            className="px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5"
-            style={
-              activeTab === 'services'
-                ? {
-                    backgroundColor: '#0d9488',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                    boxShadow: '0 4px 12px #134e4a80',
-                  }
-                : {
-                    backgroundColor: 'transparent',
-                    color: '#bae6fd',
-                  }
-            }
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Service Demand</span>
-          </button>
+        <div className="flex items-center gap-1 border-b sm:border-b-0" style={{ borderColor: '#E7E5E4' }}>
+          {TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className="relative px-3 py-2 text-sm font-medium transition-colors cursor-pointer"
+                style={{
+                  color: active
+                    ? 'var(--sanity-text-primary, #1C1917)'
+                    : 'var(--sanity-text-muted, #A8A29E)',
+                }}
+              >
+                {tab.label}
+                {active && (
+                  <span
+                    className="absolute inset-x-2 -bottom-px h-0.5 rounded-full sm:bottom-0"
+                    style={{ backgroundColor: 'var(--sanity-accent-primary, #E02126)' }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* ======================================================== */}
-      {/* 1. MONTHLY INGESTION TRENDS VIEW                         */}
-      {/* ======================================================== */}
+      {/* Trends */}
       {activeTab === 'monthly' && (
-        <div className="space-y-4">
-          {/* Controls & Metrics Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            {/* KPI Summary Headline */}
-            <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: '#ffffff' }}>
-                {totalYearVolume}
-              </span>
-              <span className="text-xs font-medium" style={{ color: '#bae6fdcc' }}>
-                total inquiries in {selectedYear}
-              </span>
-
-              {momGrowth !== null && (
-                <span 
-                  className="text-xs font-bold flex items-center gap-1 px-2.5 py-1 rounded-md border ml-auto sm:ml-0"
-                  style={
-                    momGrowth >= 0
-                      ? {
-                          backgroundColor: '#10b98133',
-                          color: '#6ee7b7',
-                          borderColor: '#34d39966',
-                        }
-                      : {
-                          backgroundColor: '#f43f5e33',
-                          color: '#fca5a5',
-                          borderColor: '#fb718566',
-                        }
-                  }
+        <div>
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm" style={{ color: '#78716C' }}>
+                Monthly volume
+              </p>
+              <div className="mt-1 flex items-baseline gap-2.5">
+                <span
+                  className="text-3xl font-semibold tracking-tight tabular-nums"
+                  style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
                 >
-                  {momGrowth >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {momGrowth >= 0 ? `+${momGrowth}%` : `${momGrowth}%`} MoM
+                  {totalYearVolume}
                 </span>
+                <span className="text-sm" style={{ color: '#78716C' }}>
+                  in {selectedYear}
+                </span>
+                {momGrowth !== null && (
+                  <span
+                    className="inline-flex items-center gap-0.5 text-sm font-medium"
+                    style={{ color: momGrowth >= 0 ? '#15803D' : '#E02126' }}
+                  >
+                    {momGrowth >= 0 ? (
+                      <TrendingUp className="h-3.5 w-3.5" />
+                    ) : (
+                      <TrendingDown className="h-3.5 w-3.5" />
+                    )}
+                    {momGrowth >= 0 ? `+${momGrowth}%` : `${momGrowth}%`}
+                  </span>
+                )}
+              </div>
+              {peakMonth && peakMonth.totalLeads > 0 && (
+                <p className="mt-1.5 text-xs" style={{ color: '#A8A29E' }}>
+                  Peak{' '}
+                  <span style={{ color: '#78716C' }}>
+                    {peakMonth.monthName} · {peakMonth.totalLeads}
+                  </span>
+                </p>
               )}
             </div>
 
-            {/* Filter Dropdown & Year Selection */}
-            <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <div className="flex items-center gap-2">
               {isFilterLoading && (
-                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" style={{ color: '#38bdf8' }} />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: '#A8A29E' }} />
               )}
-
-              <span className="text-xs font-medium flex items-center gap-1" style={{ color: '#bae6fd' }}>
-                <Filter className="w-3 h-3" style={{ color: '#38bdf8' }} />
-                Service:
-              </span>
-              <select
-                value={selectedService}
-                onChange={(e) => handleServiceChange(e.target.value)}
-                aria-label="Filter Trends by Service"
-                className="border rounded-xl px-2.5 py-1 text-xs focus:outline-none cursor-pointer"
-                style={{
-                  backgroundColor: '#061834',
-                  borderColor: '#93c5fd4d',
-                  color: '#ffffff',
-                }}
-              >
-                <option value="all">All Service Categories</option>
-                {availableServices.map((svc) => (
-                  <option key={svc} value={svc}>
-                    {svc}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={selectedYear}
-                onChange={(e) => handleYearChange(Number(e.target.value))}
-                aria-label="Select Year for Analytics"
-                className="border rounded-xl px-2.5 py-1 text-xs focus:outline-none cursor-pointer font-mono"
-                style={{
-                  backgroundColor: '#061834',
-                  borderColor: '#93c5fd4d',
-                  color: '#ffffff',
-                }}
-              >
-                {[currentYear, currentYear - 1, currentYear - 2].map((yr) => (
-                  <option key={yr} value={yr}>
-                    {yr}
-                  </option>
-                ))}
-              </select>
+              {availableServices.length > 0 && (
+                <CustomSelect
+                  value={selectedService}
+                  options={serviceOptions}
+                  onChange={handleServiceChange}
+                  ariaLabel="Filter by service"
+                  minWidth={160}
+                  align="right"
+                />
+              )}
+              <CustomSelect
+                value={String(selectedYear)}
+                options={yearOptions}
+                onChange={(yr) => handleYearChange(Number(yr))}
+                ariaLabel="Select year"
+                minWidth={100}
+                align="right"
+              />
             </div>
           </div>
 
-          {/* Service Quick Filter Pills */}
-          {availableServices.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-none">
-              <button
-                type="button"
-                onClick={() => handleServiceChange('all')}
-                className="px-2.5 py-1 rounded-lg transition-all text-[11px] whitespace-nowrap cursor-pointer border"
-                style={
-                  selectedService === 'all'
-                    ? {
-                        backgroundColor: '#2563eb',
-                        color: '#ffffff',
-                        borderColor: '#60a5fa80',
-                        fontWeight: 600,
-                      }
-                    : {
-                        backgroundColor: '#071b3866',
-                        color: '#bae6fd',
-                        borderColor: '#93c5fd40',
-                      }
-                }
-              >
-                All Services
-              </button>
-              {availableServices.slice(0, 5).map((svc) => (
-                <button
-                  key={svc}
-                  type="button"
-                  onClick={() => handleServiceChange(svc)}
-                  className="px-2.5 py-1 rounded-lg transition-all text-[11px] whitespace-nowrap cursor-pointer border"
-                  style={
-                    selectedService === svc
-                      ? {
-                          backgroundColor: '#2563eb',
-                          color: '#ffffff',
-                          borderColor: '#60a5fa80',
-                          fontWeight: 600,
-                        }
-                      : {
-                          backgroundColor: '#071b3866',
-                          color: '#bae6fd',
-                          borderColor: '#93c5fd40',
-                        }
-                  }
-                >
-                  {svc}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Responsive SVG Chart Container */}
-          <div className="relative w-full overflow-x-auto scrollbar-none pt-2">
-            <div className="min-w-[580px] w-full relative">
+          <div className="relative w-full overflow-x-auto">
+            <div className="relative min-w-[520px]">
               <svg
-                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                viewBox={`0 0 ${svgWidth} ${svgHeight + 28}`}
                 className="w-full h-auto overflow-visible"
               >
                 <defs>
-                  <linearGradient id="trendsGlowGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0284c7" stopOpacity="0.45" />
-                    <stop offset="100%" stopColor="#0284c7" stopOpacity="0.0" />
-                  </linearGradient>
-                  <linearGradient id="trendsLineGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#38bdf8" />
-                    <stop offset="50%" stopColor="#60a5fa" />
-                    <stop offset="100%" stopColor="#818cf8" />
+                  <linearGradient id="trendsFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#E02126" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#E02126" stopOpacity="0.02" />
                   </linearGradient>
                 </defs>
 
-                {/* Grid Horizontal Lines */}
-                {[0, 0.25, 0.5, 0.75, 1].map((pct, idx) => {
-                  const y = paddingY + pct * (svgHeight - 2 * paddingY);
-                  const gridVal = Math.round(maxVal * (1 - pct));
-                  return (
-                    <g key={idx}>
-                      <line
-                        x1={paddingX}
-                        y1={y}
-                        x2={svgWidth - paddingX}
-                        y2={y}
-                        stroke="#93c5fd26"
-                        strokeDasharray="4 4"
-                      />
-                      <text
-                        x={paddingX - 8}
-                        y={y + 3}
-                        textAnchor="end"
-                        fontSize="9"
-                        fill="#bae6fdc0"
-                        fontFamily="monospace"
-                        fontWeight="600"
-                      >
-                        {gridVal}
-                      </text>
-                    </g>
-                  );
-                })}
+                {/* Soft baseline */}
+                <line
+                  x1={paddingX}
+                  y1={svgHeight - paddingY}
+                  x2={svgWidth - paddingX}
+                  y2={svgHeight - paddingY}
+                  stroke="#E7E5E4"
+                  strokeWidth="1"
+                />
 
-                {/* Area Fill Under Curve */}
-                <path d={areaD} fill="url(#trendsGlowGradient)" />
+                {/* Hover band */}
+                {hoveredIndex !== null && (
+                  <rect
+                    x={points[hoveredIndex].x - (svgWidth - 2 * paddingX) / trendsData.length / 2}
+                    y={paddingY - 8}
+                    width={(svgWidth - 2 * paddingX) / trendsData.length}
+                    height={svgHeight - 2 * paddingY + 16}
+                    fill="rgba(224, 33, 38, 0.06)"
+                    rx="4"
+                  />
+                )}
 
-                {/* Main Curve Line */}
+                {/* Area under curve */}
+                <path d={areaD} fill="url(#trendsFill)" />
+
+                {/* Line */}
                 <path
                   d={pathD}
                   fill="none"
-                  stroke="url(#trendsLineGradient)"
-                  strokeWidth="3.5"
+                  stroke="#E02126"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
 
-                {/* Interactive Data Points */}
-                {points.map((pt, i) => (
-                  <g key={i}>
-                    {/* Vertical Indicator Guide when Hovered */}
-                    {hoveredIndex === i && (
-                      <line
-                        x1={pt.x}
-                        y1={paddingY}
-                        x2={pt.x}
-                        y2={svgHeight - paddingY}
-                        stroke="#38bdf899"
-                        strokeDasharray="2 2"
-                      />
-                    )}
-
-                    <circle
-                      cx={pt.x}
-                      cy={pt.y}
-                      r={hoveredIndex === i ? 6.5 : 4}
-                      className="transition-all duration-150 cursor-pointer"
-                      fill="#071b36"
-                      stroke={pt.val > 0 ? '#38bdf8' : '#60a5fa'}
-                      strokeWidth="2.5"
+                {/* Points + month labels */}
+                {points.map((pt, i) => {
+                  const active = hoveredIndex === i;
+                  const isPeak = peakMonth && pt.raw.month === peakMonth.month && pt.val > 0;
+                  return (
+                    <g
+                      key={i}
+                      className="cursor-pointer"
                       onMouseEnter={() => setHoveredIndex(i)}
                       onMouseLeave={() => setHoveredIndex(null)}
-                    />
-                  </g>
-                ))}
-              </svg>
-
-              {/* Floating Tooltip with Status Breakdown from Backend */}
-              {hoveredIndex !== null && (
-                <div
-                  className="absolute top-0 left-1/2 -translate-x-1/2 rounded-xl p-3 shadow-2xl z-30 pointer-events-none text-xs flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 animate-in fade-in duration-100 backdrop-blur-md border"
-                  style={{
-                    backgroundColor: '#061730f2',
-                    borderColor: '#38bdf866',
-                    boxShadow: '0 10px 25px #020617cc',
-                  }}
-                >
-                  <div>
-                    <p className="font-medium" style={{ color: '#bae6fd' }}>
-                      {points[hoveredIndex].raw.monthName} {selectedYear}
-                    </p>
-                    <p className="font-extrabold text-sm flex items-center gap-1.5" style={{ color: '#ffffff' }}>
-                      <span>{points[hoveredIndex].val} Inquiries</span>
-                      {points[hoveredIndex].raw.winRatePercentage > 0 && (
-                        <span 
-                          className="text-[10px] font-bold px-1.5 py-0.5 rounded border"
-                          style={{
-                            color: '#6ee7b7',
-                            backgroundColor: '#10b98133',
-                            borderColor: '#34d3994d',
-                          }}
+                    >
+                      {/* Invisible hit area */}
+                      <rect
+                        x={pt.x - 16}
+                        y={paddingY - 8}
+                        width={32}
+                        height={svgHeight - 2 * paddingY + 40}
+                        fill="transparent"
+                      />
+                      <circle
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={active ? 5.5 : isPeak ? 4.5 : 3.5}
+                        fill={active || isPeak ? '#E02126' : '#FFFFFF'}
+                        stroke="#E02126"
+                        strokeWidth="2"
+                      />
+                      {active && (
+                        <text
+                          x={pt.x}
+                          y={pt.y - 14}
+                          textAnchor="middle"
+                          fontSize="11"
+                          fontWeight="600"
+                          fill="#1C1917"
                         >
-                          {points[hoveredIndex].raw.winRatePercentage}% Won
-                        </span>
+                          {pt.val}
+                        </text>
                       )}
-                    </p>
-                  </div>
-
-                  <div 
-                    className="border-t sm:border-t-0 sm:border-l pt-2 sm:pt-0 sm:pl-3 text-[11px] grid grid-cols-2 gap-x-3 gap-y-1"
-                    style={{
-                      borderColor: '#93c5fd33',
-                      color: '#e0f2fee6',
-                    }}
-                  >
-                    <div>New: <span className="font-bold" style={{ color: '#38bdf8' }}>{(points[hoveredIndex].raw.statusBreakdown as Record<string, number>)?.['new'] ?? 0}</span></div>
-                    <div>In Review: <span className="font-bold" style={{ color: '#fbbf24' }}>{(points[hoveredIndex].raw.statusBreakdown as Record<string, number>)?.['in_review'] ?? 0}</span></div>
-                    <div>Won: <span className="font-bold" style={{ color: '#34d399' }}>{points[hoveredIndex].raw.wonLeads}</span></div>
-                    <div>In Progress: <span className="font-bold" style={{ color: '#818cf8' }}>{points[hoveredIndex].raw.inProgressLeads}</span></div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* X-Axis Month Labels */}
-            <div 
-              className="flex justify-between px-2 sm:px-6 pt-2 text-[10px] sm:text-[11px] font-semibold border-t min-w-[580px]"
-              style={{
-                borderColor: '#93c5fd33',
-                color: '#bae6fdcc',
-              }}
-            >
-              {trendsData.map((d, i) => (
-                <span 
-                  key={i} 
-                  className="text-center transition-colors"
-                  style={{
-                    color: hoveredIndex === i ? '#38bdf8' : '#bae6fdcc',
-                    fontWeight: hoveredIndex === i ? 700 : 600,
-                  }}
-                >
-                  {d.monthName.slice(0, 3)}
-                </span>
-              ))}
+                      <text
+                        x={pt.x}
+                        y={svgHeight + 12}
+                        textAnchor="middle"
+                        fontSize="11"
+                        fontWeight={active ? '600' : '400'}
+                        fill={active ? '#1C1917' : '#A8A29E'}
+                      >
+                        {pt.label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
             </div>
           </div>
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* 2. PIPELINE FUNNEL VIEW                                  */}
-      {/* ======================================================== */}
+      {/* Pipeline — tapering funnel */}
       {activeTab === 'funnel' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-medium" style={{ color: '#bae6fd' }}>
-              Pipeline Stage Progression & Dwell Time ({funnelAnalytics?.totalLeadsInFunnel ?? 0} total leads)
-            </span>
-            <span className="font-semibold" style={{ color: '#38bdf8' }}>
-              Live Funnel Conversion
-            </span>
+        <div>
+          <div className="mb-6 flex items-baseline justify-between gap-3">
+            <p className="text-sm" style={{ color: '#78716C' }}>
+              Stage progression
+            </p>
+            <p className="text-sm tabular-nums font-medium" style={{ color: '#1C1917' }}>
+              {funnelAnalytics?.totalLeadsInFunnel ?? 0} in pipeline
+            </p>
           </div>
 
-          <div className="space-y-2.5">
-            {funnelAnalytics?.stages && funnelAnalytics.stages.length > 0 ? (
-              funnelAnalytics.stages.map((stage) => {
-                const pct = stage.percentageOfTotal || 0;
+          {funnelAnalytics?.stages && funnelAnalytics.stages.length > 0 ? (
+            <div className="mx-auto flex w-full max-w-md flex-col items-center gap-1.5">
+              {funnelAnalytics.stages.map((stage, index) => {
+                const stageCount = funnelAnalytics.stages.length;
+                // Narrow from ~100% at top to ~42% at bottom
+                const widthPct = 100 - (index / Math.max(stageCount - 1, 1)) * 58;
+                const opacity = 0.28 + (1 - index / Math.max(stageCount - 1, 1)) * 0.72;
+
                 return (
                   <div
                     key={stage.slug}
-                    className="p-3 rounded-xl border transition-all space-y-2"
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 transition-all"
                     style={{
-                      backgroundColor: '#07162dbf',
-                      borderColor: '#93c5fd33',
+                      width: `${widthPct}%`,
+                      backgroundColor: `rgba(224, 33, 38, ${opacity.toFixed(2)})`,
+                      clipPath:
+                        index === stageCount - 1
+                          ? 'polygon(8% 0, 92% 0, 100% 100%, 0 100%)'
+                          : 'polygon(0 0, 100% 0, 96% 100%, 4% 100%)',
+                      color: opacity > 0.55 ? '#FFFFFF' : '#1C1917',
                     }}
                   >
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
-                          style={{ backgroundColor: stage.color || '#38bdf8' }}
-                        />
-                        <span className="font-semibold" style={{ color: '#ffffff' }}>{stage.title}</span>
-                      </div>
-
-                      <div className="flex items-center gap-3 font-mono">
-                        <span className="font-bold" style={{ color: '#ffffff' }}>{stage.leadCount} leads</span>
-                        <span className="font-semibold" style={{ color: '#38bdf8' }}>{pct}%</span>
-                      </div>
-                    </div>
-
-                    {/* Funnel Stage Bar */}
-                    <div 
-                      className="w-full h-2 rounded-full border overflow-hidden"
-                      style={{
-                        backgroundColor: '#061730',
-                        borderColor: '#93c5fd33',
-                      }}
-                    >
-                      <div
-                        className="h-full rounded-full transition-all duration-300"
-                        style={{
-                          width: `${Math.max(pct, 2)}%`,
-                          backgroundColor: stage.color || '#38bdf8',
-                        }}
-                      />
-                    </div>
-
-                    {/* Drop-off rate & dwell time */}
-                    <div className="flex items-center justify-between text-[10px] pt-0.5" style={{ color: '#bae6fdcc' }}>
-                      <span>Drop-off: {stage.dropOffRatePercentage}%</span>
-                      <span>Avg Dwell: {stage.avgDwellTimeHours > 0 ? `${stage.avgDwellTimeHours} hrs` : 'Immediate'}</span>
-                    </div>
+                    <span className="min-w-0 truncate text-sm font-medium">{stage.title}</span>
+                    <span className="shrink-0 text-sm font-semibold tabular-nums">
+                      {stage.leadCount}
+                      <span className="ml-1.5 text-[11px] font-normal opacity-80">
+                        {stage.percentageOfTotal}%
+                      </span>
+                    </span>
                   </div>
                 );
-              })
-            ) : (
-              <div 
-                className="p-8 text-center text-xs rounded-xl border"
-                style={{
-                  backgroundColor: '#07162d99',
-                  borderColor: '#93c5fd26',
-                  color: '#bae6fdb3',
-                }}
-              >
-                No pipeline funnel metrics available yet.
-              </div>
-            )}
-          </div>
+              })}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-sm" style={{ color: '#A8A29E' }}>
+              No pipeline data yet. Run <code className="text-xs">npm run seed</code> in crm-be.
+            </p>
+          )}
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* 3. SERVICE DEMAND VIEW                                   */}
-      {/* ======================================================== */}
+      {/* Services — ranked table, no bars */}
       {activeTab === 'services' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-medium" style={{ color: '#bae6fd' }}>
-              Inquiry Share & Performance by Service Offering
-            </span>
-            <span className="font-semibold" style={{ color: '#34d399' }}>
-              Demand Distribution
-            </span>
+        <div>
+          <div className="mb-5 flex items-baseline justify-between gap-3">
+            <p className="text-sm" style={{ color: '#78716C' }}>
+              Ranked by demand
+            </p>
+            <p className="text-sm tabular-nums font-medium" style={{ color: '#1C1917' }}>
+              {serviceAnalytics?.totalInquiries ?? 0} inquiries
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {serviceAnalytics?.services && serviceAnalytics.services.length > 0 ? (
-              serviceAnalytics.services.map((svc) => (
-                <div
-                  key={svc.service}
-                  className="p-3.5 rounded-xl border transition-all space-y-2.5"
-                  style={{
-                    backgroundColor: '#07162dbf',
-                    borderColor: '#93c5fd33',
-                  }}
-                >
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold truncate max-w-[200px]" style={{ color: '#ffffff' }}>
-                      {svc.service}
-                    </span>
-                    <span className="font-bold font-mono" style={{ color: '#34d399' }}>
-                      {svc.sharePercentage}% share
-                    </span>
-                  </div>
-
-                  {/* Share Progress Bar */}
-                  <div 
-                    className="w-full h-2 rounded-full border overflow-hidden"
-                    style={{
-                      backgroundColor: '#061730',
-                      borderColor: '#93c5fd33',
-                    }}
-                  >
-                    <div
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${Math.max(svc.sharePercentage, 3)}%`,
-                        background: 'linear-gradient(90deg, #38bdf8 0%, #34d399 100%)',
-                      }}
-                    />
-                  </div>
-
-                  {/* Volume Metrics */}
-                  <div 
-                    className="flex items-center justify-between text-[11px] pt-1 border-t"
-                    style={{
-                      borderColor: '#93c5fd26',
-                      color: '#bae6fdcc',
-                    }}
-                  >
-                    <span>{svc.totalInquiries} total inquiries</span>
-                    <span className="flex items-center gap-2">
-                      <span className="font-semibold" style={{ color: '#34d399' }}>{svc.wonCount} won</span>
-                      <span>•</span>
-                      <span className="font-semibold" style={{ color: '#bae6fd' }}>{svc.inProgressCount} active</span>
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div 
-                className="col-span-2 p-8 text-center text-xs rounded-xl border"
-                style={{
-                  backgroundColor: '#07162d99',
-                  borderColor: '#93c5fd26',
-                  color: '#bae6fdb3',
-                }}
+          {serviceAnalytics?.services && serviceAnalytics.services.length > 0 ? (
+            <div>
+              <div
+                className="mb-2 grid grid-cols-[2rem_1fr_4.5rem_3.5rem] gap-2 px-1 text-[11px] font-medium uppercase tracking-wide"
+                style={{ color: '#A8A29E' }}
               >
-                No service offering breakdown available yet.
+                <span>#</span>
+                <span>Service</span>
+                <span className="text-right">Leads</span>
+                <span className="text-right">Share</span>
               </div>
-            )}
-          </div>
+              <ul className="divide-y" style={{ borderColor: '#E7E5E4' }}>
+                {[...serviceAnalytics.services]
+                  .sort((a, b) => b.totalInquiries - a.totalInquiries)
+                  .map((svc, index) => (
+                    <li
+                      key={svc.service}
+                      className="grid grid-cols-[2rem_1fr_4.5rem_3.5rem] items-center gap-2 py-3 first:pt-2"
+                      style={{ borderColor: '#E7E5E4' }}
+                    >
+                      <span
+                        className="text-sm font-semibold tabular-nums"
+                        style={{
+                          color: index === 0 ? 'var(--sanity-accent-primary, #E02126)' : '#A8A29E',
+                        }}
+                      >
+                        {index + 1}
+                      </span>
+                      <span
+                        className="min-w-0 truncate text-sm font-medium"
+                        style={{ color: '#1C1917' }}
+                      >
+                        {svc.service}
+                      </span>
+                      <span
+                        className="text-right text-sm font-semibold tabular-nums"
+                        style={{ color: '#1C1917' }}
+                      >
+                        {svc.totalInquiries}
+                      </span>
+                      <span
+                        className="text-right text-sm tabular-nums"
+                        style={{ color: '#78716C' }}
+                      >
+                        {svc.sharePercentage}%
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="py-8 text-center text-sm" style={{ color: '#A8A29E' }}>
+              No service breakdown yet. Run <code className="text-xs">npm run seed</code> in crm-be.
+            </p>
+          )}
         </div>
       )}
     </div>

@@ -40,10 +40,10 @@ const PRIORITIES: {
   {
     id: 'Low',
     label: 'Low Priority',
-    dotColor: '#38bdf8',
-    activeBg: '#0284c726',
-    activeText: '#bae6fd',
-    activeBorder: '#38bdf84d',
+    dotColor: '#E02126',
+    activeBg: '#FEE2E2',
+    activeText: '#78716C',
+    activeBorder: '#FECACA',
   },
 ];
 
@@ -145,16 +145,16 @@ export const PrioritySelector: React.FC<PrioritySelectorProps> = ({
             ${align === 'right' ? 'right-0' : 'left-0'}
           `}
           style={{
-            backgroundColor: '#081e3af5',
-            borderColor: '#93c5fd40',
-            boxShadow: '0 20px 40px #020617cc',
+            backgroundColor: '#FFFFFFF5',
+            borderColor: '#E7E5E4',
+            boxShadow: '0 20px 40px #1C191733',
           }}
         >
           <div 
             className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider border-b mb-1"
             style={{
-              borderColor: '#93c5fd26',
-              color: '#7dd3fc',
+              borderColor: '#E7E5E4',
+              color: '#A8A29E',
             }}
           >
             Set Priority
@@ -180,7 +180,7 @@ export const PrioritySelector: React.FC<PrioritySelectorProps> = ({
                         }
                       : {
                           backgroundColor: 'transparent',
-                          color: '#bae6fde6',
+                          color: '#78716C',
                           borderColor: 'transparent',
                         }
                   }

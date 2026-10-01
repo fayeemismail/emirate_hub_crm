@@ -37,9 +37,9 @@ const COLUMNS: { id: RequestStatus; title: string; color: string; bg: string; bo
   {
     id: 'In Progress',
     title: 'In Progress',
-    color: '#38bdf8',
-    bg: '#0284c726',
-    border: '#38bdf84d',
+    color: '#E02126',
+    bg: '#FEE2E2',
+    border: '#FECACA',
     icon: Clock,
   },
   {
@@ -116,20 +116,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         className="p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm"
         style={{
           backgroundColor: '#0c244799',
-          borderColor: '#93c5fd40',
-          color: '#bae6fd',
+          borderColor: '#E7E5E4',
+          color: '#78716C',
         }}
       >
         <span className="flex items-center gap-2">
-          <GripVertical className="w-4 h-4 shrink-0" style={{ color: '#38bdf8' }} />
+          <GripVertical className="w-4 h-4 shrink-0" style={{ color: '#E02126' }} />
           <span><strong>Jira Drag & Drop Board:</strong> Drag cards between columns on desktop, or swipe across columns on mobile. Leads are sorted with High Priority on top.</span>
         </span>
         <span 
           className="text-[10px] font-mono font-bold border px-2 py-0.5 rounded uppercase self-start sm:self-auto shrink-0"
           style={{
-            backgroundColor: '#0284c733',
-            borderColor: '#38bdf84d',
-            color: '#bae6fd',
+            backgroundColor: '#FEE2E2',
+            borderColor: '#FECACA',
+            color: '#78716C',
           }}
         >
           Priority Sorted
@@ -153,9 +153,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               onDrop={(e) => handleDrop(e, column.id)}
               className="rounded-2xl p-4 border transition-all duration-200 min-h-120 sm:min-h-130 flex flex-col justify-between w-[85vw] sm:w-[320px] md:w-auto shrink-0 snap-center backdrop-blur-md"
               style={{
-                backgroundColor: isOver ? 'var(--sanity-header-bg, #0c2e59e6)' : 'var(--sanity-card-bg, #0d284ce6)',
-                borderColor: isOver ? 'var(--sanity-accent-sky, #38bdf8)' : 'var(--sanity-card-border, #93c5fd40)',
-                boxShadow: isOver ? '0 0 25px #0284c766' : '0 10px 30px #040f1eb3',
+                backgroundColor: isOver ? 'var(--sanity-header-bg, #FFFFFF)' : 'var(--sanity-card-bg, #FFFFFF)',
+                borderColor: isOver ? 'var(--sanity-accent-sky, #E02126)' : 'var(--sanity-card-border, #E7E5E4)',
+                boxShadow: isOver ? '0 0 25px #0284c766' : '0 10px 30px #1C191715',
               }}
             >
               <div>
@@ -169,7 +169,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <Icon className="w-4 h-4" style={{ color: column.color }} />
-                    <h3 className="text-xs font-bold tracking-tight uppercase" style={{ color: '#ffffff' }}>
+                    <h3 className="text-xs font-bold tracking-tight uppercase" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>
                       {column.title}
                     </h3>
                   </div>
@@ -190,9 +190,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   <div 
                     className="p-8 text-center border-2 border-dashed rounded-xl mb-3 text-xs font-medium animate-pulse"
                     style={{
-                      borderColor: '#38bdf899',
-                      backgroundColor: '#0284c726',
-                      color: '#bae6fd',
+                      borderColor: '#E0212666',
+                      backgroundColor: '#FEE2E2',
+                      color: '#78716C',
                     }}
                   >
                     Drop Request Here to set as "{column.title}"
@@ -214,17 +214,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         onClick={() => onSelectRequest(req)}
                         className="rounded-xl p-3.5 sm:p-4 border transition-all cursor-grab active:cursor-grabbing group relative space-y-3"
                         style={{
-                          backgroundColor: 'var(--sanity-inner-card-bg, #07162dbf)',
-                          borderColor: isBeingDragged ? 'var(--sanity-accent-sky, #38bdf8)' : 'var(--sanity-card-border, #93c5fd33)',
+                          backgroundColor: 'var(--sanity-inner-card-bg, #FAF9F6)',
+                          borderColor: isBeingDragged ? 'var(--sanity-accent-sky, #E02126)' : 'var(--sanity-card-border, #E7E5E4)',
                           opacity: isBeingDragged ? 0.4 : 1,
-                          boxShadow: '0 4px 12px #02061766',
+                          boxShadow: '0 4px 12px #1C191722',
                         }}
                       >
                         {/* Drag Handle, Priority Selector & Soft Delete */}
                         <div className="flex items-center justify-between gap-2 text-xs">
-                          <div className="flex items-center gap-1.5" style={{ color: '#7dd3fccc' }}>
-                            <GripVertical className="w-3.5 h-3.5" style={{ color: '#38bdf899' }} />
-                            <span className="font-mono text-[10px] font-semibold" style={{ color: '#bae6fd' }}>{req.id}</span>
+                          <div className="flex items-center gap-1.5" style={{ color: '#A8A29E' }}>
+                            <GripVertical className="w-3.5 h-3.5" style={{ color: '#E0212666' }} />
+                            <span className="font-mono text-[10px] font-semibold" style={{ color: '#78716C' }}>{req.id}</span>
                           </div>
 
                           <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
@@ -261,7 +261,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                 }}
                                 title="Soft delete lead"
                                 className="p-1 rounded transition-colors cursor-pointer hover:bg-[#f43f5e33]"
-                                style={{ color: '#bae6fd80' }}
+                                style={{ color: '#78716C80' }}
                               >
                                 <Trash2 className="w-3.5 h-3.5 hover:text-[#f43f5e]" />
                               </button>
@@ -272,13 +272,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         {/* Customer Full Name & Email */}
                         <div className="space-y-1">
                           <h4 
-                            className="font-bold text-xs transition-colors flex items-center justify-between group-hover:text-[#38bdf8]"
-                            style={{ color: '#ffffff' }}
+                            className="font-bold text-xs transition-colors flex items-center justify-between group-hover:text-[#E02126]"
+                            style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
                           >
                             <span className="truncate">{clientName}</span>
                           </h4>
-                          <p className="text-[11px] flex items-center gap-1 min-w-0" style={{ color: '#bae6fdcc' }}>
-                            <Mail className="w-3 h-3 shrink-0" style={{ color: '#38bdf8b3' }} />
+                          <p className="text-[11px] flex items-center gap-1 min-w-0" style={{ color: '#78716C' }}>
+                            <Mail className="w-3 h-3 shrink-0" style={{ color: '#E02126b3' }} />
                             <span className="truncate">{req.email}</span>
                           </p>
                         </div>
@@ -287,17 +287,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         <div 
                           className="text-[11px] flex items-center gap-1 pt-1 border-t"
                           style={{
-                            borderColor: '#93c5fd26',
-                            color: '#bae6fdcc',
+                            borderColor: '#E7E5E4',
+                            color: '#78716C',
                           }}
                         >
                           {req.phone ? (
-                            <span className="font-mono font-semibold flex items-center gap-1 truncate" style={{ color: '#7dd3fc' }}>
-                              <Phone className="w-3 h-3 shrink-0" style={{ color: '#38bdf8' }} />
+                            <span className="font-mono font-semibold flex items-center gap-1 truncate" style={{ color: '#A8A29E' }}>
+                              <Phone className="w-3 h-3 shrink-0" style={{ color: '#E02126' }} />
                               {req.phone}
                             </span>
                           ) : (
-                            <span className="italic flex items-center gap-1" style={{ color: '#93c5fd80' }}>
+                            <span className="italic flex items-center gap-1" style={{ color: '#D6D3D1' }}>
                               <PhoneOff className="w-3 h-3 shrink-0" />
                               Phone not provided
                             </span>
@@ -309,9 +309,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           <span 
                             className="px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border inline-block truncate max-w-full"
                             style={{
-                              backgroundColor: '#0284c733',
-                              borderColor: '#38bdf84d',
-                              color: '#bae6fd',
+                              backgroundColor: '#FEE2E2',
+                              borderColor: '#FECACA',
+                              color: '#78716C',
                             }}
                           >
                             {req.service}
@@ -322,20 +322,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         <p 
                           className="text-xs p-2.5 rounded-lg border line-clamp-2 leading-relaxed italic"
                           style={{
-                            backgroundColor: '#061834',
-                            borderColor: '#93c5fd33',
+                            backgroundColor: '#FAF9F6',
+                            borderColor: '#E7E5E4',
                             color: '#e0f2fee6',
                           }}
                         >
-                          {req.message ? `"${req.message}"` : <span className="italic" style={{ color: '#93c5fd80' }}>No message provided</span>}
+                          {req.message ? `"${req.message}"` : <span className="italic" style={{ color: '#D6D3D1' }}>No message provided</span>}
                         </p>
 
                         {/* Mobile Quick Move Dropdown Options */}
                         <div 
                           className="pt-2 border-t flex items-center justify-between text-[10px] font-medium"
                           style={{
-                            borderColor: '#93c5fd26',
-                            color: '#bae6fdb3',
+                            borderColor: '#E7E5E4',
+                            color: '#A8A29E',
                           }}
                         >
                           <span>{new Date(req.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
@@ -354,9 +354,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                               aria-label="Move Status"
                               className="md:hidden border text-[10px] rounded px-1.5 py-0.5 focus:outline-none"
                               style={{
-                                backgroundColor: '#061834',
-                                borderColor: '#93c5fd4d',
-                                color: '#bae6fd',
+                                backgroundColor: '#FAF9F6',
+                                borderColor: '#E7E5E4',
+                                color: '#78716C',
                               }}
                             >
                               <option value="Pending">Move: Pending</option>
@@ -370,7 +370,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                 onSelectRequest(req);
                               }}
                               className="font-bold flex items-center gap-1 cursor-pointer hover:text-white"
-                              style={{ color: '#7dd3fc' }}
+                              style={{ color: '#A8A29E' }}
                             >
                               <Eye className="w-3 h-3" />
                               View

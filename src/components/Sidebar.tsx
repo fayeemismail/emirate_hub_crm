@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
   Inbox, 
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { SanitySiteSettings } from '../sanity';
+import { ConfirmModal } from './ui/ConfirmModal';
 
 interface SidebarProps {
   activeTab: 'dashboard' | 'requests';
@@ -30,9 +31,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   siteSettings,
 }) => {
   const { user, logout } = useAuth();
-  const userInitials = user?.name
-    ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-    : 'EH';
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const userInitials = user?.name?.trim()?.charAt(0)?.toUpperCase() || 'E';
 
   const navItems = [
     {
@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {isOpenMobile && (
         <div 
           className="fixed inset-0 z-40 backdrop-blur-sm lg:hidden transition-opacity duration-300"
-          style={{ backgroundColor: '#020617cc' }}
+          style={{ backgroundColor: '#1C191733' }}
           onClick={() => setIsOpenMobile(false)}
         />
       )}
@@ -67,49 +67,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ${isOpenMobile ? 'translate-x-0' : '-translate-x-full'}
         `}
         style={{
-          background: 'linear-gradient(180deg, var(--sanity-sidebar-start, #081d39) 0%, var(--sanity-sidebar-mid, #071830) 50%, var(--sanity-sidebar-end, #051224) 100%)',
-          borderColor: 'var(--sanity-sidebar-border, #93c5fd33)',
+          backgroundColor: 'var(--sanity-sidebar-start, #FFFFFF)',
+          borderColor: 'var(--sanity-sidebar-border, #E7E5E4)',
         }}
       >
         {/* Top Brand Section */}
         <div>
           <div 
-            className="h-16 px-6 flex items-center justify-between border-b backdrop-blur-md"
+            className="h-16 px-6 flex items-center justify-between border-b"
             style={{ 
-              backgroundColor: 'var(--sanity-header-bg, #081e3ab3)',
-              borderColor: 'var(--sanity-sidebar-border, #93c5fd33)',
+              backgroundColor: 'var(--sanity-header-bg, #FFFFFF)',
+              borderColor: 'var(--sanity-sidebar-border, #E7E5E4)',
             }}
           >
             <div className="flex items-center gap-3">
               <div 
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-md border"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-white border"
                 style={{
-                  background: 'linear-gradient(135deg, var(--sanity-accent-primary, #3b82f6) 0%, var(--sanity-accent-sky, #38bdf8) 100%)',
-                  borderColor: 'var(--sanity-card-border, #93c5fd4d)',
-                  boxShadow: '0 4px 14px #1e3a8a80',
+                  backgroundColor: 'var(--sanity-accent-primary, #E02126)',
+                  borderColor: 'var(--sanity-card-border, #E7E5E4)',
                 }}
               >
                 <Briefcase className="w-4 h-4 text-white" />
               </div>
-              <div className="flex flex-col">
-                <span 
-                  className="font-extrabold text-base tracking-tight flex items-center gap-1.5 uppercase font-mono"
-                  style={{ color: 'var(--sanity-text-primary, #ffffff)' }}
-                >
-                  {siteSettings?.companyName || 'emirate hub'}
-                </span>
-                <span 
-                  className="text-[9px] font-bold tracking-wider uppercase"
-                  style={{ color: 'var(--sanity-accent-sky, #7dd3fc)' }}
-                >
-                  {siteSettings?.companyTagline || 'Business Consultancy'}
-                </span>
-              </div>
+              <span 
+                className="font-extrabold text-base tracking-tight uppercase font-mono"
+                style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+              >
+                {siteSettings?.companyName || 'emirate hub'}
+              </span>
             </div>
             
             <button 
               className="lg:hidden p-1 rounded-lg transition-colors cursor-pointer"
-              style={{ color: '#bae6fd' }}
+              style={{ color: 'var(--sanity-text-secondary, #A8A29E)' }}
               onClick={() => setIsOpenMobile(false)}
               aria-label="Close Sidebar"
             >
@@ -121,7 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <nav className="p-4 space-y-1.5">
             <div 
               className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider"
-              style={{ color: '#7dd3fccc' }}
+              style={{ color: 'var(--sanity-text-muted, #78716C)' }}
             >
               Consultancy Portal
             </div>
@@ -141,15 +132,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   style={
                     isActive
                       ? {
-                          background: 'linear-gradient(90deg, var(--sanity-sidebar-active-start, #2563eb) 0%, var(--sanity-sidebar-active-end, #0284c7) 100%)',
-                          color: 'var(--sanity-btn-primary-txt, #ffffff)',
-                          borderColor: '#60a5fa66',
-                          boxShadow: '0 4px 12px #1e3a8a80',
+                          backgroundColor: 'var(--sanity-sidebar-active-start, #E02126)',
+                          color: 'var(--sanity-btn-primary-txt, #FFFFFF)',
+                          borderColor: 'transparent',
                           fontWeight: 600,
                         }
                       : {
                           backgroundColor: 'transparent',
-                          color: 'var(--sanity-text-secondary, #bae6fde6)',
+                          color: 'var(--sanity-text-secondary, #A8A29E)',
                           borderColor: 'transparent',
                         }
                   }
@@ -157,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="flex items-center gap-3">
                     <Icon 
                       className="w-4 h-4 transition-colors" 
-                      style={{ color: isActive ? 'var(--sanity-btn-primary-txt, #ffffff)' : 'var(--sanity-accent-sky, #7dd3fc)' }}
+                      style={{ color: isActive ? 'var(--sanity-btn-primary-txt, #FFFFFF)' : 'var(--sanity-text-muted, #78716C)' }}
                     />
                     <span>{item.label}</span>
                   </div>
@@ -169,14 +159,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         style={
                           isActive
                             ? {
-                                backgroundColor: '#ffffff',
-                                color: '#1e3a8a',
-                                borderColor: '#ffffff',
+                                backgroundColor: '#FFFFFF',
+                                color: 'var(--sanity-accent-primary, #E02126)',
+                                borderColor: '#FFFFFF',
                               }
                             : {
-                                backgroundColor: 'var(--sanity-pill-bg, #3b82f633)',
-                                color: 'var(--sanity-pill-txt, #bae6fd)',
-                                borderColor: 'var(--sanity-pill-border, #60a5fa4d)',
+                                backgroundColor: 'var(--sanity-pill-bg, #E021261A)',
+                                color: 'var(--sanity-pill-txt, #F0A8A8)',
+                                borderColor: 'var(--sanity-pill-border, #E0212640)',
                               }
                         }
                       >
@@ -185,7 +175,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     )}
                     <ChevronRight 
                       className="w-3.5 h-3.5 transition-opacity" 
-                      style={{ color: isActive ? '#ffffff' : '#38bdf8' }}
+                      style={{ color: isActive ? '#FFFFFF' : 'var(--sanity-text-muted, #78716C)' }}
                     />
                   </div>
                 </button>
@@ -198,23 +188,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div 
           className="p-4 border-t space-y-3"
           style={{
-            backgroundColor: 'var(--sanity-header-bg, #06142699)',
-            borderColor: 'var(--sanity-sidebar-border, #93c5fd33)',
+            backgroundColor: 'var(--sanity-header-bg, #FFFFFF)',
+            borderColor: 'var(--sanity-sidebar-border, #E7E5E4)',
           }}
         >
           {/* Business Admin Profile & Logout */}
           <div 
-            className="flex items-center gap-2.5 p-2.5 rounded-xl border shadow-sm"
+            className="flex items-center gap-2.5 p-2.5 rounded-xl border"
             style={{
-              backgroundColor: 'var(--sanity-inner-card-bg, #081e3a)',
-              borderColor: 'var(--sanity-card-border, #93c5fd40)',
+              backgroundColor: 'var(--sanity-inner-card-bg, #FAF9F6)',
+              borderColor: 'var(--sanity-card-border, #E7E5E4)',
             }}
           >
             <div 
-              className="w-8 h-8 rounded-lg text-white flex items-center justify-center text-xs font-bold shadow-sm shrink-0 border"
+              className="w-8 h-8 rounded-lg text-white flex items-center justify-center text-xs font-bold shrink-0 border"
               style={{
-                background: 'linear-gradient(135deg, var(--sanity-accent-primary, #2563eb) 0%, var(--sanity-accent-sky, #0ea5e9) 100%)',
-                borderColor: 'var(--sanity-card-border, #93c5fd4d)',
+                backgroundColor: 'var(--sanity-accent-primary, #E02126)',
+                borderColor: 'var(--sanity-card-border, #E7E5E4)',
               }}
             >
               {userInitials}
@@ -222,21 +212,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex flex-col min-w-0 flex-1">
               <span 
                 className="text-xs font-bold truncate"
-                style={{ color: 'var(--sanity-text-primary, #ffffff)' }}
+                style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
               >
                 {user?.name || 'Emirate Hub Admin'}
               </span>
               <span 
                 className="text-[10px] truncate"
-                style={{ color: 'var(--sanity-text-secondary, #bae6fdcc)' }}
+                style={{ color: 'var(--sanity-text-secondary, #A8A29E)' }}
               >
                 {user?.email || 'admin@emirate.com'}
               </span>
             </div>
             <button
-              onClick={() => logout()}
-              className="p-1.5 rounded-lg transition-colors shrink-0 cursor-pointer hover:bg-[#f43f5e33]"
-              style={{ color: 'var(--sanity-text-secondary, #bae6fd)' }}
+              onClick={() => setShowLogoutConfirm(true)}
+              className="p-1.5 rounded-lg transition-colors shrink-0 cursor-pointer hover:bg-[#E0212633]"
+              style={{ color: 'var(--sanity-text-secondary, #A8A29E)' }}
               title="Sign Out"
               aria-label="Sign Out"
             >
@@ -245,6 +235,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
       </aside>
+
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={async () => {
+          setShowLogoutConfirm(false);
+          await logout();
+        }}
+        title="Sign out?"
+        message="You will need to sign in again to access the CRM."
+        confirmText="Sign out"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </>
   );
 };

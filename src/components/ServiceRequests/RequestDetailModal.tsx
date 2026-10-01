@@ -126,14 +126,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     <>
       <div 
         className="fixed inset-0 z-50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
-        style={{ backgroundColor: '#020617cc' }}
+        style={{ backgroundColor: '#1C191733' }}
       >
         <div 
           className="rounded-2xl w-full max-w-2xl border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto"
           style={{
-            backgroundColor: '#0d284ce6',
-            borderColor: '#93c5fd4d',
-            boxShadow: '0 25px 50px #020617cc',
+            backgroundColor: '#FFFFFF',
+            borderColor: '#E7E5E4',
+            boxShadow: '0 25px 50px #1C191733',
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -141,16 +141,16 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           <div 
             className="p-4 sm:p-6 border-b flex items-start justify-between gap-3"
             style={{
-              background: 'linear-gradient(90deg, #061834 0%, #09254c 50%, #0c3162 100%)',
-              borderColor: '#93c5fd33',
+              background: '#FFFFFF',
+              borderColor: '#E7E5E4',
             }}
           >
             <div className="flex items-center gap-3">
               <div 
                 className="w-10 sm:w-12 h-10 sm:h-12 rounded-2xl flex items-center justify-center text-sm sm:text-base font-bold text-white shadow-lg border shrink-0"
                 style={{
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #38bdf8 100%)',
-                  borderColor: '#93c5fd4d',
+                  background: '#E02126',
+                  borderColor: '#E7E5E4',
                   boxShadow: '0 4px 14px #1e3a8a80',
                 }}
               >
@@ -158,15 +158,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-base sm:text-lg font-bold tracking-tight truncate" style={{ color: '#ffffff' }}>
+                  <h3 className="text-base sm:text-lg font-bold tracking-tight truncate" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>
                     {displayName}
                   </h3>
                   <span 
                     className="px-2.5 py-0.5 rounded-full text-xs font-semibold border"
                     style={{
-                      backgroundColor: '#0284c733',
-                      borderColor: '#38bdf84d',
-                      color: '#bae6fd',
+                      backgroundColor: '#FEE2E2',
+                      borderColor: '#FECACA',
+                      color: '#78716C',
                     }}
                   >
                     {request.service}
@@ -178,21 +178,21 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                         ? { backgroundColor: '#f43f5e33', color: '#fca5a5', borderColor: '#fb71854d' }
                         : request.priority === 'Medium'
                         ? { backgroundColor: '#f59e0b33', color: '#fcd34d', borderColor: '#fbbf244d' }
-                        : { backgroundColor: '#0284c733', color: '#bae6fd', borderColor: '#38bdf84d' }
+                        : { backgroundColor: '#FEE2E2', color: '#78716C', borderColor: '#FECACA' }
                     }
                   >
                     <span 
                       className="w-1.5 h-1.5 rounded-full" 
                       style={{ 
-                        backgroundColor: request.priority === 'High' ? '#f43f5e' : request.priority === 'Medium' ? '#f59e0b' : '#38bdf8',
-                        boxShadow: `0 0 6px ${request.priority === 'High' ? '#f43f5e' : request.priority === 'Medium' ? '#f59e0b' : '#38bdf8'}` 
+                        backgroundColor: request.priority === 'High' ? '#f43f5e' : request.priority === 'Medium' ? '#f59e0b' : '#E02126',
+                        boxShadow: `0 0 6px ${request.priority === 'High' ? '#f43f5e' : request.priority === 'Medium' ? '#f59e0b' : '#E02126'}` 
                       }} 
                     />
                     {request.priority} Priority
                   </span>
                 </div>
-                <p className="text-xs mt-0.5 flex items-center gap-2 flex-wrap" style={{ color: '#bae6fdcc' }}>
-                  <span className="font-mono" style={{ color: '#7dd3fc' }}>{request.id}</span>
+                <p className="text-xs mt-0.5 flex items-center gap-2 flex-wrap" style={{ color: '#78716C' }}>
+                  <span className="font-mono" style={{ color: '#A8A29E' }}>{request.id}</span>
                   <span>•</span>
                   <span>Submitted {new Date(request.createdAt).toLocaleString()}</span>
                 </p>
@@ -202,8 +202,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             <button
               onClick={onClose}
               aria-label="Close details modal"
-              className="p-1.5 rounded-xl transition-colors shrink-0 cursor-pointer hover:bg-[#38bdf833]"
-              style={{ color: '#7dd3fc' }}
+              className="p-1.5 rounded-xl transition-colors shrink-0 cursor-pointer hover:bg-[#FEE2E2]"
+              style={{ color: '#A8A29E' }}
             >
               <X className="w-5 h-5 hover:text-white" />
             </button>
@@ -217,26 +217,26 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <div 
                 className="p-3.5 sm:p-4 rounded-xl border space-y-3"
                 style={{
-                  backgroundColor: '#061834cc',
-                  borderColor: '#93c5fd33',
+                  backgroundColor: '#FAF9F6cc',
+                  borderColor: '#E7E5E4',
                 }}
               >
-                <h4 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#7dd3fc' }}>
-                  <User className="w-3.5 h-3.5" style={{ color: '#38bdf8' }} />
+                <h4 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#A8A29E' }}>
+                  <User className="w-3.5 h-3.5" style={{ color: '#E02126' }} />
                   Customer Contact Details
                 </h4>
 
                 <div className="space-y-2 text-xs">
                   {/* Email */}
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <span style={{ color: '#bae6fdcc' }}>Email:</span>
+                    <span style={{ color: '#78716C' }}>Email:</span>
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-medium truncate" style={{ color: '#ffffff' }}>{request.email}</span>
+                      <span className="font-medium truncate" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>{request.email}</span>
                       <button
                         onClick={handleCopyEmail}
                         title="Copy Email"
                         className="p-1 shrink-0 cursor-pointer hover:text-white"
-                        style={{ color: '#7dd3fc' }}
+                        style={{ color: '#A8A29E' }}
                       >
                         {copied ? <Check className="w-3.5 h-3.5 text-[#34d399]" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
@@ -246,16 +246,16 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   {/* Phone */}
                   <div 
                     className="flex items-center justify-between pt-1 border-t gap-2 flex-wrap"
-                    style={{ borderColor: '#93c5fd26' }}
+                    style={{ borderColor: '#E7E5E4' }}
                   >
-                    <span style={{ color: '#bae6fdcc' }}>Phone (Optional):</span>
+                    <span style={{ color: '#78716C' }}>Phone (Optional):</span>
                     {request.phone ? (
-                      <span className="font-mono font-medium flex items-center gap-1" style={{ color: '#7dd3fc' }}>
-                        <Phone className="w-3.5 h-3.5" style={{ color: '#38bdf8' }} />
+                      <span className="font-mono font-medium flex items-center gap-1" style={{ color: '#A8A29E' }}>
+                        <Phone className="w-3.5 h-3.5" style={{ color: '#E02126' }} />
                         {request.phone}
                       </span>
                     ) : (
-                      <span className="italic flex items-center gap-1" style={{ color: '#93c5fd80' }}>
+                      <span className="italic flex items-center gap-1" style={{ color: '#D6D3D1' }}>
                         <PhoneOff className="w-3.5 h-3.5" />
                         Not Provided
                       </span>
@@ -266,11 +266,11 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   {request.companyName && (
                     <div 
                       className="flex items-center justify-between pt-1 border-t gap-2 flex-wrap"
-                      style={{ borderColor: '#93c5fd26' }}
+                      style={{ borderColor: '#E7E5E4' }}
                     >
-                      <span style={{ color: '#bae6fdcc' }}>Company:</span>
-                      <span className="font-medium flex items-center gap-1" style={{ color: '#ffffff' }}>
-                        <Building className="w-3.5 h-3.5" style={{ color: '#38bdf8' }} />
+                      <span style={{ color: '#78716C' }}>Company:</span>
+                      <span className="font-medium flex items-center gap-1" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>
+                        <Building className="w-3.5 h-3.5" style={{ color: '#E02126' }} />
                         {request.companyName}
                       </span>
                     </div>
@@ -282,46 +282,46 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <div 
                 className="p-3.5 sm:p-4 rounded-xl border space-y-3"
                 style={{
-                  backgroundColor: '#061834cc',
-                  borderColor: '#93c5fd33',
+                  backgroundColor: '#FAF9F6cc',
+                  borderColor: '#E7E5E4',
                 }}
               >
-                <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#7dd3fc' }}>
+                <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#A8A29E' }}>
                   Workflow & Priority Control
                 </h4>
 
                 <div className="space-y-3">
                   {/* Status Selector */}
                   <div>
-                    <label className="text-xs block mb-1" style={{ color: '#bae6fdcc' }}>Status:</label>
+                    <label className="text-xs block mb-1" style={{ color: '#78716C' }}>Status:</label>
                     <select
                       value={request.status}
                       onChange={(e) => handleStatusChangeRequest(e.target.value as RequestStatus)}
                       aria-label="Update Request Status"
                       className="w-full px-3 py-1.5 border rounded-xl text-xs font-semibold focus:outline-none cursor-pointer"
                       style={{
-                        backgroundColor: '#081e3a',
-                        borderColor: '#93c5fd4d',
-                        color: '#ffffff',
+                        backgroundColor: '#FAF9F6',
+                        borderColor: '#E7E5E4',
+                        color: 'var(--sanity-text-primary, #1C1917)',
                       }}
                     >
-                      <option value="Pending" style={{ backgroundColor: '#081e3a', color: '#ffffff' }}>Pending Review</option>
-                      <option value="In Progress" style={{ backgroundColor: '#081e3a', color: '#ffffff' }}>In Progress (Assigned)</option>
-                      <option value="Resolved" style={{ backgroundColor: '#081e3a', color: '#ffffff' }}>Resolved & Closed</option>
+                      <option value="Pending" style={{ backgroundColor: '#FAF9F6', color: 'var(--sanity-text-primary, #1C1917)' }}>Pending Review</option>
+                      <option value="In Progress" style={{ backgroundColor: '#FAF9F6', color: 'var(--sanity-text-primary, #1C1917)' }}>In Progress (Assigned)</option>
+                      <option value="Resolved" style={{ backgroundColor: '#FAF9F6', color: 'var(--sanity-text-primary, #1C1917)' }}>Resolved & Closed</option>
                     </select>
                   </div>
 
                   {/* Sleek Segmented Priority Selector */}
                   <div>
                     <label className="text-xs mb-1.5 flex items-center justify-between">
-                      <span className="font-medium" style={{ color: '#bae6fd' }}>Admin Priority:</span>
-                      <span className="text-[10px] font-mono" style={{ color: '#7dd3fc' }}>High sorts on top</span>
+                      <span className="font-medium" style={{ color: '#78716C' }}>Admin Priority:</span>
+                      <span className="text-[10px] font-mono" style={{ color: '#A8A29E' }}>High sorts on top</span>
                     </label>
                     <div 
                       className="grid grid-cols-3 gap-1.5 p-1 rounded-xl border"
                       style={{
-                        backgroundColor: '#07162c',
-                        borderColor: '#93c5fd40',
+                        backgroundColor: '#FAF9F6',
+                        borderColor: '#E7E5E4',
                       }}
                     >
                       {(['High', 'Medium', 'Low'] as const).map((p) => {
@@ -329,19 +329,19 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                         const btnStyles = {
                           High: isSelected
                             ? { backgroundColor: '#f43f5e33', color: '#fca5a5', borderColor: '#fb718580' }
-                            : { backgroundColor: 'transparent', color: '#93c5fdb3', borderColor: 'transparent' },
+                            : { backgroundColor: 'transparent', color: '#A8A29E', borderColor: 'transparent' },
                           Medium: isSelected
                             ? { backgroundColor: '#f59e0b33', color: '#fcd34d', borderColor: '#fbbf2480' }
-                            : { backgroundColor: 'transparent', color: '#93c5fdb3', borderColor: 'transparent' },
+                            : { backgroundColor: 'transparent', color: '#A8A29E', borderColor: 'transparent' },
                           Low: isSelected
-                            ? { backgroundColor: '#0284c740', color: '#e0f2fe', borderColor: '#38bdf880' }
-                            : { backgroundColor: 'transparent', color: '#93c5fdb3', borderColor: 'transparent' },
+                            ? { backgroundColor: '#0284c740', color: '#e0f2fe', borderColor: '#E0212666' }
+                            : { backgroundColor: 'transparent', color: '#A8A29E', borderColor: 'transparent' },
                         }[p];
 
                         const dotColors = {
                           High: '#f43f5e',
                           Medium: '#f59e0b',
-                          Low: '#38bdf8',
+                          Low: '#E02126',
                         }[p];
 
                         return (
@@ -368,19 +368,19 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
             {/* Full User Request Message */}
             <div className="space-y-2">
-              <h4 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#7dd3fc' }}>
-                <MessageSquare className="w-3.5 h-3.5" style={{ color: '#38bdf8' }} />
+              <h4 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#A8A29E' }}>
+                <MessageSquare className="w-3.5 h-3.5" style={{ color: '#E02126' }} />
                 Request / Message (Optional)
               </h4>
               <div 
                 className="p-3.5 sm:p-4 rounded-xl border text-xs sm:text-sm leading-relaxed font-sans shadow-inner"
                 style={{
-                  backgroundColor: '#061834',
-                  borderColor: '#93c5fd33',
+                  backgroundColor: '#FAF9F6',
+                  borderColor: '#E7E5E4',
                   color: '#e0f2fee6',
                 }}
               >
-                {request.message ? `"${request.message}"` : <span className="italic" style={{ color: '#93c5fd80' }}>No message provided</span>}
+                {request.message ? `"${request.message}"` : <span className="italic" style={{ color: '#D6D3D1' }}>No message provided</span>}
               </div>
             </div>
 
@@ -388,11 +388,11 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             <div 
               className="p-3.5 sm:p-4 rounded-xl border space-y-3"
               style={{
-                backgroundColor: '#061834cc',
-                borderColor: '#93c5fd33',
+                backgroundColor: '#FAF9F6cc',
+                borderColor: '#E7E5E4',
               }}
             >
-              <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#7dd3fc' }}>
+              <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#A8A29E' }}>
                 Send Direct Response to {displayName}
               </h4>
 
@@ -417,9 +417,9 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     placeholder={`Write a reply to ${request.email}...`}
                     className="w-full p-3 border rounded-xl text-xs focus:outline-none"
                     style={{
-                      backgroundColor: '#081e3a',
-                      borderColor: '#93c5fd4d',
-                      color: '#ffffff',
+                      backgroundColor: '#FAF9F6',
+                      borderColor: '#E7E5E4',
+                      color: 'var(--sanity-text-primary, #1C1917)',
                     }}
                   />
                   <button
@@ -427,8 +427,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     disabled={!replyText.trim()}
                     className="px-3.5 py-2 rounded-xl text-white text-xs font-medium disabled:opacity-50 transition-all flex items-center gap-1.5 ml-auto cursor-pointer shadow-md border"
                     style={{
-                      backgroundColor: '#2563eb',
-                      borderColor: '#60a5fa66',
+                      backgroundColor: '#E02126',
+                      borderColor: '#FECACA',
                       boxShadow: '0 4px 12px #02061780',
                     }}
                   >
@@ -444,9 +444,9 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           <div 
             className="p-3.5 sm:p-4 border-t flex items-center justify-between text-xs"
             style={{
-              backgroundColor: '#061834',
-              borderColor: '#93c5fd33',
-              color: '#bae6fdcc',
+              backgroundColor: '#FAF9F6',
+              borderColor: '#E7E5E4',
+              color: '#78716C',
             }}
           >
             <button
@@ -465,13 +465,13 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             </button>
 
             <div className="flex items-center gap-3">
-              <span className="hidden sm:inline font-medium" style={{ color: '#7dd3fcb3' }}>Emirate Hub Advisory</span>
+              <span className="hidden sm:inline font-medium" style={{ color: '#A8A29Eb3' }}>Emirate Hub Advisory</span>
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl border font-medium transition-colors cursor-pointer hover:bg-[#0284c733]"
+                className="px-4 py-2 rounded-xl border font-medium transition-colors cursor-pointer hover:bg-[#FEE2E2]"
                 style={{
-                  backgroundColor: '#081d3980',
-                  borderColor: '#93c5fd40',
+                  backgroundColor: '#F5F5F480',
+                  borderColor: '#E7E5E4',
                   color: '#e0f2fe',
                 }}
               >

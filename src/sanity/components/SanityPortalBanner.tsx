@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Briefcase, ArrowUpRight } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { SanityDashboardConfig } from '../types/documents';
 import { isValidDashboardConfig } from '../types/typeGuards';
 import { SanityFallbackMessage } from './SanityFallbackMessage';
@@ -12,12 +12,36 @@ interface SanityPortalBannerProps {
   showFallbackIfMissing?: boolean;
 }
 
+/** Prefer short CRM-friendly labels when CMS still has the old verbose copy. */
+function displayTitle(raw?: string) {
+  const t = (raw || '').trim();
+  if (!t) return 'Website inquiries';
+  if (/consultancy website portal/i.test(t)) return 'Website inquiries';
+  return t;
+}
+
+function displayDescription(raw?: string) {
+  const t = (raw || '').trim();
+  if (!t) return 'Live form submissions from emiratehub.ae land here.';
+  if (/routed directly to this management panel/i.test(t)) {
+    return 'Live form submissions from emiratehub.ae land here.';
+  }
+  return t;
+}
+
+function displayButton(raw?: string) {
+  const t = (raw || '').trim();
+  if (!t || /simulate website form/i.test(t) || /test form submission/i.test(t)) {
+    return 'Create lead';
+  }
+  return t;
+}
+
 export const SanityPortalBanner: React.FC<SanityPortalBannerProps> = ({
   dashboardConfig,
   onOpenSimulateModal,
   showFallbackIfMissing = false,
 }) => {
-  // Check if incoming Sanity data is present and valid
   const hasValidData = isValidDashboardConfig(dashboardConfig) && Boolean(dashboardConfig.bannerTitle);
 
   if (!hasValidData) {
@@ -29,61 +53,57 @@ export const SanityPortalBanner: React.FC<SanityPortalBannerProps> = ({
         />
       );
     }
-    // Do not show the component if there is no data
     return null;
   }
-  console.log(hasValidData ?   hasValidData : "false")
 
-  const bgStart = dashboardConfig.bannerBgStart || '#0d2e59';
-  const bgEnd = dashboardConfig.bannerBgEnd || '#092244';
-  const borderColor = dashboardConfig.bannerBorderColor || '#93c5fd4d';
+  const title = displayTitle(dashboardConfig.bannerTitle);
+  const description = displayDescription(dashboardConfig.bannerDescription);
+  const buttonLabel = displayButton(dashboardConfig.bannerButtonText);
 
   return (
-    <div 
-      className="rounded-2xl p-5 border shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-md"
+    <div
+      className="flex flex-col gap-4 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6"
       style={{
-        background: `linear-gradient(90deg, ${bgStart} 0%, ${bgEnd} 100%)`,
-        borderColor,
-        boxShadow: '0 10px 30px #040f1eb3',
+        backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+        borderColor: 'var(--sanity-card-border, #E7E5E4)',
       }}
     >
-      <div className="flex items-center gap-3.5">
-        <div 
-          className="w-10 h-10 rounded-xl text-white flex items-center justify-center font-bold text-sm shadow-md shrink-0 border"
-          style={{
-            background: 'linear-gradient(135deg, #3b82f6 0%, #38bdf8 100%)',
-            borderColor: '#93c5fd4d',
-            boxShadow: '0 4px 14px #1e3a8a80',
-          }}
+      <div className="min-w-0">
+        <h2
+          className="text-base font-semibold tracking-tight"
+          style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
         >
-          <Briefcase className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h2 className="text-sm font-bold tracking-tight" style={{ color: '#ffffff' }}>
-            {dashboardConfig.bannerTitle}
-          </h2>
-          {dashboardConfig.bannerDescription && (
-            <p className="text-xs mt-0.5 font-normal" style={{ color: '#e0f2fee6' }}>
-              {dashboardConfig.bannerDescription}
-            </p>
-          )}
-        </div>
+          {title}
+        </h2>
+        <p
+          className="mt-0.5 text-sm leading-snug line-clamp-2"
+          style={{ color: 'var(--sanity-text-secondary, #78716C)' }}
+        >
+          {description}
+        </p>
       </div>
 
-      {dashboardConfig.bannerButtonText && (
-        <button
-          onClick={onOpenSimulateModal}
-          className="px-4 py-2 rounded-xl text-white text-xs font-semibold whitespace-nowrap self-start sm:self-auto flex items-center gap-1.5 transition-all shadow-md cursor-pointer border hover:opacity-95 active:scale-[0.99]"
-          style={{
-            backgroundColor: '#2563eb',
-            borderColor: '#93c5fd66',
-            boxShadow: '0 4px 12px #02061780',
-          }}
-        >
-          <span>{dashboardConfig.bannerButtonText}</span>
-          <ArrowUpRight className="w-3.5 h-3.5" />
+      <button
+        type="button"
+        onClick={onOpenSimulateModal}
+        className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full border px-4 py-2 text-xs font-semibold tracking-wide transition-colors cursor-pointer sm:self-auto"
+        style={{
+          color: 'var(--sanity-accent-primary, #E02126)',
+          borderColor: 'var(--sanity-accent-primary, #E02126)',
+          backgroundColor: '#FEE2E2',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#E02126';
+          e.currentTarget.style.color = '#FFFFFF';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#FEE2E2';
+          e.currentTarget.style.color = '#E02126';
+        }}
+      >
+          <span>{buttonLabel}</span>
+          <Plus className="h-3.5 w-3.5" />
         </button>
-      )}
     </div>
   );
 };

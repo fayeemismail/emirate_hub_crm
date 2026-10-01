@@ -14,38 +14,36 @@ export const RequestStatusBadge: React.FC<RequestStatusBadgeProps> = ({
     switch (status) {
       case 'Pending':
         return {
-          backgroundColor: '#f59e0b26',
-          color: '#fbbf24',
-          borderColor: '#f59e0b4d',
+          backgroundColor: '#FEF3C7',
+          color: '#92400E',
+          borderColor: '#FDE68A',
         };
       case 'In Progress':
         return {
-          backgroundColor: '#0284c726',
-          color: '#38bdf8',
-          borderColor: '#0284c74d',
+          backgroundColor: '#FEE2E2',
+          color: '#B91C1C',
+          borderColor: '#FECACA',
         };
       case 'Resolved':
         return {
-          backgroundColor: '#10b98126',
-          color: '#34d399',
-          borderColor: '#10b9814d',
+          backgroundColor: '#DCFCE7',
+          color: '#166534',
+          borderColor: '#BBF7D0',
         };
       case 'Archived':
       default:
         return {
-          backgroundColor: '#64748b26',
-          color: '#94a3b8',
-          borderColor: '#64748b4d',
+          backgroundColor: '#F5F5F4',
+          color: '#57534E',
+          borderColor: '#E7E5E4',
         };
     }
   };
 
-  const styleColors = getColors();
-
   return (
     <span
-      className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${className}`}
-      style={styleColors}
+      className={`px-2.5 py-0.5 text-[10px] font-semibold rounded-full border ${className}`}
+      style={getColors()}
     >
       {status}
     </span>

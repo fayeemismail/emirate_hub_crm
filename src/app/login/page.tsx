@@ -23,7 +23,6 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // If already authenticated, redirect to dashboard
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       router.push('/');
@@ -54,12 +53,12 @@ export default function LoginPage() {
     return (
       <div 
         className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: '#07172e' }}
+        style={{ backgroundColor: '#F7F5F1' }}
       >
-        <div className="flex flex-col items-center gap-3" style={{ color: '#bae6fd' }}>
+        <div className="flex flex-col items-center gap-3" style={{ color: '#78716C' }}>
           <div 
             className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" 
-            style={{ borderColor: '#38bdf8', borderTopColor: 'transparent' }}
+            style={{ borderColor: '#E02126', borderTopColor: 'transparent' }}
           />
           <span className="text-xs font-medium">Verifying session...</span>
         </div>
@@ -69,76 +68,56 @@ export default function LoginPage() {
 
   return (
     <div 
-      className="min-h-screen relative flex items-center justify-center p-4 sm:p-6 overflow-hidden selection:bg-[#2563eb] selection:text-white font-sans"
+      className="min-h-screen relative flex items-center justify-center p-4 sm:p-6 overflow-hidden selection:bg-[#E02126] selection:text-white font-sans"
       style={{
-        background: 'linear-gradient(180deg, #081d39 0%, #0b2548 40%, #061326 100%)',
-        color: '#ffffff',
+        backgroundColor: '#F7F5F1',
+        color: '#1C1917',
       }}
     >
-      {/* Background Decorative Ambient Glows */}
-      <div 
-        className="absolute -top-40 -left-40 w-96 h-96 rounded-full blur-3xl pointer-events-none"
-        style={{ backgroundColor: '#0284c71a' }}
-      />
-      <div 
-        className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full blur-3xl pointer-events-none"
-        style={{ backgroundColor: '#4f46e51a' }}
-      />
-
       <div className="w-full max-w-md relative z-10 space-y-6">
-        {/* Brand Header */}
         <div className="text-center space-y-2">
           <div 
-            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl shadow-xl border mb-2"
+            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl border mb-2"
             style={{
-              background: 'linear-gradient(135deg, #3b82f6 0%, #38bdf8 100%)',
-              borderColor: '#93c5fd4d',
-              boxShadow: '0 10px 25px #02061766',
+              backgroundColor: '#E02126',
+              borderColor: '#E7E5E4',
             }}
           >
             <Briefcase className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight uppercase font-mono" style={{ color: '#ffffff' }}>
+          <h1 className="text-2xl font-extrabold tracking-tight uppercase font-mono" style={{ color: '#1C1917' }}>
             emirate hub
           </h1>
-          <p className="text-xs max-w-xs mx-auto" style={{ color: '#bae6fdcc' }}>
+          <p className="text-xs max-w-xs mx-auto" style={{ color: '#78716C' }}>
             Sign in to access your CRM and advisory portal.
           </p>
         </div>
 
-        {/* Login Card */}
         <div 
-          className="rounded-3xl p-6 sm:p-8 shadow-2xl border backdrop-blur-xl relative"
-          style={{
-            backgroundColor: '#0d284cf2',
-            borderColor: '#93c5fd40',
-            boxShadow: '0 25px 50px #020617cc',
-          }}
+          className="rounded-3xl p-6 sm:p-8 border relative bg-white"
+          style={{ borderColor: '#E7E5E4' }}
         >
-          {/* Error Message Box */}
           {errorMessage && (
             <div 
               className="mb-5 p-3 rounded-xl border flex items-start gap-2.5 text-xs"
               style={{
-                backgroundColor: '#f43f5e26',
-                borderColor: '#fb71854d',
-                color: '#fca5a5',
+                backgroundColor: '#FEE2E2',
+                borderColor: '#FECACA',
+                color: '#B91C1C',
               }}
             >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#f43f5e' }} />
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#E02126' }} />
               <div className="flex-1 leading-relaxed">{errorMessage}</div>
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold" style={{ color: '#bae6fd' }}>
+              <label className="block text-xs font-semibold" style={{ color: '#57534E' }}>
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#7dd3fc' }} />
+                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#A8A29E' }} />
                 <input
                   type="email"
                   value={email}
@@ -146,22 +125,22 @@ export default function LoginPage() {
                   placeholder="name@example.com"
                   autoComplete="email"
                   required
-                  className="w-full pl-10 pr-3 py-2.5 border rounded-xl text-xs text-white focus:outline-none transition-all"
+                  className="w-full pl-10 pr-3 py-2.5 border rounded-xl text-xs focus:outline-none transition-all"
                   style={{
-                    backgroundColor: '#061834',
-                    borderColor: '#93c5fd4d',
+                    backgroundColor: '#FAF9F6',
+                    borderColor: '#E7E5E4',
+                    color: '#1C1917',
                   }}
                 />
               </div>
             </div>
 
-            {/* Password Field */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold" style={{ color: '#bae6fd' }}>
+              <label className="block text-xs font-semibold" style={{ color: '#57534E' }}>
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#7dd3fc' }} />
+                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#A8A29E' }} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -169,17 +148,18 @@ export default function LoginPage() {
                   placeholder="••••••••••••"
                   autoComplete="current-password"
                   required
-                  className="w-full pl-10 pr-10 py-2.5 border rounded-xl text-xs text-white focus:outline-none transition-all"
+                  className="w-full pl-10 pr-10 py-2.5 border rounded-xl text-xs focus:outline-none transition-all"
                   style={{
-                    backgroundColor: '#061834',
-                    borderColor: '#93c5fd4d',
+                    backgroundColor: '#FAF9F6',
+                    borderColor: '#E7E5E4',
+                    color: '#1C1917',
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 transition-colors cursor-pointer hover:text-white"
-                  style={{ color: '#7dd3fccc' }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 transition-colors cursor-pointer"
+                  style={{ color: '#A8A29E' }}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -187,16 +167,11 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full mt-2 py-3 px-4 rounded-xl text-white font-semibold text-xs tracking-wide shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed group active:scale-[0.99] border"
-              style={{
-                background: 'linear-gradient(90deg, #2563eb 0%, #0284c7 100%)',
-                borderColor: '#60a5fa66',
-                boxShadow: '0 4px 14px #1e3a8a80',
-              }}
+              className="w-full mt-2 py-3 px-4 rounded-xl text-white font-semibold text-xs tracking-wide flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed group active:scale-[0.99]"
+              style={{ backgroundColor: '#E02126' }}
             >
               {isSubmitting ? (
                 <>
@@ -216,8 +191,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Footer info */}
-        <div className="text-center text-[11px]" style={{ color: '#bae6fd99' }}>
+        <div className="text-center text-[11px]" style={{ color: '#A8A29E' }}>
           Emirate Hub Business Consultancy CRM
         </div>
       </div>

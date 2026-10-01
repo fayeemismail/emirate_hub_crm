@@ -3,13 +3,23 @@
 import React, { useState } from 'react';
 import { ServiceRequest } from '../../types';
 import { COMPANY_SERVICES } from '../../data/mockData';
-import { X, Send, CheckCircle2, Globe, ShieldCheck } from 'lucide-react';
+import { X, Plus, CheckCircle2, ChevronDown } from 'lucide-react';
 
 interface SimulateFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitNewRequest: (req: Omit<ServiceRequest, 'id' | 'createdAt' | 'status' | 'priority'>) => void;
 }
+
+const labelStyle: React.CSSProperties = {
+  color: 'var(--sanity-text-primary, #1C1917)',
+};
+
+const fieldStyle: React.CSSProperties = {
+  backgroundColor: '#FAF9F6',
+  borderColor: '#E7E5E4',
+  color: 'var(--sanity-text-primary, #1C1917)',
+};
 
 export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
   isOpen,
@@ -58,218 +68,163 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
-      style={{ backgroundColor: '#020617cc' }}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      style={{ backgroundColor: '#1C191755' }}
+      onClick={onClose}
     >
-      <div 
-        className="rounded-2xl w-full max-w-lg border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto"
-        style={{
-          backgroundColor: '#0d284ce6',
-          borderColor: '#93c5fd4d',
-          boxShadow: '0 25px 50px #020617cc',
-        }}
+      <div
+        className="w-full max-w-lg rounded-2xl border bg-white my-auto"
+        style={{ borderColor: '#E7E5E4' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header Banner */}
-        <div 
-          className="p-4 sm:p-5 border-b flex items-center justify-between"
-          style={{
-            background: 'linear-gradient(90deg, #061834 0%, #09254c 50%, #0c3162 100%)',
-            borderColor: '#93c5fd33',
-          }}
+        <div
+          className="flex items-center justify-between gap-3 border-b px-5 py-4"
+          style={{ borderColor: '#E7E5E4' }}
         >
-          <div className="flex items-center gap-3">
-            <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-md font-bold text-xs shrink-0 border"
-              style={{
-                background: 'linear-gradient(135deg, #2563eb 0%, #38bdf8 100%)',
-                borderColor: '#93c5fd4d',
-              }}
-            >
-              <Globe className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold tracking-wider uppercase block" style={{ color: '#38bdf8' }}>
-                Emirate Hub Website Form Simulator
-              </span>
-              <h3 className="text-xs sm:text-sm font-bold" style={{ color: '#ffffff' }}>
-                Submit Customer Service Request
-              </h3>
-            </div>
+          <div>
+            <h3 className="text-base font-semibold tracking-tight" style={labelStyle}>
+              Create lead
+            </h3>
+            <p className="mt-0.5 text-sm" style={{ color: '#78716C' }}>
+              Add a production inquiry to the CRM pipeline.
+            </p>
           </div>
-
           <button
+            type="button"
             onClick={onClose}
-            aria-label="Close modal"
-            className="p-1 rounded-lg transition-colors shrink-0 hover:bg-[#38bdf833]"
-            style={{ color: '#bae6fd' }}
+            aria-label="Close"
+            className="rounded-lg p-1.5 transition-colors hover:bg-[#F5F5F4] cursor-pointer"
+            style={{ color: '#78716C' }}
           >
-            <X className="w-4 h-4 hover:text-white" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Content Body */}
         {isSuccess ? (
-          <div className="p-8 text-center space-y-3">
-            <div 
-              className="w-14 h-14 rounded-full flex items-center justify-center font-bold mx-auto border animate-bounce"
-              style={{
-                backgroundColor: '#10b98133',
-                color: '#34d399',
-                borderColor: '#34d39966',
-              }}
+          <div className="flex flex-col items-center gap-3 px-5 py-10 text-center">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-full"
+              style={{ backgroundColor: '#DCFCE7', color: '#15803D' }}
             >
-              <CheckCircle2 className="w-8 h-8" />
+              <CheckCircle2 className="h-6 w-6" />
             </div>
-            <h4 className="text-lg font-bold" style={{ color: '#ffffff' }}>Request Submitted Successfully!</h4>
-            <p className="text-xs max-w-xs mx-auto" style={{ color: '#bae6fdcc' }}>
-              Your inquiry has been routed to Emirate Hub Admin Portal. The dashboard graph and Jira-style Kanban board have been updated in real time.
+            <h4 className="text-base font-semibold" style={labelStyle}>
+              Lead created
+            </h4>
+            <p className="max-w-xs text-sm" style={{ color: '#78716C' }}>
+              The inquiry is now in your pipeline and dashboard.
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-3.5 text-xs max-h-[80vh] overflow-y-auto">
-            <div 
-              className="p-3 rounded-xl border font-medium flex items-center gap-2"
-              style={{
-                backgroundColor: '#0284c726',
-                borderColor: '#38bdf84d',
-                color: '#7dd3fc',
-              }}
-            >
-              <ShieldCheck className="w-4 h-4 shrink-0 text-[#38bdf8]" />
-              <span>Simulates visitor filling out the contact form on website.</span>
-            </div>
-
-            {/* 1. Service */}
-            <div>
-              <label className="block font-bold mb-1" style={{ color: '#e0f2fe' }}>
-                Service <span style={{ color: '#38bdf8' }}>*</span>
+          <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium" style={labelStyle}>
+                Service <span style={{ color: '#E02126' }}>*</span>
               </label>
-              <select
-                value={service}
-                onChange={(e) => setService(e.target.value)}
-                className="w-full px-3 py-2 border rounded-xl focus:outline-none cursor-pointer"
-                style={{
-                  backgroundColor: '#061834',
-                  borderColor: '#93c5fd4d',
-                  color: '#ffffff',
-                }}
-              >
-                {COMPANY_SERVICES.map((s) => (
-                  <option key={s} value={s} style={{ backgroundColor: '#061834', color: '#ffffff' }}>{s}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={service}
+                  onChange={(e) => setService(e.target.value)}
+                  className="w-full appearance-none rounded-xl border px-3 py-2.5 pr-10 text-sm focus:outline-none cursor-pointer"
+                  style={fieldStyle}
+                >
+                  {COMPANY_SERVICES.map((s) => (
+                    <option key={s} value={s} style={{ backgroundColor: '#FFFFFF', color: '#1C1917' }}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                  style={{ color: '#A8A29E' }}
+                />
+              </div>
             </div>
 
-            {/* 2. Name */}
-            <div>
-              <label className="block font-bold mb-1" style={{ color: '#e0f2fe' }}>
-                Name <span style={{ color: '#38bdf8' }}>*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Full Name (e.g. Sarah Jenkins)"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border rounded-xl focus:outline-none"
-                style={{
-                  backgroundColor: '#061834',
-                  borderColor: '#93c5fd4d',
-                  color: '#ffffff',
-                }}
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="block text-sm font-medium" style={labelStyle}>
+                  Name <span style={{ color: '#E02126' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none"
+                  style={fieldStyle}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium" style={labelStyle}>
+                  Email <span style={{ color: '#E02126' }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="name@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none"
+                  style={fieldStyle}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium" style={labelStyle}>
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  placeholder="+971 …"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none"
+                  style={fieldStyle}
+                />
+              </div>
             </div>
 
-            {/* 3. Email Address */}
-            <div>
-              <label className="block font-bold mb-1" style={{ color: '#e0f2fe' }}>
-                Email Address <span style={{ color: '#38bdf8' }}>*</span>
-              </label>
-              <input
-                type="email"
-                required
-                placeholder="sarah@company.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border rounded-xl focus:outline-none"
-                style={{
-                  backgroundColor: '#061834',
-                  borderColor: '#93c5fd4d',
-                  color: '#ffffff',
-                }}
-              />
-            </div>
-
-            {/* 4. Phone (Optional) */}
-            <div>
-              <label className="font-bold mb-1 flex items-center justify-between" style={{ color: '#e0f2fe' }}>
-                <span>Phone</span>
-                <span className="text-[10px] font-normal italic" style={{ color: '#bae6fd99' }}>(Optional)</span>
-              </label>
-              <input
-                type="tel"
-                placeholder="+1 (555) 019-2831"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3 py-2 border rounded-xl focus:outline-none"
-                style={{
-                  backgroundColor: '#061834',
-                  borderColor: '#93c5fd4d',
-                  color: '#ffffff',
-                }}
-              />
-            </div>
-
-            {/* 5. Request (Optional) */}
-            <div>
-              <label className="font-bold mb-1 flex items-center justify-between" style={{ color: '#e0f2fe' }}>
-                <span>Request</span>
-                <span className="text-[10px] font-normal italic" style={{ color: '#bae6fd99' }}>(Optional)</span>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium" style={labelStyle}>
+                Notes
               </label>
               <textarea
                 rows={3}
-                placeholder="Describe your request or leave notes (optional)..."
+                placeholder="Optional message or context…"
                 value={requestText}
                 onChange={(e) => setRequestText(e.target.value)}
-                className="w-full p-3 border rounded-xl focus:outline-none leading-relaxed"
-                style={{
-                  backgroundColor: '#061834',
-                  borderColor: '#93c5fd4d',
-                  color: '#ffffff',
-                }}
+                className="w-full rounded-xl border px-3 py-2.5 text-sm leading-relaxed focus:outline-none resize-none"
+                style={fieldStyle}
               />
             </div>
 
-            {/* Form Footer Buttons */}
-            <div 
-              className="pt-3 border-t flex items-center justify-end gap-2"
-              style={{ borderColor: '#93c5fd33' }}
+            <div
+              className="flex items-center justify-end gap-2 border-t pt-4"
+              style={{ borderColor: '#E7E5E4' }}
             >
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl font-medium transition-colors border cursor-pointer hover:bg-[#38bdf826]"
+                className="rounded-xl border px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors hover:bg-[#F5F5F4]"
                 style={{
-                  backgroundColor: '#081d3980',
-                  borderColor: '#93c5fd33',
-                  color: '#bae6fd',
+                  borderColor: '#E7E5E4',
+                  color: '#57534E',
+                  backgroundColor: '#FFFFFF',
                 }}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl text-white font-bold shadow-md flex items-center gap-1.5 border cursor-pointer"
-                style={{
-                  background: 'linear-gradient(90deg, #2563eb 0%, #0284c7 100%)',
-                  borderColor: '#60a5fa66',
-                  boxShadow: '0 4px 14px #1e3a8a80',
-                }}
+                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white cursor-pointer"
+                style={{ backgroundColor: '#E02126' }}
               >
-                <Send className="w-3.5 h-3.5" />
-                <span>Submit Form Request</span>
+                <Plus className="h-3.5 w-3.5" />
+                <span>Create lead</span>
               </button>
             </div>
           </form>

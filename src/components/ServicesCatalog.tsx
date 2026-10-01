@@ -8,17 +8,17 @@ export const ServicesCatalog: React.FC = () => {
   const getIcon = (index: number) => {
     const icons = [Code, Bot, Cloud, Layout, Briefcase, Smartphone, ShieldCheck];
     const IconComponent = icons[index % icons.length];
-    return <IconComponent className="w-5 h-5 text-[#38bdf8]" />;
+    return <IconComponent className="w-5 h-5 text-[#E02126]" />;
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold tracking-tight flex items-center gap-2" style={{ color: '#ffffff' }}>
-          <Layers className="w-5 h-5 text-[#38bdf8]" />
+        <h2 className="text-xl font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>
+          <Layers className="w-5 h-5 text-[#E02126]" />
           Emirate Hub Company Services Catalog
         </h2>
-        <p className="text-xs" style={{ color: '#bae6fdcc' }}>
+        <p className="text-xs" style={{ color: '#78716C' }}>
           Services presented on Emirate Hub website for visitor inquiries
         </p>
       </div>
@@ -29,9 +29,9 @@ export const ServicesCatalog: React.FC = () => {
             key={serviceName}
             className="rounded-2xl p-5 border space-y-3 flex flex-col justify-between backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5"
             style={{
-              backgroundColor: '#0d284ce6',
-              borderColor: '#93c5fd40',
-              boxShadow: '0 10px 30px #040f1eb3',
+              backgroundColor: '#FFFFFF',
+              borderColor: '#E7E5E4',
+              boxShadow: '0 10px 30px #1C191715',
             }}
           >
             <div className="space-y-2">
@@ -39,8 +39,8 @@ export const ServicesCatalog: React.FC = () => {
                 <div 
                   className="p-2.5 rounded-xl border"
                   style={{
-                    backgroundColor: '#0284c726',
-                    borderColor: '#38bdf84d',
+                    backgroundColor: '#FEE2E2',
+                    borderColor: '#FECACA',
                   }}
                 >
                   {getIcon(idx)}
@@ -57,20 +57,20 @@ export const ServicesCatalog: React.FC = () => {
                 </span>
               </div>
 
-              <h3 className="text-base font-semibold pt-1" style={{ color: '#ffffff' }}>{serviceName}</h3>
-              <p className="text-xs leading-relaxed" style={{ color: '#bae6fdcc' }}>
+              <h3 className="text-base font-semibold pt-1" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>{serviceName}</h3>
+              <p className="text-xs leading-relaxed" style={{ color: '#78716C' }}>
                 Full lifecycle engineering, strategy, and deployment services tailored for high-growth enterprises and tech ventures.
               </p>
             </div>
 
             <div 
               className="pt-3 border-t flex items-center justify-between text-xs"
-              style={{ borderColor: '#93c5fd26' }}
+              style={{ borderColor: '#E7E5E4' }}
             >
-              <span style={{ color: '#93c5fdb3' }}>Form Enabled</span>
+              <span style={{ color: '#A8A29E' }}>Form Enabled</span>
               <span 
                 className="font-medium flex items-center gap-1 cursor-pointer hover:underline"
-                style={{ color: '#38bdf8' }}
+                style={{ color: '#E02126' }}
               >
                 Configure <ArrowUpRight className="w-3.5 h-3.5" />
               </span>

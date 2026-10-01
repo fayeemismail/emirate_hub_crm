@@ -15,3 +15,4 @@ export * from './components/SanityPortalBanner';
 export * from './components/SanityPortalFooter';
 export * from './components/SanityServicesShowcase';
 export * from './components/SanityThemeStyle';
+export * from './themeDefaults';

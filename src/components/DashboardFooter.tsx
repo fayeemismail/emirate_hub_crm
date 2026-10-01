@@ -2,17 +2,34 @@
 
 import React from 'react';
 
+/** Lightweight fallback footer when Sanity footer is not used. */
 export const DashboardFooter: React.FC = () => {
+  const year = new Date().getFullYear();
+
   return (
-    <footer 
-      className="px-8 py-4 border-t text-center text-xs font-medium"
-      style={{ 
-        backgroundColor: '#061426cc', 
-        borderColor: '#93c5fd33',
-        color: '#bae6fdb3' 
+    <footer
+      className="mt-auto border-t"
+      style={{
+        backgroundColor: 'var(--sanity-header-bg, #FFFFFF)',
+        borderColor: 'var(--sanity-sidebar-border, #E7E5E4)',
       }}
     >
-      Emirate Hub Business Consultancy Admin Portal • Executive Office Blue Theme
+      <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div>
+          <p
+            className="text-sm font-semibold tracking-tight"
+            style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+          >
+            Emirate Hub
+          </p>
+          <p className="mt-0.5 text-sm" style={{ color: '#78716C' }}>
+            CRM for leads and client inquiries
+          </p>
+        </div>
+        <p className="text-sm tabular-nums" style={{ color: '#A8A29E' }}>
+          © {year} Emirate Hub
+        </p>
+      </div>
     </footer>
   );
 };

@@ -14,7 +14,6 @@ import { ServiceRequestsView } from '../components/ServiceRequests/ServiceReques
 import { RequestDetailModal } from '../components/ServiceRequests/RequestDetailModal';
 import { SimulateFormModal } from '../components/ServiceRequests/SimulateFormModal';
 import { AuthLoadingScreen } from '../components/AuthLoadingScreen';
-import { SanityPortalFooter } from '../sanity/components/SanityPortalFooter';
 import { SanityThemeStyle } from '../sanity/components/SanityThemeStyle';
 
 export default function Home() {
@@ -30,11 +29,8 @@ export default function Home() {
 
   // Sanity CMS integration layer (data fetching & strict validation)
   const {
-    dashboardConfig,
     siteSettings,
-    footer,
     themeSettings,
-    services,
   } = useSanityData();
 
   // Leads & Analytics data layer
@@ -76,22 +72,13 @@ export default function Home() {
     return <AuthLoadingScreen />;
   }
 
-  // Dynamic titles and subtitles derived from incoming Sanity data if present
-  const headerTitle = activeTab === 'dashboard'
-    ? (dashboardConfig?.dashboardTabTitle || 'Emirate Hub Executive Dashboard')
-    : (dashboardConfig?.inquiriesTabTitle || 'Client Service Inquiries');
-
-  const headerSubtitle = activeTab === 'dashboard'
-    ? (dashboardConfig?.dashboardTabSubtitle || 'Overview of business consultancy inquiries & message metrics')
-    : (dashboardConfig?.inquiriesTabSubtitle || 'User messages submitted from company website with Jira drag and drop');
-
   return (
     <div 
-      className="min-h-screen flex font-sans antialiased selection:bg-[#2563eb] selection:text-white"
+      className="min-h-screen flex font-sans antialiased selection:bg-[#E02126] selection:text-white"
       style={{ 
-        backgroundColor: 'var(--sanity-bg-main, #07172e)',
-        background: 'var(--sanity-page-bg, linear-gradient(180deg, #081d39 0%, #0b2548 40%, #061326 100%))',
-        color: 'var(--sanity-text-primary, #f8fafc)' 
+        backgroundColor: 'var(--sanity-bg-main, #F7F5F1)',
+        background: 'var(--sanity-page-bg, #F7F5F1)',
+        color: 'var(--sanity-text-primary, #1C1917)' 
       }}
     >
       {/* Live Sanity Dynamic Theme Injector */}
@@ -111,17 +98,8 @@ export default function Home() {
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
         {/* Header Bar */}
         <Header
-          title={headerTitle}
-          subtitle={headerSubtitle}
-          searchTerm={searchTerm}
-          setSearchTerm={(term) => {
-            setSearchTerm(term);
-            if (activeTab !== 'requests') {
-              setActiveTab('requests');
-            }
-          }}
           onOpenMobileMenu={() => setIsOpenMobileSidebar(true)}
-          unreadCount={pendingCount}
+          onCreateLead={() => setIsSimulateModalOpen(true)}
         />
 
         {/* Page Content Body */}
@@ -134,11 +112,8 @@ export default function Home() {
               serviceAnalytics={serviceAnalytics}
               funnelAnalytics={funnelAnalytics}
               isLoadingAnalytics={isDataLoading}
-              dashboardConfig={dashboardConfig}
-              services={services}
               onNavigateToRequests={() => setActiveTab('requests')}
               onSelectRequest={(req) => setSelectedRequestModal(req)}
-              onOpenSimulateModal={() => setIsSimulateModalOpen(true)}
             />
           )}
 
@@ -155,9 +130,6 @@ export default function Home() {
             />
           )}
         </main>
-
-        {/* Sanity-driven Portal Footer */}
-        <SanityPortalFooter footer={footer} />
       </div>
 
       {/* Request Details Drawer / Modal */}

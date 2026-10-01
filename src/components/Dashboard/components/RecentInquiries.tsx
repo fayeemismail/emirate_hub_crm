@@ -1,12 +1,33 @@
 import React from 'react';
 import { ServiceRequest } from '../../../types';
 import { ArrowRight } from 'lucide-react';
-import { RequestStatusBadge } from '../../ui/RequestStatusBadge';
 
 interface RecentInquiriesProps {
   recentRequests: ServiceRequest[];
   onNavigateToRequests: () => void;
   onSelectRequest: (req: ServiceRequest) => void;
+}
+
+function formatWhen(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  if (sameDay) {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function displayName(req: ServiceRequest) {
+  return req.name || `${req.firstName || ''} ${req.lastName || ''}`.trim() || 'Client';
+}
+
+function initialFor(name: string) {
+  return name.trim().charAt(0).toUpperCase() || '?';
 }
 
 export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
@@ -15,118 +36,87 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
   onSelectRequest,
 }) => {
   return (
-    <div 
-      className="lg:col-span-2 rounded-2xl p-5 border backdrop-blur-md"
+    <div
+      className="lg:col-span-2 rounded-2xl border px-5 py-5"
       style={{
-        backgroundColor: 'var(--sanity-card-bg, #0d284ce6)',
-        borderColor: 'var(--sanity-card-border, #93c5fd40)',
-        boxShadow: '0 10px 30px #040f1eb3',
+        backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+        borderColor: 'var(--sanity-card-border, #E7E5E4)',
       }}
     >
-      <div 
-        className="flex items-center justify-between mb-4 pb-3 border-b"
-        style={{ borderColor: 'var(--sanity-card-border, #93c5fd33)' }}
-      >
-        <div>
-          <h3 className="text-sm font-bold tracking-tight" style={{ color: 'var(--sanity-text-primary, #ffffff)' }}>
-            Recent Business Inquiries
-          </h3>
-          <p className="text-xs" style={{ color: 'var(--sanity-text-secondary, #bae6fdcc)' }}>
-            Latest user messages from website visitors
-          </p>
-        </div>
-        <button
-          onClick={onNavigateToRequests}
-          className="text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer hover:text-white"
-          style={{ color: 'var(--sanity-accent-sky, #7dd3fc)' }}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h3
+          className="text-base font-semibold tracking-tight"
+          style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
         >
-          <span>View All</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          Inbox
+        </h3>
+        <button
+          type="button"
+          onClick={onNavigateToRequests}
+          className="inline-flex items-center gap-1 text-sm font-medium cursor-pointer hover:opacity-80"
+          style={{ color: 'var(--sanity-accent-primary, #E02126)' }}
+        >
+          View all
+          <ArrowRight className="h-3.5 w-3.5" />
         </button>
       </div>
 
       {recentRequests.length === 0 ? (
-        <div 
-          className="py-10 text-center space-y-2 border border-dashed rounded-xl"
-          style={{
-            backgroundColor: 'var(--sanity-inner-card-bg, #081d394d)',
-            borderColor: 'var(--sanity-card-border, #93c5fd40)',
-          }}
-        >
-          <p className="text-xs font-medium" style={{ color: 'var(--sanity-text-secondary, #bae6fd)' }}>No client inquiries yet</p>
-          <p className="text-[11px]" style={{ color: 'var(--sanity-text-muted, #93c5fdb3)' }}>Live inquiries submitted from the website form will appear here.</p>
+        <div className="py-12 text-center">
+          <p className="text-sm" style={{ color: '#78716C' }}>
+            No messages yet
+          </p>
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {recentRequests.map((req) => {
-            const isHigh = req.priority === 'High';
-            const isMed = req.priority === 'Medium';
-            const priorityBg = isHigh ? 'var(--sanity-priority-high-bg, #f43f5e33)' : isMed ? 'var(--sanity-priority-med-bg, #f59e0b33)' : 'var(--sanity-priority-low-bg, #0284c733)';
-            const priorityTxt = isHigh ? 'var(--sanity-priority-high-color, #fca5a5)' : isMed ? 'var(--sanity-priority-med-color, #fcd34d)' : 'var(--sanity-priority-low-color, #bae6fd)';
-            const priorityBorder = isHigh ? '#fb718566' : isMed ? '#fbbf2466' : '#38bdf859';
-            const dotBg = isHigh ? 'var(--sanity-danger, #f43f5e)' : isMed ? 'var(--sanity-warning, #f59e0b)' : 'var(--sanity-accent-sky, #38bdf8)';
+        <ul>
+          {recentRequests.map((req, index) => {
+            const name = displayName(req);
+            const message = req.message?.trim() || 'No message';
 
             return (
-              <div
+              <li
                 key={req.id}
                 onClick={() => onSelectRequest(req)}
-                className="p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 group"
+                className="flex cursor-pointer items-start gap-3 py-3.5 transition-colors hover:bg-[#FAF9F6] -mx-2 px-2 rounded-xl"
                 style={{
-                  backgroundColor: 'var(--sanity-inner-card-bg, #07162dbf)',
-                  borderColor: 'var(--sanity-card-border, #93c5fd29)',
+                  borderTop: index === 0 ? undefined : '1px solid #F5F5F4',
                 }}
               >
-                <div className="space-y-1.5 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span 
-                      className="text-xs font-bold transition-colors group-hover:text-[#38bdf8]"
-                      style={{ color: '#ffffff' }}
-                    >
-                      {req.name || `${req.firstName} ${req.lastName}`.trim() || 'Client'}
-                    </span>
-                    <span className="text-[11px]" style={{ color: '#bae6fdbf' }}>
-                      ({req.email})
-                    </span>
-                    <span 
-                      className="px-2 py-0.5 rounded text-[10px] font-semibold border"
-                      style={{
-                        backgroundColor: '#0284c733',
-                        color: '#bae6fd',
-                        borderColor: '#38bdf84d',
-                      }}
-                    >
-                      {req.service}
-                    </span>
-                    <span 
-                      className="px-2 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1"
-                      style={{
-                        backgroundColor: priorityBg,
-                        color: priorityTxt,
-                        borderColor: priorityBorder,
-                      }}
-                    >
-                      <span 
-                        className="w-1.5 h-1.5 rounded-full" 
-                        style={{ backgroundColor: dotBg, boxShadow: `0 0 6px ${dotBg}` }}
-                      />
-                      {req.priority}
-                    </span>
-                  </div>
-                  <p className="text-xs line-clamp-1 italic font-normal" style={{ color: '#e0f2fee6' }}>
-                    {req.message ? `"${req.message}"` : <span className="italic" style={{ color: '#93c5fd80' }}>No message provided</span>}
-                  </p>
+                <div
+                  className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+                  style={{ backgroundColor: 'var(--sanity-accent-primary, #E02126)' }}
+                  aria-hidden
+                >
+                  {initialFor(name)}
                 </div>
 
-                <div className="flex flex-col items-end shrink-0 text-right">
-                  <RequestStatusBadge status={req.status} />
-                  <span className="text-[10px] mt-1 font-medium" style={{ color: '#bae6fdbf' }}>
-                    {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p
+                      className="truncate text-sm font-medium"
+                      style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+                    >
+                      {name}
+                    </p>
+                    <time
+                      className="shrink-0 text-xs tabular-nums"
+                      style={{ color: '#A8A29E' }}
+                      dateTime={req.createdAt}
+                    >
+                      {formatWhen(req.createdAt)}
+                    </time>
+                  </div>
+                  <p
+                    className="mt-0.5 truncate text-sm"
+                    style={{ color: '#78716C' }}
+                  >
+                    {message}
+                  </p>
                 </div>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </div>
   );

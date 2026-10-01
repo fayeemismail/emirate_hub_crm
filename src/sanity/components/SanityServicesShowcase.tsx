@@ -44,8 +44,8 @@ export const SanityServicesShowcase: React.FC<SanityServicesShowcaseProps> = ({
             key={svc._id}
             className="p-4 rounded-xl border backdrop-blur-md"
             style={{
-              backgroundColor: '#0d284cf2',
-              borderColor: '#93c5fd40',
+              backgroundColor: '#FFFFFFF2',
+              borderColor: '#E7E5E4',
             }}
           >
             <div className="flex items-center gap-2 mb-1.5">
