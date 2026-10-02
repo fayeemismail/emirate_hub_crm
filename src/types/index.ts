@@ -50,6 +50,8 @@ export interface ServiceRequest {
   priority: RequestPriority;
   boardOrder?: number;
   notes?: string[];
+  /** online = website form; manual = CRM-created. */
+  source?: 'online' | 'manual';
   companyName?: string;
   isDeleted?: boolean;
 }

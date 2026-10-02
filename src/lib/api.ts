@@ -60,6 +60,8 @@ export interface LeadItem {
   message?: string;
   /** Internal admin notes. */
   notes?: string[];
+  /** online = website form; manual = CRM-created. */
+  source?: 'online' | 'manual';
   status: string;
   statusChangedAt?: string;
   statusHistory?: StatusHistoryEntry[];
@@ -406,6 +408,7 @@ export const leadsApi = {
     service: string;
     message?: string;
     formData?: Record<string, any>;
+    source?: 'online' | 'manual';
   }): Promise<ApiResponse<any>> => {
     return request<any>('/v1/public/leads', {
       method: 'POST',

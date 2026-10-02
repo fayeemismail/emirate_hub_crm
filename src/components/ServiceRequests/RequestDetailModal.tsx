@@ -17,6 +17,7 @@ import { Spinner } from '../ui/loading';
 import { EmptyState } from '../ui/EmptyState';
 import { formatStageAge, daysInStage } from '../../lib/stageAge';
 import { statusTitle } from '../../lib/adapters';
+import { leadSourceHint, leadSourceLabel } from '../../lib/leadSource';
 import {
   ARCHIVE_CONFIRM_BUTTON,
   ARCHIVE_CONFIRM_TITLE,
@@ -268,9 +269,22 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
         >
           {/* Header */}
           <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
-            <p className="text-sm" style={{ color: '#78716C' }}>
-              Submitted {submittedAt}
-            </p>
+            <div className="min-w-0 space-y-1.5">
+              <p className="text-sm" style={{ color: '#78716C' }}>
+                Submitted {submittedAt}
+              </p>
+              <span
+                className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold"
+                title={leadSourceHint(request.source)}
+                style={{
+                  color: request.source === 'manual' ? '#57534E' : '#1D4ED8',
+                  backgroundColor: request.source === 'manual' ? '#F5F5F4' : '#EFF6FF',
+                  borderColor: request.source === 'manual' ? '#E7E5E4' : '#BFDBFE',
+                }}
+              >
+                {leadSourceLabel(request.source)}
+              </span>
+            </div>
             <button
               type="button"
               onClick={onClose}

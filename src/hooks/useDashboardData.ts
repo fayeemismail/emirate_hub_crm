@@ -547,9 +547,9 @@ export function useDashboardData({
           phone: newReqData.phone,
           service: newReqData.service,
           message: newReqData.message,
+          source: 'manual',
           formData: {
             companyName: newReqData.companyName,
-            source: 'Website Form Simulator',
           },
         });
 
@@ -568,6 +568,7 @@ export function useDashboardData({
             priority: 'High',
             boardOrder: Date.now(),
             notes: [],
+            source: 'manual',
             isDeleted: false,
           };
           setRequests((prev) => [newRequest, ...prev].sort(sortByCreatedAtDesc));
@@ -591,6 +592,7 @@ export function useDashboardData({
           priority: 'High',
           boardOrder: Date.now(),
           notes: [],
+          source: 'manual',
           isDeleted: false,
         };
         setRequests((prev) => [newRequest, ...prev].sort(sortByCreatedAtDesc));

@@ -59,6 +59,7 @@ export function leadToServiceRequest(lead: LeadItem): ServiceRequest {
     priority,
     boardOrder: typeof lead.boardOrder === 'number' ? lead.boardOrder : 0,
     notes: Array.isArray(lead.notes) ? lead.notes : [],
+    source: lead.source === 'manual' ? 'manual' : 'online',
     companyName: lead.formData?.companyName as string | undefined,
     isDeleted: (lead as { isDeleted?: boolean }).isDeleted || false,
   };
