@@ -1,54 +1,142 @@
 'use client';
 
-import React from 'react';
-import { Settings, Shield, Bell, Key, Globe } from 'lucide-react';
+import React, { useState } from 'react';
+import { Settings } from 'lucide-react';
+import { LOOKBACK_PRESETS } from '../lib/crmSettings';
+import { useCrmSettings } from '../hooks/useCrmSettings';
 
 export const SettingsView: React.FC = () => {
+  const { lookbackDays, setLookbackDays } = useCrmSettings();
+  const [draft, setDraft] = useState(String(lookbackDays));
+
+  React.useEffect(() => {
+    setDraft(String(lookbackDays));
+  }, [lookbackDays]);
+
+  const applyDraft = () => {
+    const n = Number.parseInt(draft, 10);
+    if (!Number.isFinite(n) || n < 0) {
+      setDraft(String(lookbackDays));
+      return;
+    }
+    setLookbackDays(n);
+  };
+
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-2xl">
       <div>
-        <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-          <Settings className="w-5 h-5 text-indigo-400" />
-          Emirate Hub Admin Settings
+        <h2
+          className="text-lg font-semibold tracking-tight flex items-center gap-2"
+          style={{ color: 'var(--crm-text-primary, #1C1917)' }}
+        >
+          <Settings className="h-5 w-5" style={{ color: '#78716C' }} />
+          Settings
         </h2>
-        <p className="text-xs text-gray-400">
-          System configurations, integrations, and advisory preference controls
+        <p className="mt-1 text-sm" style={{ color: '#78716C' }}>
+          Preferences for this CRM workspace (saved in this browser).
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-[#111C24] border border-[#223849] rounded-xl p-5">
-          <h3 className="text-base font-semibold text-white mb-2">Webhook Ingestion</h3>
-          <div className="bg-[#0B131B] p-3 rounded-lg border border-[#223849] text-xs font-mono text-cyan-400 flex items-center justify-between">
-            <span>https://api.emiratehub.ae/v1/webhooks/service-requests</span>
-            <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded text-[10px]">ACTIVE</span>
-          </div>
-          <p className="text-xs text-gray-400 mt-2">
-            Receives incoming POST requests from emiratehub.ae website
+      <section
+        className="rounded-2xl border px-5 py-5 space-y-4"
+        style={{
+          backgroundColor: '#FFFFFF',
+          borderColor: '#E7E5E4',
+        }}
+      >
+        <div>
+          <h3
+            className="text-sm font-semibold"
+            style={{ color: 'var(--crm-text-primary, #1C1917)' }}
+          >
+            Inquiry lookback window
+          </h3>
+          <p className="mt-1 text-xs" style={{ color: '#78716C' }}>
+            Service Inquiries only shows leads created within this many days.
+            Use <span className="font-medium">0</span> for all time.
           </p>
         </div>
 
-        <div className="bg-[#111C24] border border-[#223849] rounded-xl p-5">
-          <h3 className="text-base font-semibold text-white mb-2">Advisory Notifications</h3>
-          <p className="text-xs text-gray-400 mb-3">
-            Real-time browser notifications are dispatched when a new inquiry arrives.
-          </p>
-          <div className="flex items-center gap-2 text-xs text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            Real-time listener enabled
-          </div>
+        <div className="flex flex-wrap gap-2">
+          {LOOKBACK_PRESETS.map((days) => {
+            const active = lookbackDays === days;
+            return (
+              <button
+                key={days}
+                type="button"
+                onClick={() => setLookbackDays(days)}
+                className="rounded-lg border px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors"
+                style={{
+                  borderColor: active ? '#E02126' : '#E7E5E4',
+                  backgroundColor: active ? '#FEE2E2' : '#FFFFFF',
+                  color: active ? '#E02126' : '#78716C',
+                }}
+              >
+                Last {days} days
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setLookbackDays(0)}
+            className="rounded-lg border px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors"
+            style={{
+              borderColor: lookbackDays === 0 ? '#E02126' : '#E7E5E4',
+              backgroundColor: lookbackDays === 0 ? '#FEE2E2' : '#FFFFFF',
+              color: lookbackDays === 0 ? '#E02126' : '#78716C',
+            }}
+          >
+            All time
+          </button>
         </div>
 
-        <div className="bg-[#111C24] border border-[#223849] rounded-xl p-5 md:col-span-2">
-          <h3 className="text-base font-semibold text-white mb-2">Security & Access Control</h3>
-          <p className="text-xs text-gray-400 mb-3">
-            Admin session secured with JWT HTTP Bearer token and role-based validation.
-          </p>
-          <div className="text-xs text-gray-300">
-            Admin account: <span className="text-white font-medium">admin@emirate.com</span>.
-          </div>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="flex flex-col gap-1 min-w-[8rem]">
+            <span className="text-[11px] font-medium" style={{ color: '#A8A29E' }}>
+              Custom days
+            </span>
+            <input
+              type="number"
+              min={0}
+              max={3650}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={applyDraft}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  applyDraft();
+                }
+              }}
+              className="rounded-lg border px-3 py-1.5 text-sm tabular-nums focus:outline-none"
+              style={{
+                borderColor: '#E7E5E4',
+                backgroundColor: '#FAF9F6',
+                color: '#1C1917',
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={applyDraft}
+            className="rounded-lg border px-3 py-1.5 text-xs font-semibold cursor-pointer"
+            style={{
+              borderColor: '#E02126',
+              backgroundColor: '#E02126',
+              color: '#FFFFFF',
+            }}
+          >
+            Save
+          </button>
         </div>
-      </div>
+
+        <p className="text-xs" style={{ color: '#A8A29E' }}>
+          Current:{' '}
+          <span className="font-medium" style={{ color: '#78716C' }}>
+            {lookbackDays === 0 ? 'All time' : `Last ${lookbackDays} days`}
+          </span>
+        </p>
+      </section>
     </div>
   );
 };

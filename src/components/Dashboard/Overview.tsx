@@ -1,12 +1,14 @@
 'use client';
 
-import React from 'react';
-import { 
-  ServiceRequest, 
+import React, { useMemo } from 'react';
+import {
+  ServiceRequest,
+  PipelineStatus,
   OverviewKpi,
   MonthlyTrendsResponse,
+  AvailableYearsResponse,
   ServiceAnalyticsResponse,
-  FunnelAnalyticsResponse
+  FunnelAnalyticsResponse,
 } from '../../types';
 import { MessagesGraph } from './MessagesGraph';
 import { OverviewMetrics } from './components/OverviewMetrics';
@@ -19,11 +21,15 @@ import {
   DemandSkeleton,
   LoadingOverlay,
 } from '../ui/loading';
+import { getRecentInquiries } from '../../lib/adapters';
 
 interface DashboardOverviewProps {
   requests: ServiceRequest[];
+  pipelineStatuses?: PipelineStatus[];
+  defaultStatusSlug?: string;
   overviewKpi?: OverviewKpi | null;
   monthlyTrends?: MonthlyTrendsResponse | null;
+  availableYears?: AvailableYearsResponse | null;
   serviceAnalytics?: ServiceAnalyticsResponse | null;
   funnelAnalytics?: FunnelAnalyticsResponse | null;
   isInitialLoading?: boolean;
@@ -34,8 +40,11 @@ interface DashboardOverviewProps {
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   requests,
+  pipelineStatuses = [],
+  defaultStatusSlug = '',
   overviewKpi,
   monthlyTrends,
+  availableYears,
   serviceAnalytics,
   funnelAnalytics,
   isInitialLoading = false,
@@ -43,13 +52,35 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onNavigateToRequests,
   onSelectRequest,
 }) => {
-  const pendingCount = requests.filter(r => r.status === 'Pending').length;
-  const inProgressCount = requests.filter(r => r.status === 'In Progress').length;
-  const resolvedCount = requests.filter(r => r.status === 'Resolved').length;
+  const ordered = useMemo(
+    () => [...pipelineStatuses].sort((a, b) => a.order - b.order),
+    [pipelineStatuses]
+  );
+  const firstSlug =
+    defaultStatusSlug || ordered.find((s) => s.isDefault)?.slug || ordered[0]?.slug;
+  const lastSlug = ordered[ordered.length - 1]?.slug;
+  const middleSlugs = useMemo(
+    () =>
+      new Set(
+        ordered
+          .map((s) => s.slug)
+          .filter((slug) => slug !== firstSlug && slug !== lastSlug)
+      ),
+    [ordered, firstSlug, lastSlug]
+  );
 
-  const recentRequests = [...requests]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5);
+  const pendingCount = firstSlug
+    ? requests.filter((r) => r.status === firstSlug).length
+    : 0;
+  const inProgressCount = requests.filter((r) => middleSlugs.has(r.status)).length;
+  const resolvedCount = lastSlug
+    ? requests.filter((r) => r.status === lastSlug).length
+    : 0;
+
+  const recentRequests = useMemo(
+    () => getRecentInquiries(requests, 5),
+    [requests]
+  );
 
   if (isInitialLoading) {
     return (
@@ -69,16 +100,24 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       <LoadingOverlay visible={isRefreshing} label="Refreshing dashboard…" />
 
       <OverviewMetrics
-        totalCount={overviewKpi?.totalLeads ?? requests.length}
+        totalCount={overviewKpi?.activeLeads ?? requests.length}
         pendingCount={pendingCount}
         inProgressCount={inProgressCount}
         resolvedCount={resolvedCount}
+        pendingLabel={
+          ordered.find((s) => s.slug === firstSlug)?.title || 'Pending Review'
+        }
+        inProgressLabel="In Progress"
+        resolvedLabel={
+          ordered.find((s) => s.slug === lastSlug)?.title || 'Resolved'
+        }
         momGrowth={overviewKpi?.momGrowthPercentage}
         winRate={overviewKpi?.winRatePercentage}
       />
 
       <MessagesGraph
         monthlyTrends={monthlyTrends}
+        availableYears={availableYears}
         serviceAnalytics={serviceAnalytics}
         funnelAnalytics={funnelAnalytics}
         overviewKpi={overviewKpi}

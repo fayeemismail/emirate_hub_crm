@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ServiceRequest, RequestStatus, RequestPriority } from '../../types';
+import React, { useEffect, useRef, useState } from 'react';
+import { ServiceRequest, RequestStatus, RequestPriority, PipelineStatus } from '../../types';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { CustomSelect } from '../ui/CustomSelect';
 import {
@@ -11,28 +11,61 @@ import {
   Trash2,
   Send,
   CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { Spinner } from '../ui/loading';
+import { EmptyState } from '../ui/EmptyState';
 
 interface RequestDetailModalProps {
   request: ServiceRequest | null;
+  pipelineStatuses: PipelineStatus[];
   onClose: () => void;
   onUpdateStatus: (id: string, newStatus: RequestStatus) => void | Promise<void | boolean>;
-  onUpdatePriority?: (id: string, newPriority: RequestPriority) => void | Promise<void>;
+  onUpdatePriority?: (id: string, newPriority: RequestPriority) => void | Promise<void | boolean>;
   onDeleteRequest?: (id: string) => void | Promise<void>;
   onAddNote?: (id: string, note: string) => void | Promise<void>;
 }
 
-const STATUS_OPTIONS = [
-  { value: 'Pending' as const, label: 'Pending' },
-  { value: 'In Progress' as const, label: 'In Progress' },
-  { value: 'Resolved' as const, label: 'Resolved' },
-];
-
 const PRIORITIES: RequestPriority[] = ['High', 'Medium', 'Low'];
+
+type FieldFeedback =
+  | { kind: 'saving' }
+  | { kind: 'success'; message: string }
+  | { kind: 'error'; message: string }
+  | null;
+
+function FeedbackLine({ feedback }: { feedback: FieldFeedback }) {
+  if (!feedback) return null;
+
+  if (feedback.kind === 'saving') {
+    return (
+      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: '#A8A29E' }}>
+        <Spinner size="xs" color="#A8A29E" />
+        Saving…
+      </div>
+    );
+  }
+
+  if (feedback.kind === 'success') {
+    return (
+      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: '#15803D' }}>
+        <CheckCircle2 className="h-3 w-3 shrink-0" />
+        {feedback.message}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 text-[11px]" style={{ color: '#B91C1C' }}>
+      <AlertCircle className="h-3 w-3 shrink-0" />
+      {feedback.message}
+    </div>
+  );
+}
 
 export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   request,
+  pipelineStatuses,
   onClose,
   onUpdateStatus,
   onUpdatePriority,
@@ -43,6 +76,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const [noteText, setNoteText] = useState('');
   const [noteSaved, setNoteSaved] = useState(false);
   const [isSavingNote, setIsSavingNote] = useState(false);
+  const [statusFeedback, setStatusFeedback] = useState<FieldFeedback>(null);
+  const [priorityFeedback, setPriorityFeedback] = useState<FieldFeedback>(null);
+  const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const priorityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [confirmAction, setConfirmAction] = useState<{
     isOpen: boolean;
@@ -60,6 +97,23 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     onConfirm: () => {},
   });
 
+  // Reset transient UI when switching leads / closing.
+  useEffect(() => {
+    setStatusFeedback(null);
+    setPriorityFeedback(null);
+    setNoteText('');
+    setNoteSaved(false);
+    if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+    if (priorityTimerRef.current) clearTimeout(priorityTimerRef.current);
+  }, [request?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+      if (priorityTimerRef.current) clearTimeout(priorityTimerRef.current);
+    };
+  }, []);
+
   if (!request) return null;
 
   const displayName =
@@ -72,14 +126,78 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     timeStyle: 'short',
   });
 
-  const handleStatusChange = (newStatus: RequestStatus) => {
-    if (newStatus === request.status) return;
-    void onUpdateStatus(request.id, newStatus);
+  const showTimedFeedback = (
+    setFeedback: React.Dispatch<React.SetStateAction<FieldFeedback>>,
+    timerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
+    next: Exclude<FieldFeedback, null>
+  ) => {
+    setFeedback(next);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (next.kind === 'success' || next.kind === 'error') {
+      timerRef.current = setTimeout(() => {
+        setFeedback(null);
+        timerRef.current = null;
+      }, 2800);
+    }
   };
 
-  const handlePriorityChange = (newPriority: RequestPriority) => {
-    if (newPriority === request.priority) return;
-    void onUpdatePriority?.(request.id, newPriority);
+  const handleStatusChange = async (newStatus: RequestStatus) => {
+    if (newStatus === request.status || statusFeedback?.kind === 'saving') return;
+
+    const statusTitle =
+      pipelineStatuses.find((s) => s.slug === newStatus)?.title || newStatus;
+
+    showTimedFeedback(setStatusFeedback, statusTimerRef, { kind: 'saving' });
+    try {
+      const ok = await onUpdateStatus(request.id, newStatus);
+      if (ok === false) {
+        showTimedFeedback(setStatusFeedback, statusTimerRef, {
+          kind: 'error',
+          message: 'Couldn’t update status. Try again.',
+        });
+        return;
+      }
+      showTimedFeedback(setStatusFeedback, statusTimerRef, {
+        kind: 'success',
+        message: `Status updated to ${statusTitle}`,
+      });
+    } catch {
+      showTimedFeedback(setStatusFeedback, statusTimerRef, {
+        kind: 'error',
+        message: 'Couldn’t update status. Try again.',
+      });
+    }
+  };
+
+  const handlePriorityChange = async (newPriority: RequestPriority) => {
+    if (
+      newPriority === request.priority ||
+      !onUpdatePriority ||
+      priorityFeedback?.kind === 'saving'
+    ) {
+      return;
+    }
+
+    showTimedFeedback(setPriorityFeedback, priorityTimerRef, { kind: 'saving' });
+    try {
+      const ok = await onUpdatePriority(request.id, newPriority);
+      if (ok === false) {
+        showTimedFeedback(setPriorityFeedback, priorityTimerRef, {
+          kind: 'error',
+          message: 'Couldn’t update priority. Try again.',
+        });
+        return;
+      }
+      showTimedFeedback(setPriorityFeedback, priorityTimerRef, {
+        kind: 'success',
+        message: `Priority set to ${newPriority}`,
+      });
+    } catch {
+      showTimedFeedback(setPriorityFeedback, priorityTimerRef, {
+        kind: 'error',
+        message: 'Couldn’t update priority. Try again.',
+      });
+    }
   };
 
   const handleDeleteChangeRequest = () => {
@@ -115,6 +233,9 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
       setIsSavingNote(false);
     }
   };
+
+  const statusBusy = statusFeedback?.kind === 'saving';
+  const priorityBusy = priorityFeedback?.kind === 'saving';
 
   return (
     <>
@@ -246,15 +367,48 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 <label className="text-xs" style={{ color: '#A8A29E' }}>
                   Status
                 </label>
-                <CustomSelect
-                  value={request.status as 'Pending' | 'In Progress' | 'Resolved'}
-                  options={STATUS_OPTIONS}
-                  onChange={(v) => handleStatusChange(v)}
-                  ariaLabel="Update status"
-                  align="left"
-                  minWidth={120}
-                  className="w-full [&>button]:w-full"
-                />
+                {pipelineStatuses.length === 0 ? (
+                  <EmptyState
+                    compact
+                    icon="status"
+                    title="No statuses"
+                    description="Publish lead statuses in Sanity to enable this control."
+                    className="rounded-xl border"
+                  />
+                ) : (
+                  <>
+                    {!pipelineStatuses.some((s) => s.slug === request.status) ? (
+                      <p className="text-[11px] mb-1" style={{ color: '#B45309' }}>
+                        Current status “{request.status}” is retired/unknown. Pick an active
+                        stage to reassign.
+                      </p>
+                    ) : null}
+                    <CustomSelect
+                      value={request.status}
+                      options={[
+                        ...(!pipelineStatuses.some((s) => s.slug === request.status)
+                          ? [
+                              {
+                                value: request.status,
+                                label: `Unknown · ${request.status}`,
+                              },
+                            ]
+                          : []),
+                        ...pipelineStatuses.map((s) => ({
+                          value: s.slug,
+                          label: s.title,
+                        })),
+                      ]}
+                      onChange={(v) => void handleStatusChange(v)}
+                      ariaLabel="Update status"
+                      align="left"
+                      minWidth={120}
+                      disabled={statusBusy}
+                      className="w-full [&>button]:w-full"
+                    />
+                    <FeedbackLine feedback={statusFeedback} />
+                  </>
+                )}
               </div>
 
               <div className="space-y-1.5 min-w-0">
@@ -263,7 +417,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 </label>
                 <div
                   className="grid grid-cols-3 gap-1 rounded-lg border p-1"
-                  style={{ borderColor: '#E7E5E4' }}
+                  style={{
+                    borderColor: '#E7E5E4',
+                    opacity: priorityBusy ? 0.7 : 1,
+                  }}
                 >
                   {PRIORITIES.map((p) => {
                     const selected = request.priority === p;
@@ -271,8 +428,9 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                       <button
                         key={p}
                         type="button"
-                        onClick={() => handlePriorityChange(p)}
-                        className="rounded-md py-1.5 text-xs font-medium transition-colors cursor-pointer"
+                        disabled={priorityBusy}
+                        onClick={() => void handlePriorityChange(p)}
+                        className="rounded-md py-1.5 text-xs font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
                         style={{
                           backgroundColor: selected ? '#FEE2E2' : 'transparent',
                           color: selected ? '#E02126' : '#78716C',
@@ -283,6 +441,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     );
                   })}
                 </div>
+                <FeedbackLine feedback={priorityFeedback} />
               </div>
             </div>
 

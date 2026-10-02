@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ServiceRequest } from '../../types';
-import { COMPANY_SERVICES } from '../../data/mockData';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { CatalogService, ServiceRequest } from '../../types';
 import { X, Plus, CheckCircle2 } from 'lucide-react';
 import { Spinner } from '../ui/loading';
 import { CustomSelect } from '../ui/CustomSelect';
+import { EmptyState } from '../ui/EmptyState';
 
 interface SimulateFormModalProps {
   isOpen: boolean;
+  catalogServices: CatalogService[];
   onClose: () => void;
   onSubmitNewRequest: (
     req: Omit<ServiceRequest, 'id' | 'createdAt' | 'status' | 'priority'>
@@ -25,27 +26,111 @@ const fieldStyle: React.CSSProperties = {
   color: 'var(--crm-text-primary, #1C1917)',
 };
 
+const IS_DEV = process.env.NODE_ENV === 'development';
+
+/** Prefill only in local/dev so create-lead testing is one click. Never ships to production builds. */
+function getDevMockDefaults(preferredServiceSlug: string) {
+  return {
+    name: 'Alex Morgan',
+    email: 'alex.morgan@example.com',
+    phone: '+971 50 123 4567',
+    requestText:
+      'Dev mock inquiry — interested in corporate setup timelines and required documents.',
+    service: preferredServiceSlug,
+  };
+}
+
+function emptyFormDefaults(preferredServiceSlug: string) {
+  return {
+    name: '',
+    email: '',
+    phone: '',
+    requestText: '',
+    service: preferredServiceSlug,
+  };
+}
+
 export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
   isOpen,
+  catalogServices,
   onClose,
   onSubmitNewRequest,
 }) => {
-  const [service, setService] = useState(COMPANY_SERVICES[0]);
+  const serviceOptions = useMemo(
+    () =>
+      catalogServices.map((s) => ({
+        value: s.slug,
+        label: s.title,
+      })),
+    [catalogServices]
+  );
+  const defaultService = serviceOptions[0]?.value || '';
+
+  const [service, setService] = useState(defaultService);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [requestText, setRequestText] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const wasOpenRef = useRef(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const serviceOptions = COMPANY_SERVICES.map((s) => ({ value: s, label: s }));
+  // Seed form only when the modal opens — not when catalog refreshes after submit.
+  useEffect(() => {
+    const justOpened = isOpen && !wasOpenRef.current;
+    wasOpenRef.current = isOpen;
+
+    if (!isOpen) {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (!justOpened) return;
+
+    const preferred =
+      defaultService && serviceOptions.some((o) => o.value === defaultService)
+        ? defaultService
+        : serviceOptions[0]?.value || '';
+
+    const defaults = IS_DEV
+      ? getDevMockDefaults(preferred)
+      : emptyFormDefaults(preferred);
+
+    setName(defaults.name);
+    setEmail(defaults.email);
+    setPhone(defaults.phone);
+    setRequestText(defaults.requestText);
+    setService(defaults.service);
+    setIsSuccess(false);
+    setIsSubmitting(false);
+  }, [isOpen, defaultService, serviceOptions]);
+
+  // If services load after open and service is still empty, set the first option once.
+  useEffect(() => {
+    if (!isOpen || isSuccess || !defaultService) return;
+    setService((current) =>
+      current && serviceOptions.some((o) => o.value === current)
+        ? current
+        : defaultService
+    );
+  }, [isOpen, isSuccess, defaultService, serviceOptions]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim() || !email.trim() || isSubmitting) {
+    if (!name.trim() || !email.trim() || !service || isSubmitting || isSuccess) {
       return;
     }
 
@@ -65,13 +150,9 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
       });
 
       setIsSuccess(true);
-      setTimeout(() => {
-        setIsSuccess(false);
-        setName('');
-        setEmail('');
-        setPhone('');
-        setRequestText('');
-        setService(COMPANY_SERVICES[0]);
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
         onClose();
       }, 1600);
     } finally {
@@ -99,7 +180,9 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
               Create lead
             </h3>
             <p className="mt-0.5 text-sm" style={{ color: '#78716C' }}>
-              Add a production inquiry to the CRM pipeline.
+              {IS_DEV
+                ? 'Dev mode — form is prefilled with mock data. Edit or submit as-is.'
+                : 'Add a production inquiry to the CRM pipeline.'}
             </p>
           </div>
           <button
@@ -128,6 +211,12 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
               The inquiry is now in your pipeline and dashboard.
             </p>
           </div>
+        ) : catalogServices.length === 0 ? (
+          <EmptyState
+            icon="status"
+            title="No services available"
+            description="Publish active emirateCorporateService documents in Sanity, then refresh."
+          />
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5">
             <div className="space-y-1.5">
@@ -226,7 +315,7 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !service}
                 className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 style={{ backgroundColor: '#E02126' }}
               >

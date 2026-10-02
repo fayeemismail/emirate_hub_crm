@@ -1,5 +1,29 @@
-export type RequestStatus = 'Pending' | 'In Progress' | 'Resolved' | 'Archived';
+/** Sanity leadStatus slug (SSOT via crm-be). */
+export type RequestStatus = string;
 export type RequestPriority = 'Low' | 'Medium' | 'High';
+
+/** Pipeline stage from GET /admin/leads/statuses (Sanity via BE). */
+export interface PipelineStatus {
+  id?: string;
+  title: string;
+  slug: string;
+  order: number;
+  color: string;
+  description?: string;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+/** Service catalog item from GET /admin/leads/services (Sanity via BE). */
+export interface CatalogService {
+  id?: string;
+  title: string;
+  slug: string;
+  order: number;
+  tag?: string;
+  description?: string;
+  isActive: boolean;
+}
 
 export interface ServiceRequest {
   id: string;
@@ -8,7 +32,10 @@ export interface ServiceRequest {
   lastName: string;
   email: string;
   phone?: string; // Optional phone field
+  /** Display title (from BE). */
   service: string;
+  /** Stable Sanity service slug when known. */
+  serviceSlug?: string;
   message: string;
   createdAt: string; // ISO string or relative time
   status: RequestStatus;
@@ -43,6 +70,7 @@ export type {
   OverviewKpi,
   MonthlyTrendItem,
   MonthlyTrendsResponse,
+  AvailableYearsResponse,
   ServicePerformanceItem,
   ServiceAnalyticsResponse,
   FunnelStageItem,

@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-export type DashboardTab = 'dashboard' | 'requests';
+export type DashboardTab = 'dashboard' | 'requests' | 'reassignment' | 'settings';
+
+const VALID_TABS: DashboardTab[] = ['dashboard', 'requests', 'reassignment', 'settings'];
 
 export function useActiveTab(defaultTab: DashboardTab = 'dashboard') {
   const [activeTab, setActiveTab] = useState<DashboardTab>(defaultTab);
@@ -11,7 +13,6 @@ export function useActiveTab(defaultTab: DashboardTab = 'dashboard') {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const validTabs: DashboardTab[] = ['dashboard', 'requests'];
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab') as DashboardTab | null;
     const storedTab = (
@@ -20,9 +21,9 @@ export function useActiveTab(defaultTab: DashboardTab = 'dashboard') {
     ) as DashboardTab | null;
 
     let targetTab: DashboardTab = defaultTab;
-    if (tabParam && validTabs.includes(tabParam)) {
+    if (tabParam && VALID_TABS.includes(tabParam)) {
       targetTab = tabParam;
-    } else if (storedTab && validTabs.includes(storedTab)) {
+    } else if (storedTab && VALID_TABS.includes(storedTab)) {
       targetTab = storedTab;
     }
 
@@ -45,10 +46,9 @@ export function useActiveTab(defaultTab: DashboardTab = 'dashboard') {
   // Listen to browser navigation (back / forward buttons)
   useEffect(() => {
     const handlePopState = () => {
-      const validTabs: DashboardTab[] = ['dashboard', 'requests'];
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab') as DashboardTab | null;
-      if (tabParam && validTabs.includes(tabParam)) {
+      if (tabParam && VALID_TABS.includes(tabParam)) {
         setActiveTab(tabParam);
         localStorage.setItem('emirate_active_tab', tabParam);
       } else {

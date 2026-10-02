@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
-  Inbox, 
+  Inbox,
+  AlertTriangle,
+  Settings,
   ChevronRight, 
   X, 
   LogOut 
@@ -11,11 +13,13 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { BrandMark } from './BrandMark';
+import type { DashboardTab } from '../hooks/useActiveTab';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'requests';
-  setActiveTab: (tab: 'dashboard' | 'requests') => void;
+  activeTab: DashboardTab;
+  setActiveTab: (tab: DashboardTab) => void;
   pendingCount: number;
+  orphanCount: number;
   isOpenMobile: boolean;
   setIsOpenMobile: (open: boolean) => void;
 }
@@ -24,6 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
   pendingCount,
+  orphanCount,
   isOpenMobile,
   setIsOpenMobile,
 }) => {
@@ -33,18 +38,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     {
-      id: 'dashboard',
+      id: 'dashboard' as const,
       label: 'Dashboard',
       icon: LayoutDashboard,
-      badge: null,
+      badge: null as number | null,
     },
     {
-      id: 'requests',
+      id: 'requests' as const,
       label: 'Service Inquiries',
       icon: Inbox,
       badge: pendingCount > 0 ? pendingCount : null,
     },
-  ] as const;
+    ...(orphanCount > 0
+      ? [
+          {
+            id: 'reassignment' as const,
+            label: 'Needs reassignment',
+            icon: AlertTriangle,
+            badge: orphanCount as number | null,
+          },
+        ]
+      : []),
+    {
+      id: 'settings' as const,
+      label: 'Settings',
+      icon: Settings,
+      badge: null as number | null,
+    },
+  ];
 
   return (
     <>
@@ -114,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveTab(item.id as any);
+                    setActiveTab(item.id);
                     setIsOpenMobile(false);
                   }}
                   className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs transition-all duration-200 group cursor-pointer border"

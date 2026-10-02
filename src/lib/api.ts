@@ -9,6 +9,12 @@ export interface ApiResponse<T = any> {
   success: boolean;
   message?: string;
   data: T;
+  pagination?: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  };
   meta?: {
     page: number;
     limit: number;
@@ -42,6 +48,8 @@ export interface LeadItem {
   email: string;
   phone?: string;
   service: string;
+  /** Stable Sanity service slug when present. */
+  serviceSlug?: string;
   message?: string;
   status: string;
   boardOrder: number;
@@ -100,6 +108,11 @@ export interface MonthlyTrendsResponse {
   trends: MonthlyTrendItem[];
 }
 
+export interface AvailableYearsResponse {
+  years: number[];
+  currentYear: number;
+}
+
 export interface ServicePerformanceItem {
   service: string;
   totalInquiries: number;
@@ -132,6 +145,38 @@ export interface FunnelStageItem {
 export interface FunnelAnalyticsResponse {
   totalLeadsInFunnel: number;
   stages: FunnelStageItem[];
+}
+
+export interface LeadStatusItem {
+  id?: string;
+  title: string;
+  slug: string;
+  order: number;
+  color: string;
+  description?: string;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+export interface LeadStatusListResponse {
+  statuses: LeadStatusItem[];
+  defaultStatus: string;
+  source: 'sanity' | 'stale_cache';
+}
+
+export interface CatalogServiceItem {
+  id?: string;
+  title: string;
+  slug: string;
+  order: number;
+  tag?: string;
+  description?: string;
+  isActive: boolean;
+}
+
+export interface CatalogServiceListResponse {
+  services: CatalogServiceItem[];
+  source: 'sanity' | 'stale_cache';
 }
 
 // Token helper
@@ -263,6 +308,7 @@ export const leadsApi = {
     status?: string;
     priority?: string;
     service?: string;
+    lookbackDays?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<ApiResponse<LeadItem[]>> => {
@@ -274,6 +320,9 @@ export const leadsApi = {
     if (params?.status) query.append('status', params.status);
     if (params?.priority) query.append('priority', params.priority);
     if (params?.service) query.append('service', params.service);
+    if (params?.lookbackDays !== undefined && params.lookbackDays > 0) {
+      query.append('lookbackDays', String(params.lookbackDays));
+    }
     if (params?.sortBy) query.append('sortBy', params.sortBy);
     if (params?.sortOrder) query.append('sortOrder', params.sortOrder);
 
@@ -285,6 +334,18 @@ export const leadsApi = {
 
   getLeadById: async (id: string): Promise<ApiResponse<LeadItem>> => {
     return request<LeadItem>(`/v1/admin/leads/${id}`, {
+      method: 'GET',
+    });
+  },
+
+  getLeadStatuses: async (): Promise<ApiResponse<LeadStatusListResponse>> => {
+    return request<LeadStatusListResponse>('/v1/admin/leads/statuses', {
+      method: 'GET',
+    });
+  },
+
+  getLeadServices: async (): Promise<ApiResponse<CatalogServiceListResponse>> => {
+    return request<CatalogServiceListResponse>('/v1/admin/leads/services', {
       method: 'GET',
     });
   },
@@ -373,6 +434,12 @@ export const analyticsApi = {
     if (params?.status) q.append('status', params.status);
     const queryString = q.toString() ? `?${q.toString()}` : '';
     return request<MonthlyTrendsResponse>(`/v1/admin/analytics/monthly-trends${queryString}`, {
+      method: 'GET',
+    });
+  },
+
+  getAvailableYears: async (): Promise<ApiResponse<AvailableYearsResponse>> => {
+    return request<AvailableYearsResponse>('/v1/admin/analytics/available-years', {
       method: 'GET',
     });
   },

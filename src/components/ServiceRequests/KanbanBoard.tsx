@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -26,11 +26,18 @@ import { CSS } from '@dnd-kit/utilities';
 import { ServiceRequest, RequestStatus, RequestPriority } from '../../types';
 import { sortByBoardOrder } from '../../lib/adapters';
 import { ConfirmModal } from '../ui/ConfirmModal';
-import { Spinner, LoadingOverlay } from '../ui/loading';
-import { GripVertical, Trash2, AlertTriangle, X } from 'lucide-react';
+import { Spinner } from '../ui/loading';
+import { EmptyState } from '../ui/EmptyState';
+import { GripVertical, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+
+interface KanbanColumn {
+  id: RequestStatus;
+  title: string;
+}
 
 interface KanbanBoardProps {
   requests: ServiceRequest[];
+  columns: KanbanColumn[];
   onSelectRequest: (req: ServiceRequest) => void;
   onKanbanSync: (
     next: ServiceRequest[],
@@ -39,19 +46,14 @@ interface KanbanBoardProps {
   onDeleteRequest?: (id: string) => void;
 }
 
-const COLUMNS: { id: RequestStatus; title: string }[] = [
-  { id: 'Pending', title: 'Pending' },
-  { id: 'In Progress', title: 'In Progress' },
-  { id: 'Resolved', title: 'Resolved' },
-];
-
-const COLUMN_IDS = new Set<string>(COLUMNS.map((c) => c.id));
-
 const PRIORITY_DOT: Record<RequestPriority, string> = {
   High: '#E02126',
   Medium: '#D97706',
   Low: '#A8A29E',
 };
+
+/** @deprecated kept only so old imports don't break; orphans are listed off-board now. */
+export const UNKNOWN_STATUS_COLUMN_ID = '__unknown__';
 
 type ConfirmState = {
   isOpen: boolean;
@@ -62,54 +64,58 @@ type ConfirmState = {
   onConfirm: () => void;
 };
 
-type ItemsState = Record<RequestStatus, string[]>;
+type ItemsState = Record<string, string[]>;
 
 function clientNameOf(req: ServiceRequest) {
   return req.name || `${req.firstName} ${req.lastName}`.trim() || 'Client';
 }
 
-function buildItems(requests: ServiceRequest[]): ItemsState {
-  const items: ItemsState = {
-    Pending: [],
-    'In Progress': [],
-    Resolved: [],
-    Archived: [],
-  };
+function buildItems(requests: ServiceRequest[], columns: KanbanColumn[]): ItemsState {
+  const items: ItemsState = {};
+  for (const col of columns) items[col.id] = [];
+  const columnIds = new Set(columns.map((c) => c.id));
   const sorted = [...requests].sort(sortByBoardOrder);
   for (const req of sorted) {
-    if (req.status === 'Archived') continue;
-    if (items[req.status]) items[req.status].push(req.id);
-    else items.Pending.push(req.id);
+    if (columnIds.has(req.status)) items[req.status].push(req.id);
+    // Orphans stay off the board — listed on the Reassignment nav page.
   }
   return items;
 }
 
-function findContainer(items: ItemsState, id: UniqueIdentifier): RequestStatus | null {
+function findContainer(
+  items: ItemsState,
+  columns: KanbanColumn[],
+  id: UniqueIdentifier
+): RequestStatus | null {
   const sid = String(id);
-  if (COLUMN_IDS.has(sid)) return sid as RequestStatus;
-  for (const col of COLUMNS) {
-    if (items[col.id].includes(sid)) return col.id;
+  const columnIds = new Set(columns.map((c) => c.id));
+  if (columnIds.has(sid)) return sid;
+  for (const col of columns) {
+    if (items[col.id]?.includes(sid)) return col.id;
   }
   return null;
 }
 
 function itemsToRequests(
   items: ItemsState,
+  columns: KanbanColumn[],
   byId: Map<string, ServiceRequest>
 ): ServiceRequest[] {
   const next: ServiceRequest[] = [];
-  for (const col of COLUMNS) {
-    items[col.id].forEach((id, index) => {
+  const seen = new Set<string>();
+
+  for (const col of columns) {
+    (items[col.id] || []).forEach((id, index) => {
       const base = byId.get(id);
       if (!base) return;
+      seen.add(id);
       next.push({ ...base, status: col.id, boardOrder: index });
     });
   }
-  // keep archived / unknown
+
+  // Preserve orphans untouched (not on board).
   for (const req of byId.values()) {
-    if (req.status === 'Archived' || !COLUMN_IDS.has(req.status)) {
-      if (!next.some((r) => r.id === req.id)) next.push(req);
-    }
+    if (!seen.has(req.id)) next.push(req);
   }
   return next;
 }
@@ -271,7 +277,7 @@ function Column({
 
   return (
     <div
-      className="flex flex-col rounded-2xl border min-h-[20rem]"
+      className="flex flex-col w-full rounded-2xl border min-h-[20rem]"
       style={{
         backgroundColor: '#FFFFFF',
         borderColor: isOver ? '#E02126' : '#E7E5E4',
@@ -289,12 +295,17 @@ function Column({
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className="flex-1 px-3 pb-4 space-y-3 min-h-[12rem]">
           {ids.length === 0 && (
-            <p
-              className="py-8 text-center text-xs rounded-xl border border-dashed"
-              style={{ color: '#D6D3D1', borderColor: isOver ? '#FECACA' : '#E7E5E4' }}
+            <div
+              className="rounded-xl border border-dashed"
+              style={{ borderColor: isOver ? '#FECACA' : '#E7E5E4' }}
             >
-              {isOver ? 'Drop here' : 'No inquiries'}
-            </p>
+              <EmptyState
+                compact
+                icon="inbox"
+                title={isOver ? 'Drop here' : 'No inquiries'}
+                description={isOver ? undefined : 'Drag a card into this stage.'}
+              />
+            </div>
           )}
 
           {ids.map((id) => {
@@ -318,19 +329,29 @@ function Column({
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   requests,
+  columns,
   onSelectRequest,
   onKanbanSync,
   onDeleteRequest,
 }) => {
-  const [items, setItems] = useState<ItemsState>(() => buildItems(requests));
+  const columnIds = useMemo(() => new Set(columns.map((c) => c.id)), [columns]);
+  const [items, setItems] = useState<ItemsState>(() => buildItems(requests, columns));
   const [activeId, setActiveId] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncSuccess, setSyncSuccess] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmState | null>(null);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setItems(buildItems(requests));
-  }, [requests]);
+    setItems(buildItems(requests, columns));
+  }, [requests, columns]);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    };
+  }, []);
 
   const byId = useMemo(() => {
     const map = new Map<string, ServiceRequest>();
@@ -345,41 +366,84 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   );
 
   const activeRequest = activeId ? byId.get(activeId) ?? null : null;
-  const overColumnId = activeId ? findContainer(items, activeId) : null;
+  const overColumnId = activeId ? findContainer(items, columns, activeId) : null;
 
-  const persistItems = async (nextItems: ItemsState, previousRequests: ServiceRequest[]) => {
-    const nextRequests = itemsToRequests(nextItems, byId);
+  if (columns.length === 0) {
+    return (
+      <EmptyState
+        icon="pipeline"
+        title="No pipeline columns"
+        description="Statuses from Sanity will appear here as board columns once they’re published."
+      />
+    );
+  }
+
+  const showSuccess = (message: string) => {
+    setSyncSuccess(message);
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    successTimerRef.current = setTimeout(() => {
+      setSyncSuccess(null);
+      successTimerRef.current = null;
+    }, 2800);
+  };
+
+  const persistItems = async (
+    nextItems: ItemsState,
+    previousRequests: ServiceRequest[]
+  ) => {
+    const nextRequests = itemsToRequests(nextItems, columns, byId);
     setIsSyncing(true);
     setSyncError(null);
-    const ok = await onKanbanSync(nextRequests, previousRequests);
-    setIsSyncing(false);
-    if (!ok) {
-      setItems(buildItems(previousRequests));
-      setSyncError('Could not save board changes. Your last move was reverted.');
+    setSyncSuccess(null);
+    try {
+      const ok = await onKanbanSync(nextRequests, previousRequests);
+      if (!ok) {
+        setItems(buildItems(previousRequests, columns));
+        setSyncError('Couldn’t save board changes. Your last move was reverted.');
+        return;
+      }
+      const moved = nextRequests.find((n) => {
+        const p = previousRequests.find((x) => x.id === n.id);
+        return p && p.status !== n.status;
+      });
+      if (moved) {
+        const colTitle = columns.find((c) => c.id === moved.status)?.title || moved.status;
+        showSuccess(`Moved to ${colTitle}`);
+      } else {
+        showSuccess('Board order saved');
+      }
+    } catch {
+      setItems(buildItems(previousRequests, columns));
+      setSyncError('Couldn’t save board changes. Your last move was reverted.');
+    } finally {
+      setIsSyncing(false);
     }
   };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
     setSyncError(null);
+    setSyncSuccess(null);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
 
-    const activeContainer = findContainer(items, active.id);
-    const overContainer = findContainer(items, over.id);
-    if (!activeContainer || !overContainer || activeContainer === overContainer) return;
+    const activeContainer = findContainer(items, columns, active.id);
+    const overContainer = findContainer(items, columns, over.id);
+    if (!activeContainer || !overContainer || activeContainer === overContainer) {
+      return;
+    }
 
     setItems((prev) => {
-      const activeItems = [...prev[activeContainer]];
-      const overItems = [...prev[overContainer]];
+      const activeItems = [...(prev[activeContainer] || [])];
+      const overItems = [...(prev[overContainer] || [])];
       const activeIndex = activeItems.indexOf(String(active.id));
       if (activeIndex === -1) return prev;
 
       let newIndex: number;
-      if (COLUMN_IDS.has(String(over.id))) {
+      if (columnIds.has(String(over.id))) {
         newIndex = overItems.length;
       } else {
         const overIndex = overItems.indexOf(String(over.id));
@@ -404,23 +468,23 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     setActiveId(null);
 
     if (!over) {
-      setItems(buildItems(requests));
+      setItems(buildItems(requests, columns));
       return;
     }
 
-    const activeContainer = findContainer(items, active.id);
-    const overContainer = findContainer(items, over.id);
+    const activeContainer = findContainer(items, columns, active.id);
+    const overContainer = findContainer(items, columns, over.id);
     if (!activeContainer || !overContainer) {
-      setItems(buildItems(requests));
+      setItems(buildItems(requests, columns));
       return;
     }
 
     let nextItems = items;
 
     if (activeContainer === overContainer) {
-      const colItems = [...items[activeContainer]];
+      const colItems = [...(items[activeContainer] || [])];
       const oldIndex = colItems.indexOf(String(active.id));
-      const newIndex = COLUMN_IDS.has(String(over.id))
+      const newIndex = columnIds.has(String(over.id))
         ? colItems.length - 1
         : colItems.indexOf(String(over.id));
 
@@ -434,7 +498,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
 
     const previous = requests;
-    const projected = itemsToRequests(nextItems, byId);
+    const projected = itemsToRequests(nextItems, columns, byId);
     const changed = projected.some((n) => {
       const p = previous.find((x) => x.id === n.id);
       return !p || p.status !== n.status || (p.boardOrder ?? 0) !== (n.boardOrder ?? 0);
@@ -447,42 +511,56 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   const handleDragCancel = () => {
     setActiveId(null);
-    setItems(buildItems(requests));
+    setItems(buildItems(requests, columns));
   };
 
   return (
     <div className="relative space-y-3">
-      <LoadingOverlay visible={isSyncing} label="Saving board…" />
-
-      <div className="inline-flex items-center gap-1.5 text-xs" style={{ color: '#A8A29E' }}>
-        Drag cards to reorder or move between columns
+      {/* Fixed-height status strip — swaps content in place so cards don’t jump */}
+      <div
+        className="flex min-h-[1.25rem] flex-wrap items-center gap-1.5 text-xs"
+        style={{
+          color: syncError
+            ? '#B91C1C'
+            : syncSuccess
+              ? '#15803D'
+              : '#A8A29E',
+        }}
+        role={syncError ? 'alert' : 'status'}
+        aria-live="polite"
+      >
         {isSyncing ? (
           <>
-            <span>·</span>
             <Spinner size="xs" color="#A8A29E" />
             <span>Saving…</span>
           </>
-        ) : null}
+        ) : syncError ? (
+          <>
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            <span className="flex-1 min-w-0">{syncError}</span>
+            <button
+              type="button"
+              onClick={() => setSyncError(null)}
+              className="shrink-0 cursor-pointer underline-offset-2 hover:underline"
+              aria-label="Dismiss"
+            >
+              Dismiss
+            </button>
+          </>
+        ) : syncSuccess ? (
+          <>
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+            <span>{syncSuccess}</span>
+          </>
+        ) : (
+          <span>Drag cards to reorder or move between columns</span>
+        )}
       </div>
 
-      {syncError && (
-        <div
-          className="flex items-start gap-2 rounded-xl border px-3 py-2.5 text-sm"
-          style={{ borderColor: '#FECACA', backgroundColor: '#FEF2F2', color: '#991B1B' }}
-        >
-          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-          <span className="flex-1">{syncError}</span>
-          <button
-            type="button"
-            onClick={() => setSyncError(null)}
-            className="shrink-0 cursor-pointer"
-            aria-label="Dismiss"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      )}
-
+      <div
+        className={isSyncing ? 'pointer-events-none opacity-70 transition-opacity' : ''}
+        aria-busy={isSyncing}
+      >
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -491,18 +569,26 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-          {COLUMNS.map((column) => (
-            <Column
+        <div className="flex flex-col md:flex-row gap-4 md:overflow-x-auto md:overscroll-x-contain pb-1 items-stretch">
+          {columns.map((column) => (
+            <div
               key={column.id}
-              column={column}
-              ids={items[column.id]}
-              byId={byId}
-              isOver={Boolean(activeId && overColumnId === column.id && findContainer(items, activeId) !== column.id)}
-              onSelectRequest={onSelectRequest}
-              onDeleteRequest={onDeleteRequest}
-              setConfirmAction={setConfirmAction}
-            />
+              className="w-full md:flex-1 md:basis-64 md:min-w-64 md:shrink-0"
+            >
+              <Column
+                column={column}
+                ids={items[column.id] || []}
+                byId={byId}
+                isOver={Boolean(
+                  activeId &&
+                    overColumnId === column.id &&
+                    findContainer(items, columns, activeId) !== column.id
+                )}
+                onSelectRequest={onSelectRequest}
+                onDeleteRequest={onDeleteRequest}
+                setConfirmAction={setConfirmAction}
+              />
+            </div>
           ))}
         </div>
 
@@ -520,6 +606,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           ) : null}
         </DragOverlay>
       </DndContext>
+      </div>
 
       {confirmAction && (
         <ConfirmModal

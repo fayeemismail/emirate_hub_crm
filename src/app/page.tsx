@@ -1,15 +1,27 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ServiceRequest } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useActiveTab } from '../hooks/useActiveTab';
-import { useDashboardData } from '../hooks/useDashboardData';
+import {
+  useDashboardData,
+  DEFAULT_INQUIRY_LIST_QUERY,
+  type InquiryListQuery,
+} from '../hooks/useDashboardData';
+import { useCrmSettings } from '../hooks/useCrmSettings';
+import { getOrphanRequests } from '../lib/orphans';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
 import { DashboardOverview } from '../components/Dashboard/Overview';
-import { ServiceRequestsView } from '../components/ServiceRequests/ServiceRequestsView';
+import {
+  ServiceRequestsView,
+  getInitialInquiriesViewMode,
+  type InquiryFiltersState,
+} from '../components/ServiceRequests/ServiceRequestsView';
+import { OrphanRequestsView } from '../components/ServiceRequests/OrphanRequestsView';
+import { SettingsView } from '../components/SettingsView';
 import { RequestDetailModal } from '../components/ServiceRequests/RequestDetailModal';
 import { SimulateFormModal } from '../components/ServiceRequests/SimulateFormModal';
 import { AuthLoadingScreen } from '../components/AuthLoadingScreen';
@@ -18,16 +30,55 @@ export default function Home() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { activeTab, setActiveTab } = useActiveTab('dashboard');
+  const { tableSort } = useCrmSettings();
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [inquiryFilters, setInquiryFilters] = useState<InquiryFiltersState>(() => ({
+    search: '',
+    service: 'All',
+    status: 'All',
+    tableSort,
+    viewMode: typeof window !== 'undefined' ? getInitialInquiriesViewMode() : 'kanban',
+  }));
+
+  // Sync persisted table sort into inquiry query when settings hydrate/change.
+  useEffect(() => {
+    setInquiryFilters((prev) =>
+      prev.tableSort === tableSort ? prev : { ...prev, tableSort }
+    );
+  }, [tableSort]);
+
+  const onInquiryFiltersChange = useCallback((patch: Partial<InquiryFiltersState>) => {
+    setInquiryFilters((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  // Dashboard / orphans / settings: lookback only (no inquiry toolbar filters).
+  // Requests tab: full BE-driven filter/sort query.
+  const inquiryQuery: InquiryListQuery = useMemo(() => {
+    if (activeTab !== 'requests') {
+      return DEFAULT_INQUIRY_LIST_QUERY;
+    }
+    return {
+      search: inquiryFilters.search,
+      service: inquiryFilters.service,
+      status: inquiryFilters.status,
+      tableSort: inquiryFilters.tableSort,
+      viewMode: inquiryFilters.viewMode,
+    };
+  }, [activeTab, inquiryFilters]);
+
   const [selectedRequestModal, setSelectedRequestModal] = useState<ServiceRequest | null>(null);
   const [isSimulateModalOpen, setIsSimulateModalOpen] = useState(false);
   const [isOpenMobileSidebar, setIsOpenMobileSidebar] = useState(false);
 
   const {
     requests,
+    leadsTotal,
+    pipelineStatuses,
+    catalogServices,
+    defaultStatusSlug,
     overviewKpi,
     monthlyTrends,
+    availableYears,
     serviceAnalytics,
     funnelAnalytics,
     isInitialLoading,
@@ -40,6 +91,7 @@ export default function Home() {
     handleSubmitNewRequest,
   } = useDashboardData({
     isAuthenticated,
+    inquiryQuery,
     onModalRequestUpdate: (updater) => setSelectedRequestModal((prev) => updater(prev)),
   });
 
@@ -49,7 +101,23 @@ export default function Home() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  const pendingCount = requests.filter((r) => r.status === 'Pending').length;
+  const pendingSlug =
+    defaultStatusSlug ||
+    pipelineStatuses.find((s) => s.isDefault)?.slug ||
+    pipelineStatuses[0]?.slug;
+  const pendingCount = pendingSlug
+    ? requests.filter((r) => r.status === pendingSlug).length
+    : 0;
+  const orphanCount = useMemo(
+    () => getOrphanRequests(requests, pipelineStatuses).length,
+    [requests, pipelineStatuses]
+  );
+
+  useEffect(() => {
+    if (activeTab === 'reassignment' && orphanCount === 0 && !isInitialLoading) {
+      setActiveTab('requests');
+    }
+  }, [activeTab, orphanCount, isInitialLoading, setActiveTab]);
 
   if (authLoading || (!isAuthenticated && typeof window !== 'undefined')) {
     return <AuthLoadingScreen />;
@@ -68,6 +136,7 @@ export default function Home() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         pendingCount={pendingCount}
+        orphanCount={orphanCount}
         isOpenMobile={isOpenMobileSidebar}
         setIsOpenMobile={setIsOpenMobileSidebar}
       />
@@ -82,8 +151,11 @@ export default function Home() {
           {activeTab === 'dashboard' && (
             <DashboardOverview
               requests={requests}
+              pipelineStatuses={pipelineStatuses}
+              defaultStatusSlug={defaultStatusSlug}
               overviewKpi={overviewKpi}
               monthlyTrends={monthlyTrends}
+              availableYears={availableYears}
               serviceAnalytics={serviceAnalytics}
               funnelAnalytics={funnelAnalytics}
               isInitialLoading={isInitialLoading}
@@ -96,21 +168,37 @@ export default function Home() {
           {activeTab === 'requests' && (
             <ServiceRequestsView
               requests={requests}
+              leadsTotal={leadsTotal}
+              pipelineStatuses={pipelineStatuses}
+              catalogServices={catalogServices}
               isLoading={isInitialLoading}
               isRefreshing={isRefreshing}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
+              filters={inquiryFilters}
+              onFiltersChange={onInquiryFiltersChange}
               onSelectRequest={(req) => setSelectedRequestModal(req)}
               onUpdateStatus={handleUpdateStatus}
               onKanbanSync={handleKanbanSync}
               onDeleteRequest={handleDeleteRequest}
             />
           )}
+
+          {activeTab === 'reassignment' && (
+            <OrphanRequestsView
+              requests={requests}
+              pipelineStatuses={pipelineStatuses}
+              isLoading={isInitialLoading}
+              isRefreshing={isRefreshing}
+              onSelectRequest={(req) => setSelectedRequestModal(req)}
+            />
+          )}
+
+          {activeTab === 'settings' && <SettingsView />}
         </main>
       </div>
 
       <RequestDetailModal
         request={selectedRequestModal}
+        pipelineStatuses={pipelineStatuses}
         onClose={() => setSelectedRequestModal(null)}
         onUpdateStatus={handleUpdateStatus}
         onUpdatePriority={handleUpdatePriority}
@@ -120,6 +208,7 @@ export default function Home() {
 
       <SimulateFormModal
         isOpen={isSimulateModalOpen}
+        catalogServices={catalogServices}
         onClose={() => setIsSimulateModalOpen(false)}
         onSubmitNewRequest={handleSubmitNewRequest}
       />

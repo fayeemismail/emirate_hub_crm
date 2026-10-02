@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import {
   MonthlyTrendsResponse,
+  AvailableYearsResponse,
   ServiceAnalyticsResponse,
   FunnelAnalyticsResponse,
   OverviewKpi,
@@ -11,9 +12,11 @@ import {
 import { analyticsApi } from '../../lib/api';
 import { CustomSelect } from '../ui/CustomSelect';
 import { Spinner, ChartSkeleton, LoadingOverlay } from '../ui/loading';
+import { EmptyState } from '../ui/EmptyState';
 
 interface MessagesGraphProps {
   monthlyTrends?: MonthlyTrendsResponse | null;
+  availableYears?: AvailableYearsResponse | null;
   serviceAnalytics?: ServiceAnalyticsResponse | null;
   funnelAnalytics?: FunnelAnalyticsResponse | null;
   overviewKpi?: OverviewKpi | null;
@@ -28,13 +31,14 @@ const TABS = [
 
 export const MessagesGraph: React.FC<MessagesGraphProps> = ({
   monthlyTrends: initialMonthlyTrends,
+  availableYears,
   serviceAnalytics,
   funnelAnalytics,
   overviewKpi,
   isLoading = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'monthly' | 'funnel' | 'services'>('monthly');
-  const currentYear = new Date().getFullYear();
+  const currentYear = availableYears?.currentYear ?? new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedService, setSelectedService] = useState<string>('all');
   const [currentTrends, setCurrentTrends] = useState<MonthlyTrendsResponse | null>(
@@ -42,6 +46,15 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
   );
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Keep selection valid when BE years arrive / refresh.
+  useEffect(() => {
+    const years = availableYears?.years;
+    if (!years?.length) return;
+    if (!years.includes(selectedYear)) {
+      setSelectedYear(availableYears?.currentYear ?? years[0]!);
+    }
+  }, [availableYears, selectedYear]);
 
   useEffect(() => {
     if (initialMonthlyTrends) {
@@ -142,14 +155,16 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
 
   const momGrowth = overviewKpi?.momGrowthPercentage ?? null;
 
-  const yearOptions = useMemo(
-    () =>
-      [currentYear, currentYear - 1, currentYear - 2].map((yr) => ({
-        value: String(yr),
-        label: String(yr),
-      })),
-    [currentYear]
-  );
+  const yearOptions = useMemo(() => {
+    const years =
+      availableYears?.years?.length
+        ? availableYears.years
+        : [currentYear];
+    return years.map((yr) => ({
+      value: String(yr),
+      label: String(yr),
+    }));
+  }, [availableYears, currentYear]);
 
   const serviceOptions = useMemo(
     () => [
@@ -277,6 +292,14 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
 
           <div className="relative w-full overflow-x-auto">
             <div className="relative min-w-[520px]">
+              {totalYearVolume === 0 ? (
+                <EmptyState
+                  compact
+                  icon="chart"
+                  title="No trend data for this year"
+                  description="Monthly volume will show once leads are created."
+                />
+              ) : (
               <svg
                 viewBox={`0 0 ${svgWidth} ${svgHeight + 28}`}
                 className="w-full h-auto overflow-visible"
@@ -376,6 +399,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                   );
                 })}
               </svg>
+              )}
             </div>
           </div>
         </div>
@@ -427,9 +451,12 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               })}
             </div>
           ) : (
-            <p className="py-8 text-center text-sm" style={{ color: '#A8A29E' }}>
-              No pipeline data yet. Run <code className="text-xs">npm run seed</code> in crm-be.
-            </p>
+            <EmptyState
+              compact
+              icon="pipeline"
+              title="No pipeline data yet"
+              description="Funnel stages appear once Sanity statuses are live and leads enter the board."
+            />
           )}
         </div>
       )}
@@ -497,9 +524,12 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               </ul>
             </div>
           ) : (
-            <p className="py-8 text-center text-sm" style={{ color: '#A8A29E' }}>
-              No service breakdown yet. Run <code className="text-xs">npm run seed</code> in crm-be.
-            </p>
+            <EmptyState
+              compact
+              icon="chart"
+              title="No service breakdown yet"
+              description="Demand by service shows up after inquiries start coming in."
+            />
           )}
         </div>
       )}

@@ -1,16 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { ServiceRequest, RequestStatus, RequestPriority } from '../../types';
-import { sortByPriorityDesc, sortByBoardOrder } from '../../lib/adapters';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { ServiceRequest, RequestPriority, PipelineStatus, CatalogService } from '../../types';
+import { LOOKBACK_PRESETS, type TableSortMode } from '../../lib/crmSettings';
+import { useCrmSettings } from '../../hooks/useCrmSettings';
 import { KanbanBoard } from './KanbanBoard';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { CustomSelect } from '../ui/CustomSelect';
 import { RequestStatusBadge } from '../ui/RequestStatusBadge';
+import { EmptyState } from '../ui/EmptyState';
 import { KanbanSkeleton, TableSkeleton, LoadingOverlay } from '../ui/loading';
 import {
   Search,
-  Inbox,
   Kanban,
   Table as TableIcon,
   Trash2,
@@ -51,14 +52,25 @@ function persistViewMode(mode: InquiriesViewMode) {
   }
 }
 
+export interface InquiryFiltersState {
+  search: string;
+  service: string;
+  status: string;
+  tableSort: TableSortMode;
+  viewMode: InquiriesViewMode;
+}
+
 interface ServiceRequestsViewProps {
   requests: ServiceRequest[];
+  leadsTotal: number;
+  pipelineStatuses: PipelineStatus[];
+  catalogServices: CatalogService[];
   isLoading?: boolean;
   isRefreshing?: boolean;
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
+  filters: InquiryFiltersState;
+  onFiltersChange: (patch: Partial<InquiryFiltersState>) => void;
   onSelectRequest: (req: ServiceRequest) => void;
-  onUpdateStatus: (id: string, newStatus: RequestStatus, boardOrder?: number) => void | Promise<boolean | void>;
+  onUpdateStatus: (id: string, newStatus: string, boardOrder?: number) => void | Promise<boolean | void>;
   onKanbanSync: (
     next: ServiceRequest[],
     previous: ServiceRequest[]
@@ -72,27 +84,31 @@ const PRIORITY_DOT: Record<RequestPriority, string> = {
   Low: '#A8A29E',
 };
 
+const TABLE_SORT_OPTIONS: { value: TableSortMode; label: string }[] = [
+  { value: 'priority', label: 'Sort: Priority' },
+  { value: 'status', label: 'Sort: Status' },
+  { value: 'newest', label: 'Sort: Newest' },
+  { value: 'oldest', label: 'Sort: Oldest' },
+];
+
 export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
   requests,
+  leadsTotal,
+  pipelineStatuses,
+  catalogServices,
   isLoading = false,
   isRefreshing = false,
-  searchTerm,
-  setSearchTerm,
+  filters,
+  onFiltersChange,
   onSelectRequest,
-  onUpdateStatus,
+  onUpdateStatus: _onUpdateStatus,
   onKanbanSync,
   onDeleteRequest,
 }) => {
-  const [selectedService, setSelectedService] = useState<string>('All');
-  const [viewMode, setViewModeState] = useState<InquiriesViewMode>(() => readStoredViewMode());
-
-  useEffect(() => {
-    persistViewMode(viewMode);
-  }, [viewMode]);
-
-  const setViewMode = useCallback((mode: InquiriesViewMode) => {
-    setViewModeState(mode);
-  }, []);
+  void _onUpdateStatus;
+  const { lookbackDays, setLookbackDays, setTableSort } = useCrmSettings();
+  const [searchInput, setSearchInput] = useState(filters.search);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [confirmAction, setConfirmAction] = useState<{
     isOpen: boolean;
@@ -103,41 +119,75 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
     onConfirm: () => void;
   } | null>(null);
 
-  const servicesList = Array.from(new Set(requests.map((r) => r.service)));
+  useEffect(() => {
+    persistViewMode(filters.viewMode);
+  }, [filters.viewMode]);
+
+  // Keep local search box in sync when Reset clears filters.
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
+
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      if (searchInput !== filters.search) {
+        onFiltersChange({ search: searchInput });
+      }
+    }, 300);
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [searchInput, filters.search, onFiltersChange]);
 
   const serviceOptions = [
     { value: 'All', label: 'All services' },
-    ...servicesList.map((svc) => ({ value: svc, label: svc })),
+    ...(catalogServices.length > 0
+      ? catalogServices.map((s) => ({ value: s.slug, label: s.title }))
+      : Array.from(new Set(requests.map((r) => r.serviceSlug || r.service)))
+          .filter(Boolean)
+          .map((v) => ({ value: v, label: v }))),
   ];
 
-  const filteredRequests = requests.filter((r) => {
-    if (selectedService !== 'All' && r.service !== selectedService) return false;
+  const statusOptions = useMemo(
+    () => [
+      { value: 'All', label: 'All statuses' },
+      ...[...pipelineStatuses]
+        .sort((a, b) => a.order - b.order)
+        .map((s) => ({ value: s.slug, label: s.title })),
+    ],
+    [pipelineStatuses]
+  );
 
-    if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      const clientName = (r.name || `${r.firstName} ${r.lastName}`).toLowerCase();
-      return (
-        clientName.includes(q) ||
-        r.email.toLowerCase().includes(q) ||
-        (r.phone || '').toLowerCase().includes(q) ||
-        r.service.toLowerCase().includes(q) ||
-        (r.message || '').toLowerCase().includes(q)
-      );
-    }
-
-    return true;
-  });
-
-  const sortedRequests = [...filteredRequests].sort(sortByPriorityDesc);
-  const boardRequests = [...filteredRequests].sort(sortByBoardOrder);
+  const lookbackOptions = useMemo(
+    () => [
+      ...LOOKBACK_PRESETS.map((d) => ({
+        value: String(d),
+        label: `Last ${d} days`,
+      })),
+      ...(LOOKBACK_PRESETS.includes(lookbackDays as (typeof LOOKBACK_PRESETS)[number]) ||
+      lookbackDays === 0
+        ? []
+        : [{ value: String(lookbackDays), label: `Last ${lookbackDays} days` }]),
+      { value: '0', label: 'All time' },
+    ],
+    [lookbackDays]
+  );
 
   const hasActiveFilters =
-    searchTerm.trim().length > 0 || selectedService !== 'All';
+    filters.search.trim().length > 0 ||
+    filters.service !== 'All' ||
+    (filters.viewMode === 'table' && filters.status !== 'All');
 
   const resetFilters = () => {
-    setSearchTerm('');
-    setSelectedService('All');
+    setSearchInput('');
+    onFiltersChange({ search: '', service: 'All', status: 'All' });
   };
+
+  const rangeLabel =
+    lookbackDays === 0 ? 'All time' : `Last ${lookbackDays} days`;
+
+  const shownCount = leadsTotal > 0 ? leadsTotal : requests.length;
 
   return (
     <div className="relative space-y-5">
@@ -151,7 +201,9 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           Service inquiries
         </h2>
         <p className="mt-1 text-sm" style={{ color: '#78716C' }}>
-          {requests.length} total
+          {shownCount} shown
+          {' · '}
+          {rangeLabel}
         </p>
       </div>
 
@@ -164,8 +216,8 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           />
           <input
             type="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search…"
             className="w-full rounded-lg border py-1.5 pl-8 pr-3 text-sm focus:outline-none"
             style={{
@@ -177,38 +229,76 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {servicesList.length > 0 && (
+          <CustomSelect
+            value={String(lookbackDays)}
+            options={lookbackOptions}
+            onChange={(v) => setLookbackDays(Number.parseInt(v, 10) || 0)}
+            ariaLabel="Inquiry lookback window"
+            minWidth={140}
+            align="right"
+          />
+
+          {serviceOptions.length > 1 && (
             <CustomSelect
-              value={selectedService}
+              value={filters.service}
               options={serviceOptions}
-              onChange={setSelectedService}
+              onChange={(v) => onFiltersChange({ service: v })}
               ariaLabel="Filter by service"
               minWidth={150}
               align="right"
             />
           )}
 
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer shrink-0"
-              style={{
-                borderColor: '#E7E5E4',
-                color: '#78716C',
-                backgroundColor: '#FFFFFF',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#F5F5F4';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#FFFFFF';
-              }}
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Reset filters
-            </button>
+          {filters.viewMode === 'table' && (
+            <>
+              <CustomSelect
+                value={filters.status}
+                options={statusOptions}
+                onChange={(v) => onFiltersChange({ status: v })}
+                ariaLabel="Filter by status"
+                minWidth={150}
+                align="right"
+              />
+              <CustomSelect
+                value={filters.tableSort}
+                options={TABLE_SORT_OPTIONS}
+                onChange={(v) => {
+                  const mode = v as TableSortMode;
+                  setTableSort(mode);
+                  onFiltersChange({ tableSort: mode });
+                }}
+                ariaLabel="Sort table"
+                minWidth={150}
+                align="right"
+              />
+            </>
           )}
+
+          <button
+            type="button"
+            onClick={resetFilters}
+            disabled={!hasActiveFilters}
+            className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors shrink-0"
+            style={{
+              borderColor: '#E7E5E4',
+              color: hasActiveFilters ? '#78716C' : '#D6D3D1',
+              backgroundColor: '#FFFFFF',
+              cursor: hasActiveFilters ? 'pointer' : 'default',
+              opacity: hasActiveFilters ? 1 : 0.55,
+            }}
+            onMouseEnter={(e) => {
+              if (!hasActiveFilters) return;
+              e.currentTarget.style.backgroundColor = '#F5F5F4';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#FFFFFF';
+            }}
+            aria-label="Reset filters"
+            title={hasActiveFilters ? 'Reset filters' : 'No filters to reset'}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </button>
 
           <div
             className="inline-flex rounded-lg border p-0.5"
@@ -216,11 +306,11 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           >
             <button
               type="button"
-              onClick={() => setViewMode('kanban')}
+              onClick={() => onFiltersChange({ viewMode: 'kanban' })}
               className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium cursor-pointer transition-colors"
               style={{
-                backgroundColor: viewMode === 'kanban' ? '#FEE2E2' : 'transparent',
-                color: viewMode === 'kanban' ? '#E02126' : '#78716C',
+                backgroundColor: filters.viewMode === 'kanban' ? '#FEE2E2' : 'transparent',
+                color: filters.viewMode === 'kanban' ? '#E02126' : '#78716C',
               }}
             >
               <Kanban className="h-3.5 w-3.5" />
@@ -228,11 +318,11 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('table')}
+              onClick={() => onFiltersChange({ viewMode: 'table' })}
               className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium cursor-pointer transition-colors"
               style={{
-                backgroundColor: viewMode === 'table' ? '#FEE2E2' : 'transparent',
-                color: viewMode === 'table' ? '#E02126' : '#78716C',
+                backgroundColor: filters.viewMode === 'table' ? '#FEE2E2' : 'transparent',
+                color: filters.viewMode === 'table' ? '#E02126' : '#78716C',
               }}
             >
               <TableIcon className="h-3.5 w-3.5" />
@@ -243,39 +333,49 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
       </div>
 
       {isLoading ? (
-        viewMode === 'kanban' ? (
+        filters.viewMode === 'kanban' ? (
           <KanbanSkeleton />
         ) : (
           <TableSkeleton />
         )
-      ) : sortedRequests.length === 0 ? (
-        <div className="py-16 text-center">
-          <Inbox className="mx-auto h-8 w-8" style={{ color: '#D6D3D1' }} />
-          <p className="mt-3 text-sm font-medium" style={{ color: '#1C1917' }}>
-            {requests.length === 0 ? 'No inquiries yet' : 'No matching inquiries'}
-          </p>
-          <p className="mt-1 text-sm" style={{ color: '#78716C' }}>
-            {requests.length === 0
-              ? 'New leads from the website will show up here.'
-              : 'Try clearing search or filters.'}
-          </p>
-          {requests.length > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTerm('');
-                setSelectedService('All');
-              }}
-              className="mt-4 text-sm font-medium cursor-pointer"
-              style={{ color: '#E02126' }}
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
-      ) : viewMode === 'kanban' ? (
+      ) : pipelineStatuses.length === 0 ? (
+        <EmptyState
+          icon="pipeline"
+          title="Pipeline not configured"
+          description="No lead statuses are available from the CMS yet. Add and publish leadStatus documents in Sanity, then refresh."
+        />
+      ) : requests.length === 0 ? (
+        <EmptyState
+          icon={hasActiveFilters || lookbackDays > 0 ? 'search' : 'inbox'}
+          title={hasActiveFilters || lookbackDays > 0 ? 'No matching inquiries' : 'No inquiries yet'}
+          description={
+            !hasActiveFilters && lookbackDays === 0
+              ? 'New leads from the website form will show up here automatically.'
+              : lookbackDays > 0 && !hasActiveFilters
+                ? `Nothing in the last ${lookbackDays} days — try widening the lookback in Settings or filters.`
+                : 'Try a different search or clear your filters.'
+          }
+          action={
+            hasActiveFilters || lookbackDays > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput('');
+                  onFiltersChange({ search: '', service: 'All', status: 'All' });
+                  if (lookbackDays > 0) setLookbackDays(0);
+                }}
+                className="text-sm font-medium cursor-pointer"
+                style={{ color: '#E02126' }}
+              >
+                Clear filters
+              </button>
+            ) : undefined
+          }
+        />
+      ) : filters.viewMode === 'kanban' ? (
         <KanbanBoard
-          requests={boardRequests}
+          requests={requests}
+          columns={pipelineStatuses.map((s) => ({ id: s.slug, title: s.title }))}
           onSelectRequest={onSelectRequest}
           onKanbanSync={onKanbanSync}
           onDeleteRequest={onDeleteRequest}
@@ -307,7 +407,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {sortedRequests.map((req) => {
+                {requests.map((req) => {
                   const clientName =
                     req.name ||
                     `${req.firstName} ${req.lastName}`.trim() ||
@@ -339,7 +439,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                         {req.service}
                       </td>
                       <td className="py-3.5 px-4">
-                        <RequestStatusBadge status={req.status} />
+                        <RequestStatusBadge status={req.status} pipelineStatuses={pipelineStatuses} />
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="inline-flex items-center gap-1.5">
@@ -403,3 +503,8 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
     </div>
   );
 };
+
+/** Read initial view mode for parent state (SSR-safe default). */
+export function getInitialInquiriesViewMode(): InquiriesViewMode {
+  return readStoredViewMode();
+}

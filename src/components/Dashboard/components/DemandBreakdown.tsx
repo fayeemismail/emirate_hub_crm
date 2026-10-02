@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 import { ServicePerformanceItem } from '../../../types';
 import { DemandSkeleton } from '../../ui/loading';
+import { EmptyState } from '../../ui/EmptyState';
 
 interface DemandBreakdownProps {
   services?: ServicePerformanceItem[];
@@ -44,9 +45,12 @@ export const DemandBreakdown: React.FC<DemandBreakdownProps> = ({
       </p>
 
       {ranked.length === 0 ? (
-        <p className="mt-8 py-4 text-center text-sm" style={{ color: '#A8A29E' }}>
-          No demand data yet
-        </p>
+        <EmptyState
+          compact
+          icon="chart"
+          title="No demand data yet"
+          description="Service breakdown appears once inquiries start coming in."
+        />
       ) : (
         <div className="mt-6">
           {top && (

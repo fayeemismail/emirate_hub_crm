@@ -1,53 +1,56 @@
 import { LeadItem } from './api';
-import { ServiceRequest, RequestStatus, RequestPriority, MessagesGraphData } from '../types';
+import { ServiceRequest, RequestPriority, PipelineStatus } from '../types';
 
 /**
- * Maps a backend LeadItem to frontend ServiceRequest interface.
+ * Maps a backend LeadItem to frontend ServiceRequest.
+ * Status is the Sanity slug from crm-be — no UI remapping.
  */
 export function leadToServiceRequest(lead: LeadItem): ServiceRequest {
-  let status: RequestStatus = 'Pending';
-  const rawStatus = (lead.status || '').toLowerCase();
-
-  if (rawStatus === 'new') {
-    status = 'Pending';
-  } else if (['contacted', 'in_review', 'proposal_sent', 'in progress'].includes(rawStatus)) {
-    status = 'In Progress';
-  } else if (['qualified', 'won', 'resolved'].includes(rawStatus)) {
-    status = 'Resolved';
-  } else if (['lost', 'archived'].includes(rawStatus)) {
-    status = 'Archived';
-  }
+  const rawStatus = (lead.status || '').toLowerCase().trim();
 
   let priority: RequestPriority = 'Medium';
   const rawPriority = (lead.priority || '').toUpperCase();
   if (rawPriority === 'LOW') priority = 'Low';
   else if (rawPriority === 'HIGH' || rawPriority === 'URGENT') priority = 'High';
 
-  const fullName = (lead as any).name || lead.fullName || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Client';
+  const fullName =
+    (lead as { name?: string }).name ||
+    lead.fullName ||
+    `${lead.firstName || ''} ${lead.lastName || ''}`.trim() ||
+    'Client';
   const nameParts = fullName.split(/\s+/);
   const firstName = lead.firstName || nameParts[0] || 'Client';
-  const lastName = lead.lastName !== undefined ? lead.lastName : (nameParts.slice(1).join(' ') || '');
+  const lastName =
+    lead.lastName !== undefined
+      ? lead.lastName
+      : nameParts.slice(1).join(' ') || '';
 
   return {
-    id: lead.id || (lead as any)._id || lead.referenceId,
+    id: lead.id || (lead as { _id?: string })._id || lead.referenceId,
     name: fullName,
     firstName,
     lastName,
     email: lead.email,
     phone: lead.phone,
     service: lead.service,
+    ...(lead.serviceSlug ? { serviceSlug: lead.serviceSlug } : {}),
     message: lead.message || '',
-    createdAt: lead.createdAt || new Date().toISOString(),
-    status,
+    createdAt: (() => {
+      const raw = lead.createdAt;
+      if (!raw) return new Date().toISOString();
+      const parsed = new Date(raw);
+      return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+    })(),
+    status: rawStatus || 'unknown',
     priority,
-    boardOrder: typeof (lead as any).boardOrder === 'number' ? (lead as any).boardOrder : 0,
-    notes: ((lead as any).notes || []).filter(
+    boardOrder: typeof lead.boardOrder === 'number' ? lead.boardOrder : 0,
+    notes: ((lead as { notes?: string[] }).notes || []).filter(
       (note: string) =>
         note !== 'Inquiry submitted via Emirate Hub portal.' &&
         note !== 'Submitted via website form simulator.'
     ),
     companyName: lead.formData?.companyName as string | undefined,
-    isDeleted: (lead as any).isDeleted || false,
+    isDeleted: (lead as { isDeleted?: boolean }).isDeleted || false,
   };
 }
 
@@ -66,37 +69,61 @@ export const getPriorityRank = (priority: RequestPriority): number => {
 export const sortByPriorityDesc = (a: ServiceRequest, b: ServiceRequest): number => {
   const rankDiff = getPriorityRank(b.priority) - getPriorityRank(a.priority);
   if (rankDiff !== 0) return rankDiff;
-  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  return sortByCreatedAtDesc(a, b);
 };
+
+/** Newest submissions first (dashboard Recent inquiries / default list order). */
+export const sortByCreatedAtDesc = (
+  a: ServiceRequest,
+  b: ServiceRequest
+): number => {
+  const aTime = Date.parse(a.createdAt) || 0;
+  const bTime = Date.parse(b.createdAt) || 0;
+  if (bTime !== aTime) return bTime - aTime;
+  return String(b.id).localeCompare(String(a.id));
+};
+
+/** Top N newest inquiries for the dashboard widget. */
+export function getRecentInquiries(
+  requests: ServiceRequest[],
+  limit = 5
+): ServiceRequest[] {
+  return [...requests].sort(sortByCreatedAtDesc).slice(0, limit);
+}
 
 export const sortByBoardOrder = (a: ServiceRequest, b: ServiceRequest): number => {
   const orderDiff = (a.boardOrder ?? 0) - (b.boardOrder ?? 0);
   if (orderDiff !== 0) return orderDiff;
-  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  return sortByCreatedAtDesc(a, b);
 };
 
-/**
- * Maps frontend RequestStatus to backend status slug.
- */
-export function requestStatusToBackendSlug(status: RequestStatus): string {
-  switch (status) {
-    case 'Pending':
-      return 'new';
-    case 'In Progress':
-      return 'in_review';
-    case 'Resolved':
-      return 'won';
-    case 'Archived':
-      return 'archived';
-    default:
-      return 'new';
-  }
+export const sortByCreatedAtAsc = (
+  a: ServiceRequest,
+  b: ServiceRequest
+): number => -sortByCreatedAtDesc(a, b);
+
+/** Pipeline stage order (Sanity order), then newest within a stage. */
+export function sortByStatusPipeline(
+  pipelineStatuses: PipelineStatus[]
+): (a: ServiceRequest, b: ServiceRequest) => number {
+  const orderMap = new Map(
+    [...pipelineStatuses]
+      .sort((a, b) => a.order - b.order)
+      .map((s, index) => [s.slug, index] as const)
+  );
+  const rank = (slug: string) =>
+    orderMap.has(slug) ? (orderMap.get(slug) as number) : Number.MAX_SAFE_INTEGER;
+
+  return (a, b) => {
+    const diff = rank(a.status) - rank(b.status);
+    if (diff !== 0) return diff;
+    return sortByCreatedAtDesc(a, b);
+  };
 }
 
-/**
- * Maps frontend RequestPriority to backend priority enum.
- */
-export function requestPriorityToBackendEnum(priority: RequestPriority): 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' {
+export function requestPriorityToBackendEnum(
+  priority: RequestPriority
+): 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' {
   switch (priority) {
     case 'Low':
       return 'LOW';
@@ -105,4 +132,16 @@ export function requestPriorityToBackendEnum(priority: RequestPriority): 'LOW' |
     case 'High':
       return 'HIGH';
   }
+}
+
+export function findPipelineStatus(
+  statuses: PipelineStatus[],
+  slug: string
+): PipelineStatus | undefined {
+  const normalized = (slug || '').toLowerCase().trim();
+  return statuses.find((s) => s.slug === normalized);
+}
+
+export function statusTitle(statuses: PipelineStatus[], slug: string): string {
+  return findPipelineStatus(statuses, slug)?.title || slug || 'Unknown';
 }

@@ -9,6 +9,9 @@ interface OverviewMetricsProps {
   pendingCount: number;
   inProgressCount: number;
   resolvedCount: number;
+  pendingLabel?: string;
+  inProgressLabel?: string;
+  resolvedLabel?: string;
   momGrowth?: number | null;
   winRate?: number | null;
 }
@@ -18,6 +21,9 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
   pendingCount,
   inProgressCount,
   resolvedCount,
+  pendingLabel = 'Pending Review',
+  inProgressLabel = 'In Progress',
+  resolvedLabel = 'Resolved',
 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -31,7 +37,7 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       />
 
       <MetricCard
-        label="Pending Review"
+        label={pendingLabel}
         icon={AlertCircle}
         iconColor="#B45309"
         iconBgColor="#FEF3C7"
@@ -40,7 +46,7 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       />
 
       <MetricCard
-        label="In Progress"
+        label={inProgressLabel}
         icon={Clock}
         iconColor="#57534E"
         iconBgColor="#F5F5F4"
@@ -49,7 +55,7 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       />
 
       <MetricCard
-        label="Resolved"
+        label={resolvedLabel}
         icon={CheckCircle2}
         iconColor="#15803D"
         iconBgColor="#DCFCE7"

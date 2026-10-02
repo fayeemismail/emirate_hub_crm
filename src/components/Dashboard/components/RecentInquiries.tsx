@@ -1,6 +1,7 @@
 import React from 'react';
 import { ServiceRequest } from '../../../types';
 import { ArrowRight } from 'lucide-react';
+import { EmptyState } from '../../ui/EmptyState';
 
 interface RecentInquiriesProps {
   recentRequests: ServiceRequest[];
@@ -62,11 +63,12 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
       </div>
 
       {recentRequests.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-sm" style={{ color: '#78716C' }}>
-            No inquiries yet
-          </p>
-        </div>
+        <EmptyState
+          compact
+          icon="inbox"
+          title="No inquiries yet"
+          description="Fresh leads from the site will land here first."
+        />
       ) : (
         <ul>
           {recentRequests.map((req, index) => {
