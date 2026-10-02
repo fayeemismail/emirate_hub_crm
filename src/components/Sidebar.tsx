@@ -52,8 +52,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ...(orphanCount > 0
       ? [
           {
-            id: 'reassignment' as const,
-            label: 'Needs reassignment',
+            id: 'off-pipeline' as const,
+            label: 'Off-pipeline',
             icon: AlertTriangle,
             badge: orphanCount as number | null,
           },

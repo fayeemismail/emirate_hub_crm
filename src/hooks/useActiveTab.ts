@@ -2,9 +2,21 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-export type DashboardTab = 'dashboard' | 'requests' | 'reassignment' | 'settings';
+export type DashboardTab = 'dashboard' | 'requests' | 'off-pipeline' | 'settings';
 
-const VALID_TABS: DashboardTab[] = ['dashboard', 'requests', 'reassignment', 'settings'];
+const VALID_TABS: DashboardTab[] = ['dashboard', 'requests', 'off-pipeline', 'settings'];
+
+/** Older bookmark / localStorage id → current tab. */
+const LEGACY_TAB_MAP: Record<string, DashboardTab> = {
+  reassignment: 'off-pipeline',
+};
+
+function resolveTab(raw: string | null | undefined, fallback: DashboardTab): DashboardTab {
+  if (!raw) return fallback;
+  if (VALID_TABS.includes(raw as DashboardTab)) return raw as DashboardTab;
+  if (LEGACY_TAB_MAP[raw]) return LEGACY_TAB_MAP[raw];
+  return fallback;
+}
 
 export function useActiveTab(defaultTab: DashboardTab = 'dashboard') {
   const [activeTab, setActiveTab] = useState<DashboardTab>(defaultTab);
@@ -14,19 +26,11 @@ export function useActiveTab(defaultTab: DashboardTab = 'dashboard') {
     if (typeof window === 'undefined') return;
 
     const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab') as DashboardTab | null;
-    const storedTab = (
-      localStorage.getItem('emirate_active_tab') || 
-      localStorage.getItem('foundex_active_tab')
-    ) as DashboardTab | null;
+    const tabParam = params.get('tab');
+    const storedTab =
+      localStorage.getItem('emirate_active_tab') || localStorage.getItem('foundex_active_tab');
 
-    let targetTab: DashboardTab = defaultTab;
-    if (tabParam && VALID_TABS.includes(tabParam)) {
-      targetTab = tabParam;
-    } else if (storedTab && VALID_TABS.includes(storedTab)) {
-      targetTab = storedTab;
-    }
-
+    const targetTab = resolveTab(tabParam ?? storedTab, defaultTab);
     setActiveTab(targetTab);
 
     try {
@@ -47,14 +51,9 @@ export function useActiveTab(defaultTab: DashboardTab = 'dashboard') {
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get('tab') as DashboardTab | null;
-      if (tabParam && VALID_TABS.includes(tabParam)) {
-        setActiveTab(tabParam);
-        localStorage.setItem('emirate_active_tab', tabParam);
-      } else {
-        setActiveTab('dashboard');
-        localStorage.setItem('emirate_active_tab', 'dashboard');
-      }
+      const targetTab = resolveTab(params.get('tab'), 'dashboard');
+      setActiveTab(targetTab);
+      localStorage.setItem('emirate_active_tab', targetTab);
     };
 
     window.addEventListener('popstate', handlePopState);

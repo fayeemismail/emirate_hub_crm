@@ -114,9 +114,12 @@ export default function Home() {
   );
 
   useEffect(() => {
-    if (activeTab === 'reassignment' && orphanCount === 0 && !isInitialLoading) {
-      setActiveTab('requests');
+    if (activeTab !== 'off-pipeline' || orphanCount > 0 || isInitialLoading) {
+      return;
     }
+    // Let success feedback show before leaving the empty off-pipeline page.
+    const t = window.setTimeout(() => setActiveTab('requests'), 2200);
+    return () => window.clearTimeout(t);
   }, [activeTab, orphanCount, isInitialLoading, setActiveTab]);
 
   if (authLoading || (!isAuthenticated && typeof window !== 'undefined')) {
@@ -182,13 +185,15 @@ export default function Home() {
             />
           )}
 
-          {activeTab === 'reassignment' && (
+          {activeTab === 'off-pipeline' && (
             <OrphanRequestsView
               requests={requests}
               pipelineStatuses={pipelineStatuses}
+              defaultStatusSlug={defaultStatusSlug}
               isLoading={isInitialLoading}
               isRefreshing={isRefreshing}
               onSelectRequest={(req) => setSelectedRequestModal(req)}
+              onUpdateStatus={handleUpdateStatus}
             />
           )}
 

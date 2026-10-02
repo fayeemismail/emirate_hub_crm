@@ -39,10 +39,17 @@ export interface ServiceRequest {
   message: string;
   createdAt: string; // ISO string or relative time
   status: RequestStatus;
+  /** When this lead entered the current status. */
+  statusChangedAt?: string;
+  statusHistory?: Array<{
+    fromStatus: string;
+    toStatus: string;
+    changedAt: string;
+    changedBy: string;
+  }>;
   priority: RequestPriority;
   boardOrder?: number;
   notes?: string[];
-  assignedTo?: string;
   companyName?: string;
   isDeleted?: boolean;
 }

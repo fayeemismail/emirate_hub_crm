@@ -25,10 +25,16 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { ServiceRequest, RequestStatus, RequestPriority } from '../../types';
 import { sortByBoardOrder } from '../../lib/adapters';
+import { daysInStage, formatStageAge, isStaleInStage } from '../../lib/stageAge';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { Spinner } from '../ui/loading';
 import { EmptyState } from '../ui/EmptyState';
 import { GripVertical, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import {
+  ARCHIVE_CONFIRM_BUTTON,
+  ARCHIVE_CONFIRM_TITLE,
+  archiveConfirmMessage,
+} from '../../lib/archiveCopy';
 
 interface KanbanColumn {
   id: RequestStatus;
@@ -77,7 +83,7 @@ function buildItems(requests: ServiceRequest[], columns: KanbanColumn[]): ItemsS
   const sorted = [...requests].sort(sortByBoardOrder);
   for (const req of sorted) {
     if (columnIds.has(req.status)) items[req.status].push(req.id);
-    // Orphans stay off the board — listed on the Reassignment nav page.
+    // Orphans stay off the board — listed on the Off-pipeline nav page.
   }
   return items;
 }
@@ -138,6 +144,8 @@ function CardChrome({
   isOverlay?: boolean;
 }) {
   const clientName = clientNameOf(req);
+  const ageDays = daysInStage(req.statusChangedAt, req.createdAt);
+  const stale = isStaleInStage(ageDays);
 
   return (
     <div
@@ -152,10 +160,14 @@ function CardChrome({
       }}
       className="rounded-xl border p-3 text-left cursor-pointer space-y-2.5"
       style={{
-        backgroundColor: '#FAF9F6',
-        borderColor: isDragging ? '#E02126' : '#E7E5E4',
+        backgroundColor: stale ? '#FFFBEB' : '#FAF9F6',
+        borderColor: isDragging ? '#E02126' : stale ? '#FDE68A' : '#E7E5E4',
+        boxShadow: isOverlay
+          ? '0 12px 32px rgba(28,25,23,0.18)'
+          : stale
+            ? 'inset 3px 0 0 #D97706'
+            : undefined,
         opacity: isDragging && !isOverlay ? 0.35 : 1,
-        boxShadow: isOverlay ? '0 12px 32px rgba(28,25,23,0.18)' : undefined,
       }}
     >
       <div className="flex items-start justify-between gap-2">
@@ -189,16 +201,16 @@ function CardChrome({
               e.stopPropagation();
               setConfirmAction({
                 isOpen: true,
-                title: 'Delete inquiry?',
-                message: `Archive the inquiry from ${clientName}.`,
-                confirmText: 'Delete',
+                title: ARCHIVE_CONFIRM_TITLE,
+                message: archiveConfirmMessage(clientName),
+                confirmText: ARCHIVE_CONFIRM_BUTTON,
                 variant: 'danger',
                 onConfirm: () => onDeleteRequest(req.id),
               });
             }}
             className="p-1 rounded-md cursor-pointer shrink-0"
             style={{ color: '#B91C1C' }}
-            aria-label="Delete"
+            aria-label="Archive"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -216,13 +228,22 @@ function CardChrome({
         </p>
       </div>
 
-      <div className="pl-7 flex items-center gap-1.5">
+      <div className="pl-7 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span
+            className="h-1.5 w-1.5 rounded-full shrink-0"
+            style={{ backgroundColor: PRIORITY_DOT[req.priority] }}
+          />
+          <span className="text-[11px] font-medium truncate" style={{ color: '#78716C' }}>
+            {req.priority} priority
+          </span>
+        </div>
         <span
-          className="h-1.5 w-1.5 rounded-full shrink-0"
-          style={{ backgroundColor: PRIORITY_DOT[req.priority] }}
-        />
-        <span className="text-[11px] font-medium" style={{ color: '#78716C' }}>
-          {req.priority} priority
+          className="text-[11px] font-medium tabular-nums shrink-0"
+          style={{ color: stale ? '#B45309' : '#A8A29E' }}
+          title="Time in current stage"
+        >
+          {formatStageAge(ageDays)}
         </span>
       </div>
     </div>

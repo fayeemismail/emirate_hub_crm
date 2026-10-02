@@ -12,6 +12,7 @@ interface OverviewMetricsProps {
   pendingLabel?: string;
   inProgressLabel?: string;
   resolvedLabel?: string;
+  resolvedHint?: string;
   momGrowth?: number | null;
   winRate?: number | null;
 }
@@ -24,11 +25,13 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
   pendingLabel = 'Pending Review',
   inProgressLabel = 'In Progress',
   resolvedLabel = 'Resolved',
+  resolvedHint = 'Final pipeline stage — still on the board, not archived',
 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard
         label="Total Inquiries"
+        hint="Active inquiries only — archived ones are hidden"
         icon={Inbox}
         iconColor="#E02126"
         iconBgColor="#FEE2E2"
@@ -56,6 +59,7 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
 
       <MetricCard
         label={resolvedLabel}
+        hint={resolvedHint}
         icon={CheckCircle2}
         iconColor="#15803D"
         iconBgColor="#DCFCE7"

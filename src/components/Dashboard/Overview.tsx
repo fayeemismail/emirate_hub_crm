@@ -111,6 +111,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         resolvedLabel={
           ordered.find((s) => s.slug === lastSlug)?.title || 'Resolved'
         }
+        resolvedHint="Final pipeline stage — still on the board, not archived"
         momGrowth={overviewKpi?.momGrowthPercentage}
         winRate={overviewKpi?.winRatePercentage}
       />

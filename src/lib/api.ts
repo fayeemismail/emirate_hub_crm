@@ -39,6 +39,13 @@ export interface LoginResult {
   accessToken: string;
 }
 
+export interface StatusHistoryEntry {
+  fromStatus: string;
+  toStatus: string;
+  changedAt: string;
+  changedBy: string;
+}
+
 export interface LeadItem {
   id: string;
   referenceId: string;
@@ -51,18 +58,14 @@ export interface LeadItem {
   /** Stable Sanity service slug when present. */
   serviceSlug?: string;
   message?: string;
+  /** Internal admin notes. */
+  notes?: string[];
   status: string;
+  statusChangedAt?: string;
+  statusHistory?: StatusHistoryEntry[];
   boardOrder: number;
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  publicMessage?: string;
   formData?: Record<string, any>;
-  statusHistory?: Array<{
-    fromStatus: string;
-    toStatus: string;
-    changedAt: string;
-    changedBy: string;
-    publicMessage?: string;
-  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -353,15 +356,13 @@ export const leadsApi = {
   updateLeadStatus: async (
     id: string,
     status: string,
-    boardOrder: number = 0,
-    publicMessage?: string
+    boardOrder: number = 0
   ): Promise<ApiResponse<LeadItem>> => {
     return request<LeadItem>(`/v1/admin/leads/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({
         status,
         boardOrder,
-        publicMessage,
       }),
     });
   },
@@ -378,6 +379,10 @@ export const leadsApi = {
       service?: string;
       message?: string;
       status?: string;
+      /** Append one internal note. */
+      note?: string;
+      /** Replace full notes list. */
+      notes?: string[];
     }
   ): Promise<ApiResponse<LeadItem>> => {
     return request<LeadItem>(`/v1/admin/leads/${id}`, {

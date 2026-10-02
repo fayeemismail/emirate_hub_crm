@@ -210,31 +210,76 @@ export function useDashboardData({
   }, [isAuthenticated, settingsHydrated, loadBackendData]);
 
   const handleUpdateStatus = useCallback(
-    async (id: string, newStatus: RequestStatus, boardOrder = 0) => {
+    async (id: string, newStatus: RequestStatus, boardOrder?: number) => {
       let snapshot: ServiceRequest | undefined;
+      const nowIso = new Date().toISOString();
+
+      const applyLocal = (req: ServiceRequest): ServiceRequest => {
+        const fromStatus = req.status;
+        const nextOrder =
+          boardOrder !== undefined ? boardOrder : (req.boardOrder ?? 0);
+        if (fromStatus === newStatus) {
+          return { ...req, boardOrder: nextOrder };
+        }
+        return {
+          ...req,
+          status: newStatus,
+          boardOrder: nextOrder,
+          statusChangedAt: nowIso,
+          statusHistory: [
+            ...(req.statusHistory || []),
+            {
+              fromStatus,
+              toStatus: newStatus,
+              changedAt: nowIso,
+              changedBy: 'ADMIN',
+            },
+          ],
+        };
+      };
+
       setRequests((prev) => {
         snapshot = prev.find((r) => r.id === id);
-        return prev.map((req) =>
-          req.id === id ? { ...req, status: newStatus, boardOrder } : req
-        );
+        return prev.map((req) => (req.id === id ? applyLocal(req) : req));
       });
 
       if (onModalRequestUpdate) {
-        onModalRequestUpdate((prev) =>
-          prev?.id === id ? { ...prev, status: newStatus, boardOrder } : prev
-        );
+        onModalRequestUpdate((prev) => (prev?.id === id ? applyLocal(prev) : prev));
       }
 
       const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
       if (!isMongoId) return true;
 
+      const orderForApi =
+        boardOrder !== undefined
+          ? boardOrder
+          : (snapshot?.boardOrder ?? 0);
+
       try {
-        await leadsApi.updateLeadStatus(
-          id,
-          newStatus,
-          boardOrder,
-          `Status moved to ${newStatus}`
-        );
+        const res = await leadsApi.updateLeadStatus(id, newStatus, orderForApi);
+        if (res.data) {
+          const mapped = leadToServiceRequest(res.data);
+          const mergeHistory = (current?: ServiceRequest): ServiceRequest => {
+            const apiHistory = mapped.statusHistory || [];
+            const localHistory = current?.statusHistory || [];
+            // Prefer the longer trail so a thin API payload can't wipe optimistic rows.
+            const statusHistory =
+              apiHistory.length >= localHistory.length ? apiHistory : localHistory;
+            return {
+              ...mapped,
+              statusHistory,
+              statusChangedAt: mapped.statusChangedAt || current?.statusChangedAt || nowIso,
+            };
+          };
+          setRequests((prev) =>
+            prev.map((req) => (req.id === id ? mergeHistory(req) : req))
+          );
+          if (onModalRequestUpdate) {
+            onModalRequestUpdate((prev) =>
+              prev?.id === id ? mergeHistory(prev) : prev
+            );
+          }
+        }
         return true;
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -257,9 +302,35 @@ export function useDashboardData({
       nextRequests: ServiceRequest[],
       previousRequests: ServiceRequest[]
     ): Promise<boolean> => {
-      setRequests(nextRequests);
+      const nowIso = new Date().toISOString();
+      const enriched = nextRequests.map((next) => {
+        const prev = previousRequests.find((p) => p.id === next.id);
+        if (!prev || prev.status === next.status) return next;
+        return {
+          ...next,
+          statusChangedAt: nowIso,
+          statusHistory: [
+            ...(prev.statusHistory || []),
+            {
+              fromStatus: prev.status,
+              toStatus: next.status,
+              changedAt: nowIso,
+              changedBy: 'ADMIN',
+            },
+          ],
+        };
+      });
 
-      const changed = nextRequests.filter((next) => {
+      setRequests(enriched);
+      if (onModalRequestUpdate) {
+        onModalRequestUpdate((modal) => {
+          if (!modal) return modal;
+          const updated = enriched.find((r) => r.id === modal.id);
+          return updated ?? modal;
+        });
+      }
+
+      const changed = enriched.filter((next) => {
         const prev = previousRequests.find((p) => p.id === next.id);
         if (!prev) return false;
         return (
@@ -271,26 +342,67 @@ export function useDashboardData({
       if (changed.length === 0) return true;
 
       try {
-        await Promise.all(
+        const results = await Promise.all(
           changed.map(async (req) => {
-            if (!/^[0-9a-fA-F]{24}$/.test(req.id)) return;
-            await leadsApi.updateLeadStatus(
+            if (!/^[0-9a-fA-F]{24}$/.test(req.id)) return null;
+            const res = await leadsApi.updateLeadStatus(
               req.id,
               req.status,
-              req.boardOrder ?? 0,
-              `Board sync → ${req.status}`
+              req.boardOrder ?? 0
             );
+            return res.data ? leadToServiceRequest(res.data) : null;
           })
         );
+
+        const byId = new Map(
+          results.filter((r): r is ServiceRequest => Boolean(r)).map((r) => [r.id, r])
+        );
+        if (byId.size > 0) {
+          setRequests((prev) =>
+            prev.map((req) => {
+              const mapped = byId.get(req.id);
+              if (!mapped) return req;
+              const apiHistory = mapped.statusHistory || [];
+              const localHistory = req.statusHistory || [];
+              return {
+                ...mapped,
+                statusHistory:
+                  apiHistory.length >= localHistory.length ? apiHistory : localHistory,
+                statusChangedAt: mapped.statusChangedAt || req.statusChangedAt,
+              };
+            })
+          );
+          if (onModalRequestUpdate) {
+            onModalRequestUpdate((modal) => {
+              if (!modal) return modal;
+              const mapped = byId.get(modal.id);
+              if (!mapped) return modal;
+              const apiHistory = mapped.statusHistory || [];
+              const localHistory = modal.statusHistory || [];
+              return {
+                ...mapped,
+                statusHistory:
+                  apiHistory.length >= localHistory.length ? apiHistory : localHistory,
+                statusChangedAt: mapped.statusChangedAt || modal.statusChangedAt,
+              };
+            });
+          }
+        }
         return true;
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         console.warn('Kanban sync failed, rolling back:', message);
         setRequests(previousRequests);
+        if (onModalRequestUpdate) {
+          onModalRequestUpdate((modal) => {
+            if (!modal) return modal;
+            return previousRequests.find((r) => r.id === modal.id) ?? modal;
+          });
+        }
         return false;
       }
     },
-    []
+    [onModalRequestUpdate]
   );
 
   const handleUpdatePriority = useCallback(
@@ -357,21 +469,25 @@ export function useDashboardData({
 
   const handleAddNote = useCallback(
     async (id: string, noteText: string) => {
-      setRequests((prev) =>
-        prev.map((req) => {
+      const trimmed = noteText.trim();
+      if (!trimmed) return;
+
+      let snapshot: ServiceRequest | undefined;
+
+      setRequests((prev) => {
+        snapshot = prev.find((req) => req.id === id);
+        return prev.map((req) => {
           if (req.id === id) {
-            const updatedNotes = [...(req.notes || []), noteText];
-            return { ...req, notes: updatedNotes };
+            return { ...req, notes: [...(req.notes || []), trimmed] };
           }
           return req;
-        })
-      );
+        });
+      });
 
       if (onModalRequestUpdate) {
         onModalRequestUpdate((prev) => {
           if (prev?.id === id) {
-            const updatedNotes = [...(prev.notes || []), noteText];
-            return { ...prev, notes: updatedNotes };
+            return { ...prev, notes: [...(prev.notes || []), trimmed] };
           }
           return prev;
         });
@@ -381,10 +497,29 @@ export function useDashboardData({
       if (!isMongoId) return;
 
       try {
-        await leadsApi.updateLeadDetails(id, { message: noteText });
+        const res = await leadsApi.updateLeadDetails(id, { note: trimmed });
+        const savedNotes = res.data?.notes;
+        if (Array.isArray(savedNotes)) {
+          setRequests((prev) =>
+            prev.map((req) => (req.id === id ? { ...req, notes: savedNotes } : req))
+          );
+          if (onModalRequestUpdate) {
+            onModalRequestUpdate((prev) =>
+              prev?.id === id ? { ...prev, notes: savedNotes } : prev
+            );
+          }
+        }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         console.warn(`Could not sync note to backend for lead ${id}:`, message);
+        if (snapshot) {
+          const rollback = snapshot;
+          setRequests((prev) => prev.map((req) => (req.id === id ? rollback : req)));
+          if (onModalRequestUpdate) {
+            onModalRequestUpdate((prev) => (prev?.id === id ? rollback : prev));
+          }
+        }
+        throw err;
       }
     },
     [onModalRequestUpdate]

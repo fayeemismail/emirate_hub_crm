@@ -1,25 +1,75 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Settings } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AlertTriangle, CheckCircle2, Settings } from 'lucide-react';
 import { LOOKBACK_PRESETS } from '../lib/crmSettings';
 import { useCrmSettings } from '../hooks/useCrmSettings';
+
+type SaveFeedback =
+  | null
+  | { kind: 'success'; message: string }
+  | { kind: 'error'; message: string };
+
+function lookbackLabel(days: number) {
+  return days === 0 ? 'All time' : `Last ${days} days`;
+}
 
 export const SettingsView: React.FC = () => {
   const { lookbackDays, setLookbackDays } = useCrmSettings();
   const [draft, setDraft] = useState(String(lookbackDays));
+  const [feedback, setFeedback] = useState<SaveFeedback>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setDraft(String(lookbackDays));
   }, [lookbackDays]);
 
-  const applyDraft = () => {
-    const n = Number.parseInt(draft, 10);
-    if (!Number.isFinite(n) || n < 0) {
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    };
+  }, []);
+
+  const flash = (next: SaveFeedback) => {
+    setFeedback(next);
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    if (next?.kind === 'success') {
+      feedbackTimerRef.current = setTimeout(() => {
+        setFeedback(null);
+        feedbackTimerRef.current = null;
+      }, 2800);
+    }
+  };
+
+  const saveLookback = (days: number) => {
+    if (!Number.isFinite(days) || days < 0) {
+      flash({
+        kind: 'error',
+        message: 'Enter a valid number of days (0 = all time).',
+      });
       setDraft(String(lookbackDays));
       return;
     }
-    setLookbackDays(n);
+    const clamped = Math.max(0, Math.min(Math.floor(days), 3650));
+    setLookbackDays(clamped);
+    setDraft(String(clamped));
+    flash({
+      kind: 'success',
+      message: `Lookback saved — ${lookbackLabel(clamped)}.`,
+    });
+  };
+
+  const applyDraft = () => {
+    const n = Number.parseInt(draft, 10);
+    if (!Number.isFinite(n) || n < 0 || draft.trim() === '') {
+      flash({
+        kind: 'error',
+        message: 'Enter a valid number of days (0 = all time).',
+      });
+      setDraft(String(lookbackDays));
+      return;
+    }
+    saveLookback(n);
   };
 
   return (
@@ -33,7 +83,8 @@ export const SettingsView: React.FC = () => {
           Settings
         </h2>
         <p className="mt-1 text-sm" style={{ color: '#78716C' }}>
-          Preferences for this CRM workspace (saved in this browser).
+          Preferences for this device. Lookback is stored in your browser, not shared across
+          teammates or other machines.
         </p>
       </div>
 
@@ -57,6 +108,41 @@ export const SettingsView: React.FC = () => {
           </p>
         </div>
 
+        <div
+          className="flex min-h-[1.25rem] flex-wrap items-center gap-1.5 text-xs"
+          style={{
+            color:
+              feedback?.kind === 'error'
+                ? '#B91C1C'
+                : feedback?.kind === 'success'
+                  ? '#15803D'
+                  : '#A8A29E',
+          }}
+          role={feedback?.kind === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
+        >
+          {feedback?.kind === 'success' ? (
+            <>
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              <span>{feedback.message}</span>
+            </>
+          ) : feedback?.kind === 'error' ? (
+            <>
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span className="flex-1 min-w-0">{feedback.message}</span>
+              <button
+                type="button"
+                onClick={() => setFeedback(null)}
+                className="shrink-0 cursor-pointer underline-offset-2 hover:underline"
+              >
+                Dismiss
+              </button>
+            </>
+          ) : (
+            <span>Saved on this device · applies to inquiry lists</span>
+          )}
+        </div>
+
         <div className="flex flex-wrap gap-2">
           {LOOKBACK_PRESETS.map((days) => {
             const active = lookbackDays === days;
@@ -64,7 +150,7 @@ export const SettingsView: React.FC = () => {
               <button
                 key={days}
                 type="button"
-                onClick={() => setLookbackDays(days)}
+                onClick={() => saveLookback(days)}
                 className="rounded-lg border px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors"
                 style={{
                   borderColor: active ? '#E02126' : '#E7E5E4',
@@ -78,7 +164,7 @@ export const SettingsView: React.FC = () => {
           })}
           <button
             type="button"
-            onClick={() => setLookbackDays(0)}
+            onClick={() => saveLookback(0)}
             className="rounded-lg border px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors"
             style={{
               borderColor: lookbackDays === 0 ? '#E02126' : '#E7E5E4',
@@ -110,7 +196,7 @@ export const SettingsView: React.FC = () => {
               }}
               className="rounded-lg border px-3 py-1.5 text-sm tabular-nums focus:outline-none"
               style={{
-                borderColor: '#E7E5E4',
+                borderColor: feedback?.kind === 'error' ? '#FECACA' : '#E7E5E4',
                 backgroundColor: '#FAF9F6',
                 color: '#1C1917',
               }}
@@ -133,7 +219,7 @@ export const SettingsView: React.FC = () => {
         <p className="text-xs" style={{ color: '#A8A29E' }}>
           Current:{' '}
           <span className="font-medium" style={{ color: '#78716C' }}>
-            {lookbackDays === 0 ? 'All time' : `Last ${lookbackDays} days`}
+            {lookbackLabel(lookbackDays)}
           </span>
         </p>
       </section>

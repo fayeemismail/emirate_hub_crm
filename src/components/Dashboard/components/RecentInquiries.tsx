@@ -2,6 +2,7 @@ import React from 'react';
 import { ServiceRequest } from '../../../types';
 import { ArrowRight } from 'lucide-react';
 import { EmptyState } from '../../ui/EmptyState';
+import { ACTIVE_INQUIRIES_EMPTY } from '../../../lib/archiveCopy';
 
 interface RecentInquiriesProps {
   recentRequests: ServiceRequest[];
@@ -67,7 +68,7 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
           compact
           icon="inbox"
           title="No inquiries yet"
-          description="Fresh leads from the site will land here first."
+          description={ACTIVE_INQUIRIES_EMPTY}
         />
       ) : (
         <ul>

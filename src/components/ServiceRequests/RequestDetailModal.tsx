@@ -15,6 +15,13 @@ import {
 } from 'lucide-react';
 import { Spinner } from '../ui/loading';
 import { EmptyState } from '../ui/EmptyState';
+import { formatStageAge, daysInStage } from '../../lib/stageAge';
+import { statusTitle } from '../../lib/adapters';
+import {
+  ARCHIVE_CONFIRM_BUTTON,
+  ARCHIVE_CONFIRM_TITLE,
+  archiveConfirmMessage,
+} from '../../lib/archiveCopy';
 
 interface RequestDetailModalProps {
   request: ServiceRequest | null;
@@ -144,10 +151,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const handleStatusChange = async (newStatus: RequestStatus) => {
     if (newStatus === request.status || statusFeedback?.kind === 'saving') return;
 
-    const statusTitle =
+    const statusLabel =
       pipelineStatuses.find((s) => s.slug === newStatus)?.title || newStatus;
 
+    // Flush a paint before the network call so Activity updates immediately.
     showTimedFeedback(setStatusFeedback, statusTimerRef, { kind: 'saving' });
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+
     try {
       const ok = await onUpdateStatus(request.id, newStatus);
       if (ok === false) {
@@ -159,7 +171,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
       }
       showTimedFeedback(setStatusFeedback, statusTimerRef, {
         kind: 'success',
-        message: `Status updated to ${statusTitle}`,
+        message: `Status updated to ${statusLabel}`,
       });
     } catch {
       showTimedFeedback(setStatusFeedback, statusTimerRef, {
@@ -203,9 +215,9 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const handleDeleteChangeRequest = () => {
     setConfirmAction({
       isOpen: true,
-      title: 'Delete inquiry?',
-      message: `Archive the inquiry from ${displayName}. It will be hidden from active views.`,
-      confirmText: 'Delete',
+      title: ARCHIVE_CONFIRM_TITLE,
+      message: archiveConfirmMessage(displayName),
+      confirmText: ARCHIVE_CONFIRM_BUTTON,
       variant: 'danger',
       onConfirm: async () => {
         await onDeleteRequest?.(request.id);
@@ -229,6 +241,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
       setNoteSaved(true);
       setNoteText('');
       setTimeout(() => setNoteSaved(false), 2000);
+    } catch {
+      // Keep draft text so the admin can retry after a failed save.
     } finally {
       setIsSavingNote(false);
     }
@@ -379,8 +393,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   <>
                     {!pipelineStatuses.some((s) => s.slug === request.status) ? (
                       <p className="text-[11px] mb-1" style={{ color: '#B45309' }}>
-                        Current status “{request.status}” is retired/unknown. Pick an active
-                        stage to reassign.
+                        Current status “{request.status}” is off-pipeline. Pick an active
+                        stage to move it back on the board.
                       </p>
                     ) : null}
                     <CustomSelect
@@ -504,6 +518,69 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 />
               )}
             </section>
+
+            {/* Activity */}
+            <section className="space-y-2">
+              <div className="flex items-baseline justify-between gap-2">
+                <h3 className="text-xs" style={{ color: '#A8A29E' }}>
+                  Activity
+                </h3>
+                <span className="text-[11px] tabular-nums" style={{ color: '#A8A29E' }}>
+                  {formatStageAge(daysInStage(request.statusChangedAt, request.createdAt))}
+                </span>
+              </div>
+
+              {request.statusHistory && request.statusHistory.length > 0 ? (
+                <ol className="space-y-0 border-l" style={{ borderColor: '#E7E5E4' }}>
+                  {[...request.statusHistory].reverse().map((entry, index) => {
+                    const when = (() => {
+                      const d = new Date(entry.changedAt);
+                      if (Number.isNaN(d.getTime())) return '—';
+                      return d.toLocaleString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      });
+                    })();
+                    const fromLabel =
+                      !entry.fromStatus || entry.fromStatus === 'none'
+                        ? 'New inquiry'
+                        : statusTitle(pipelineStatuses, entry.fromStatus);
+                    const toLabel = statusTitle(pipelineStatuses, entry.toStatus);
+                    return (
+                      <li key={`${entry.changedAt}-${entry.toStatus}-${index}`} className="relative pl-4 py-2">
+                        <span
+                          className="absolute left-0 top-3 h-2 w-2 -translate-x-1/2 rounded-full border"
+                          style={{
+                            backgroundColor: index === 0 ? '#E02126' : '#FFFFFF',
+                            borderColor: index === 0 ? '#E02126' : '#D6D3D1',
+                          }}
+                        />
+                        <p className="text-sm" style={{ color: '#1C1917' }}>
+                          {fromLabel === 'New inquiry' ? (
+                            <>Opened as <span className="font-medium">{toLabel}</span></>
+                          ) : (
+                            <>
+                              Moved from <span className="font-medium">{fromLabel}</span> to{' '}
+                              <span className="font-medium">{toLabel}</span>
+                            </>
+                          )}
+                        </p>
+                        <p className="mt-0.5 text-[11px]" style={{ color: '#A8A29E' }}>
+                          {when}
+                          {entry.changedBy ? ` · ${entry.changedBy}` : ''}
+                        </p>
+                      </li>
+                    );
+                  })}
+                </ol>
+              ) : (
+                <p className="text-sm" style={{ color: '#A8A29E' }}>
+                  No status changes recorded yet.
+                </p>
+              )}
+            </section>
           </div>
 
           {/* Footer */}
@@ -526,7 +603,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               }}
             >
               <Trash2 className="w-3.5 h-3.5" />
-              Delete
+              Archive
             </button>
 
             <div className="flex items-center gap-2">

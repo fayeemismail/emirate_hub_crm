@@ -42,13 +42,23 @@ export function leadToServiceRequest(lead: LeadItem): ServiceRequest {
       return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
     })(),
     status: rawStatus || 'unknown',
+    statusChangedAt: (() => {
+      const raw = lead.statusChangedAt || lead.createdAt;
+      if (!raw) return undefined;
+      const parsed = new Date(raw);
+      return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+    })(),
+    statusHistory: Array.isArray(lead.statusHistory)
+      ? lead.statusHistory.map((entry) => ({
+          fromStatus: entry.fromStatus || '',
+          toStatus: entry.toStatus || rawStatus,
+          changedAt: entry.changedAt,
+          changedBy: entry.changedBy || 'SYSTEM',
+        }))
+      : [],
     priority,
     boardOrder: typeof lead.boardOrder === 'number' ? lead.boardOrder : 0,
-    notes: ((lead as { notes?: string[] }).notes || []).filter(
-      (note: string) =>
-        note !== 'Inquiry submitted via Emirate Hub portal.' &&
-        note !== 'Submitted via website form simulator.'
-    ),
+    notes: Array.isArray(lead.notes) ? lead.notes : [],
     companyName: lead.formData?.companyName as string | undefined,
     isDeleted: (lead as { isDeleted?: boolean }).isDeleted || false,
   };

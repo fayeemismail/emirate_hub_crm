@@ -11,6 +11,13 @@ import { RequestStatusBadge } from '../ui/RequestStatusBadge';
 import { EmptyState } from '../ui/EmptyState';
 import { KanbanSkeleton, TableSkeleton, LoadingOverlay } from '../ui/loading';
 import {
+  ARCHIVE_CONFIRM_BUTTON,
+  ARCHIVE_CONFIRM_TITLE,
+  ACTIVE_INQUIRIES_EMPTY,
+  archiveConfirmMessage,
+} from '../../lib/archiveCopy';
+import { daysInStage, formatStageAge, isStaleInStage } from '../../lib/stageAge';
+import {
   Search,
   Kanban,
   Table as TableIcon,
@@ -350,7 +357,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           title={hasActiveFilters || lookbackDays > 0 ? 'No matching inquiries' : 'No inquiries yet'}
           description={
             !hasActiveFilters && lookbackDays === 0
-              ? 'New leads from the website form will show up here automatically.'
+              ? ACTIVE_INQUIRIES_EMPTY
               : lookbackDays > 0 && !hasActiveFilters
                 ? `Nothing in the last ${lookbackDays} days — try widening the lookback in Settings or filters.`
                 : 'Try a different search or clear your filters.'
@@ -400,6 +407,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                   <th className="py-3 px-4 font-medium">Phone</th>
                   <th className="py-3 px-4 font-medium">Service</th>
                   <th className="py-3 px-4 font-medium">Status</th>
+                  <th className="py-3 px-4 font-medium">In stage</th>
                   <th className="py-3 px-4 font-medium">Priority</th>
                   {onDeleteRequest ? (
                     <th className="py-3 px-4 font-medium text-right w-10"> </th>
@@ -412,18 +420,23 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                     req.name ||
                     `${req.firstName} ${req.lastName}`.trim() ||
                     'Client';
+                  const ageDays = daysInStage(req.statusChangedAt, req.createdAt);
+                  const stale = isStaleInStage(ageDays);
 
                   return (
                     <tr
                       key={req.id}
                       onClick={() => onSelectRequest(req)}
                       className="border-b last:border-b-0 cursor-pointer transition-colors"
-                      style={{ borderColor: '#E7E5E4' }}
+                      style={{
+                        borderColor: '#E7E5E4',
+                        backgroundColor: stale ? '#FFFBEB' : 'transparent',
+                      }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#FAF9F6';
+                        e.currentTarget.style.backgroundColor = stale ? '#FEF3C7' : '#FAF9F6';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.backgroundColor = stale ? '#FFFBEB' : 'transparent';
                       }}
                     >
                       <td className="py-3.5 px-4 text-sm font-medium" style={{ color: '#1C1917' }}>
@@ -440,6 +453,13 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                       </td>
                       <td className="py-3.5 px-4">
                         <RequestStatusBadge status={req.status} pipelineStatuses={pipelineStatuses} />
+                      </td>
+                      <td
+                        className="py-3.5 px-4 text-xs font-medium tabular-nums"
+                        style={{ color: stale ? '#B45309' : '#78716C' }}
+                        title="Time in current stage"
+                      >
+                        {formatStageAge(ageDays)}
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="inline-flex items-center gap-1.5">
@@ -465,16 +485,16 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                             onClick={() => {
                               setConfirmAction({
                                 isOpen: true,
-                                title: 'Delete inquiry?',
-                                message: `Archive the inquiry from ${clientName}.`,
-                                confirmText: 'Delete',
+                                title: ARCHIVE_CONFIRM_TITLE,
+                                message: archiveConfirmMessage(clientName),
+                                confirmText: ARCHIVE_CONFIRM_BUTTON,
                                 variant: 'danger',
                                 onConfirm: () => onDeleteRequest(req.id),
                               });
                             }}
                             className="p-1.5 rounded-lg cursor-pointer"
                             style={{ color: '#B91C1C' }}
-                            aria-label="Delete"
+                            aria-label="Archive"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>

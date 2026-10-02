@@ -31,7 +31,6 @@ export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
     priority: 'High',
     companyName: 'Nexus Design Studio',
     notes: ['Assigned to Senior Frontend Developer.'],
-    assignedTo: 'Marcus Vance',
     isDeleted: false,
   },
   {
@@ -64,7 +63,6 @@ export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
     priority: 'High',
     companyName: 'Fintech Pulse',
     notes: ['Audit agreement signed.'],
-    assignedTo: 'Sarah Jenkins',
     isDeleted: false,
   },
   {
@@ -81,7 +79,6 @@ export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
     priority: 'Medium',
     companyName: 'BioMend Labs',
     notes: ['Project completed and approved by client.'],
-    assignedTo: 'Elena Rostova',
     isDeleted: false,
   },
   {
@@ -130,7 +127,6 @@ export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
     priority: 'Medium',
     companyName: 'Bloom Fashion',
     notes: ['Wireframes sent to client for review.'],
-    assignedTo: 'Marcus Vance',
     isDeleted: false,
   },
   {
