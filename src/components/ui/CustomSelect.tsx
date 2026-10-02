@@ -78,10 +78,10 @@ export function CustomSelect<T extends string = string>({
         style={{
           minWidth,
           borderColor: isOpen
-            ? 'var(--sanity-accent-primary, #E02126)'
-            : 'var(--sanity-card-border, #E7E5E4)',
-          color: 'var(--sanity-text-primary, #1C1917)',
-          backgroundColor: isField ? '#FAF9F6' : 'var(--sanity-card-bg, #FFFFFF)',
+            ? 'var(--crm-accent-primary, #E02126)'
+            : 'var(--crm-card-border, #E7E5E4)',
+          color: 'var(--crm-text-primary, #1C1917)',
+          backgroundColor: isField ? '#FAF9F6' : 'var(--crm-card-bg, #FFFFFF)',
         }}
       >
         <span className="truncate flex-1 text-left">{selected?.label}</span>
@@ -100,8 +100,8 @@ export function CustomSelect<T extends string = string>({
           }`}
           style={{
             minWidth: Math.max(minWidth, 160),
-            backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
-            borderColor: 'var(--sanity-card-border, #E7E5E4)',
+            backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
+            borderColor: 'var(--crm-card-border, #E7E5E4)',
             boxShadow: '0 12px 28px rgba(28, 25, 23, 0.12)',
           }}
         >
@@ -118,8 +118,8 @@ export function CustomSelect<T extends string = string>({
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors cursor-pointer"
                   style={{
                     color: active
-                      ? 'var(--sanity-accent-primary, #E02126)'
-                      : 'var(--sanity-text-primary, #1C1917)',
+                      ? 'var(--crm-accent-primary, #E02126)'
+                      : 'var(--crm-text-primary, #1C1917)',
                     backgroundColor: active ? '#FEE2E2' : 'transparent',
                     fontWeight: active ? 600 : 400,
                   }}
@@ -134,7 +134,7 @@ export function CustomSelect<T extends string = string>({
                   {active && (
                     <Check
                       className="h-3.5 w-3.5 shrink-0"
-                      style={{ color: 'var(--sanity-accent-primary, #E02126)' }}
+                      style={{ color: 'var(--crm-accent-primary, #E02126)' }}
                     />
                   )}
                 </button>

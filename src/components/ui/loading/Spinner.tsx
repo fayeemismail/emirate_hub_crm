@@ -21,7 +21,7 @@ interface SpinnerProps {
 export const Spinner: React.FC<SpinnerProps> = ({
   size = 'sm',
   className = '',
-  color = 'var(--sanity-accent-primary, #E02126)',
+  color = 'var(--crm-accent-primary, #E02126)',
   label,
 }) => (
   <span

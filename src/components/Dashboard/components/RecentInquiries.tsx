@@ -39,14 +39,14 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
     <div
       className="lg:col-span-2 rounded-2xl border px-5 py-5"
       style={{
-        backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
-        borderColor: 'var(--sanity-card-border, #E7E5E4)',
+        backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
+        borderColor: 'var(--crm-card-border, #E7E5E4)',
       }}
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3
           className="text-base font-semibold tracking-tight"
-          style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+          style={{ color: 'var(--crm-text-primary, #1C1917)' }}
         >
           Recent inquiries
         </h3>
@@ -54,7 +54,7 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
           type="button"
           onClick={onNavigateToRequests}
           className="inline-flex items-center gap-1 text-sm font-medium cursor-pointer hover:opacity-80"
-          style={{ color: 'var(--sanity-accent-primary, #E02126)' }}
+          style={{ color: 'var(--crm-accent-primary, #E02126)' }}
         >
           View all
           <ArrowRight className="h-3.5 w-3.5" />
@@ -84,7 +84,7 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
               >
                 <div
                   className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
-                  style={{ backgroundColor: 'var(--sanity-accent-primary, #E02126)' }}
+                  style={{ backgroundColor: 'var(--crm-accent-primary, #E02126)' }}
                   aria-hidden
                 >
                   {initialFor(name)}
@@ -94,7 +94,7 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
                   <div className="flex items-baseline justify-between gap-3">
                     <p
                       className="truncate text-sm font-medium"
-                      style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+                      style={{ color: 'var(--crm-text-primary, #1C1917)' }}
                     >
                       {name}
                     </p>

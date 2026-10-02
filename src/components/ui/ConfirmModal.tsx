@@ -42,9 +42,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   const confirmBg =
     variant === 'danger'
-      ? 'var(--sanity-accent-primary, #E02126)'
+      ? 'var(--crm-accent-primary, #E02126)'
       : variant === 'info'
-        ? 'var(--sanity-accent-primary, #E02126)'
+        ? 'var(--crm-accent-primary, #E02126)'
         : '#B45309';
 
   const handleConfirm = async () => {
@@ -69,20 +69,20 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       <div
         className="w-full max-w-sm rounded-2xl p-6 animate-in zoom-in-95 duration-150"
         style={{
-          backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+          backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
           boxShadow: '0 16px 40px rgba(28, 25, 23, 0.12)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <h3
           className="text-base font-semibold tracking-tight"
-          style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+          style={{ color: 'var(--crm-text-primary, #1C1917)' }}
         >
           {title}
         </h3>
         <p
           className="mt-2 text-sm leading-relaxed"
-          style={{ color: 'var(--sanity-text-secondary, #78716C)' }}
+          style={{ color: 'var(--crm-text-secondary, #78716C)' }}
         >
           {message}
         </p>
@@ -93,7 +93,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             onClick={onClose}
             disabled={isConfirming}
             className="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ color: 'var(--sanity-text-secondary, #78716C)' }}
+            style={{ color: 'var(--crm-text-secondary, #78716C)' }}
             onMouseEnter={(e) => {
               if (!isConfirming) e.currentTarget.style.backgroundColor = '#F5F5F4';
             }}

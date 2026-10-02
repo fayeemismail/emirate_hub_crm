@@ -19,8 +19,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   iconColor = '#E02126',
   iconBgColor = '#FEE2E2',
   iconBorderColor = '#FECACA',
-  cardBgColor = 'var(--sanity-card-bg, #FFFFFF)',
-  cardBorderColor = 'var(--sanity-card-border, #E7E5E4)',
+  cardBgColor = 'var(--crm-card-bg, #FFFFFF)',
+  cardBorderColor = 'var(--crm-card-border, #E7E5E4)',
 }) => {
   return (
     <div 
@@ -31,7 +31,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       }}
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--sanity-text-secondary, #78716C)' }}>
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--crm-text-secondary, #78716C)' }}>
           {label}
         </span>
         <div 
@@ -45,7 +45,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           <Icon className="w-4 h-4" style={{ color: iconColor }} />
         </div>
       </div>
-      <span className="text-3xl font-extrabold tracking-tight" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>
+      <span className="text-3xl font-extrabold tracking-tight" style={{ color: 'var(--crm-text-primary, #1C1917)' }}>
         {value}
       </span>
     </div>

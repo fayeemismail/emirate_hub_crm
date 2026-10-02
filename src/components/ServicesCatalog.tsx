@@ -14,7 +14,7 @@ export const ServicesCatalog: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>
+        <h2 className="text-xl font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--crm-text-primary, #1C1917)' }}>
           <Layers className="w-5 h-5 text-[#E02126]" />
           Emirate Hub Company Services Catalog
         </h2>
@@ -57,7 +57,7 @@ export const ServicesCatalog: React.FC = () => {
                 </span>
               </div>
 
-              <h3 className="text-base font-semibold pt-1" style={{ color: 'var(--sanity-text-primary, #1C1917)' }}>{serviceName}</h3>
+              <h3 className="text-base font-semibold pt-1" style={{ color: 'var(--crm-text-primary, #1C1917)' }}>{serviceName}</h3>
               <p className="text-xs leading-relaxed" style={{ color: '#78716C' }}>
                 Full lifecycle engineering, strategy, and deployment services tailored for high-growth enterprises and tech ventures.
               </p>

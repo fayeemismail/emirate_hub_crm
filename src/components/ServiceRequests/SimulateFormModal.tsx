@@ -16,13 +16,13 @@ interface SimulateFormModalProps {
 }
 
 const labelStyle: React.CSSProperties = {
-  color: 'var(--sanity-text-primary, #1C1917)',
+  color: 'var(--crm-text-primary, #1C1917)',
 };
 
 const fieldStyle: React.CSSProperties = {
   backgroundColor: '#FAF9F6',
   borderColor: '#E7E5E4',
-  color: 'var(--sanity-text-primary, #1C1917)',
+  color: 'var(--crm-text-primary, #1C1917)',
 };
 
 export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({

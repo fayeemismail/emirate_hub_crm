@@ -16,8 +16,8 @@ export const Header: React.FC<HeaderProps> = ({
     <header 
       className="h-16 px-3 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 transition-all border-b"
       style={{
-        backgroundColor: 'var(--sanity-header-bg, #FFFFFF)',
-        borderColor: 'var(--sanity-sidebar-border, #E7E5E4)',
+        backgroundColor: 'var(--crm-header-bg, #FFFFFF)',
+        borderColor: 'var(--crm-sidebar-border, #E7E5E4)',
       }}
     >
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -25,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onOpenMobileMenu}
           aria-label="Open Mobile Menu"
           className="lg:hidden p-2 rounded-xl transition-colors shrink-0 cursor-pointer"
-          style={{ color: 'var(--sanity-text-secondary, #A8A29E)' }}
+          style={{ color: 'var(--crm-text-secondary, #A8A29E)' }}
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -37,8 +37,8 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onCreateLead}
           className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold tracking-wide transition-colors cursor-pointer shrink-0"
           style={{
-            color: 'var(--sanity-accent-primary, #E02126)',
-            borderColor: 'var(--sanity-accent-primary, #E02126)',
+            color: 'var(--crm-accent-primary, #E02126)',
+            borderColor: 'var(--crm-accent-primary, #E02126)',
             backgroundColor: '#FEE2E2',
           }}
           onMouseEnter={(e) => {

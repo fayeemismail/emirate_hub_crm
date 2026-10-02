@@ -29,13 +29,13 @@ export const DemandBreakdown: React.FC<DemandBreakdownProps> = ({
     <div
       className="rounded-2xl border px-5 py-5"
       style={{
-        backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
-        borderColor: 'var(--sanity-card-border, #E7E5E4)',
+        backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
+        borderColor: 'var(--crm-card-border, #E7E5E4)',
       }}
     >
       <h3
         className="text-base font-semibold tracking-tight"
-        style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+        style={{ color: 'var(--crm-text-primary, #1C1917)' }}
       >
         Demand
       </h3>
@@ -59,14 +59,14 @@ export const DemandBreakdown: React.FC<DemandBreakdownProps> = ({
               </p>
               <p
                 className="mt-1 text-sm font-medium truncate"
-                style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+                style={{ color: 'var(--crm-text-primary, #1C1917)' }}
               >
                 {top.service}
               </p>
               <div className="mt-2 flex items-baseline gap-2">
                 <span
                   className="text-3xl font-semibold tabular-nums tracking-tight"
-                  style={{ color: 'var(--sanity-accent-primary, #E02126)' }}
+                  style={{ color: 'var(--crm-accent-primary, #E02126)' }}
                 >
                   {top.sharePercentage}%
                 </span>
@@ -90,7 +90,7 @@ export const DemandBreakdown: React.FC<DemandBreakdownProps> = ({
                 >
                   <span
                     className="min-w-0 truncate text-sm"
-                    style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+                    style={{ color: 'var(--crm-text-primary, #1C1917)' }}
                   >
                     {item.service}
                   </span>

@@ -167,8 +167,8 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     <div
       className="relative rounded-2xl border px-5 py-5 sm:px-6 sm:py-6 space-y-6"
       style={{
-        backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
-        borderColor: 'var(--sanity-card-border, #E7E5E4)',
+        backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
+        borderColor: 'var(--crm-card-border, #E7E5E4)',
       }}
     >
       <LoadingOverlay visible={isFilterLoading} label="Updating chart…" />
@@ -177,7 +177,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2
           className="text-base font-semibold tracking-tight"
-          style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+          style={{ color: 'var(--crm-text-primary, #1C1917)' }}
         >
           Analytics
         </h2>
@@ -193,15 +193,15 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 className="relative px-3 py-2 text-sm font-medium transition-colors cursor-pointer"
                 style={{
                   color: active
-                    ? 'var(--sanity-text-primary, #1C1917)'
-                    : 'var(--sanity-text-muted, #A8A29E)',
+                    ? 'var(--crm-text-primary, #1C1917)'
+                    : 'var(--crm-text-muted, #A8A29E)',
                 }}
               >
                 {tab.label}
                 {active && (
                   <span
                     className="absolute inset-x-2 -bottom-px h-0.5 rounded-full sm:bottom-0"
-                    style={{ backgroundColor: 'var(--sanity-accent-primary, #E02126)' }}
+                    style={{ backgroundColor: 'var(--crm-accent-primary, #E02126)' }}
                   />
                 )}
               </button>
@@ -221,7 +221,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               <div className="mt-1 flex items-baseline gap-2.5">
                 <span
                   className="text-3xl font-semibold tracking-tight tabular-nums"
-                  style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+                  style={{ color: 'var(--crm-text-primary, #1C1917)' }}
                 >
                   {totalYearVolume}
                 </span>
@@ -469,7 +469,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                       <span
                         className="text-sm font-semibold tabular-nums"
                         style={{
-                          color: index === 0 ? 'var(--sanity-accent-primary, #E02126)' : '#A8A29E',
+                          color: index === 0 ? 'var(--crm-accent-primary, #E02126)' : '#A8A29E',
                         }}
                       >
                         {index + 1}

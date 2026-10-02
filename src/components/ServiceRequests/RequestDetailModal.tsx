@@ -126,7 +126,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
         <div
           className="w-full max-w-2xl rounded-2xl my-auto animate-in zoom-in-95 duration-150"
           style={{
-            backgroundColor: 'var(--sanity-card-bg, #FFFFFF)',
+            backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
             boxShadow: '0 16px 40px rgba(28, 25, 23, 0.12)',
           }}
           onClick={(e) => e.stopPropagation()}
@@ -168,7 +168,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 </p>
                 <p
                   className="mt-0.5 font-semibold truncate"
-                  style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+                  style={{ color: 'var(--crm-text-primary, #1C1917)' }}
                 >
                   {displayName}
                 </p>

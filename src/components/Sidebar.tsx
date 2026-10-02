@@ -9,7 +9,6 @@ import {
   LogOut 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { SanitySiteSettings } from '../sanity';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { BrandMark } from './BrandMark';
 
@@ -19,7 +18,6 @@ interface SidebarProps {
   pendingCount: number;
   isOpenMobile: boolean;
   setIsOpenMobile: (open: boolean) => void;
-  siteSettings?: SanitySiteSettings | null;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -28,7 +26,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   pendingCount,
   isOpenMobile,
   setIsOpenMobile,
-  siteSettings,
 }) => {
   const { user, logout } = useAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -67,8 +64,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ${isOpenMobile ? 'translate-x-0' : '-translate-x-full'}
         `}
         style={{
-          backgroundColor: 'var(--sanity-sidebar-start, #FFFFFF)',
-          borderColor: 'var(--sanity-sidebar-border, #E7E5E4)',
+          backgroundColor: 'var(--crm-sidebar-start, #FFFFFF)',
+          borderColor: 'var(--crm-sidebar-border, #E7E5E4)',
         }}
       >
         {/* Top Brand Section */}
@@ -76,23 +73,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div 
             className="h-16 px-6 flex items-center justify-between border-b"
             style={{ 
-              backgroundColor: 'var(--sanity-header-bg, #FFFFFF)',
-              borderColor: 'var(--sanity-sidebar-border, #E7E5E4)',
+              backgroundColor: 'var(--crm-header-bg, #FFFFFF)',
+              borderColor: 'var(--crm-sidebar-border, #E7E5E4)',
             }}
           >
             <div className="flex items-center gap-3">
               <BrandMark size="sm" />
               <span 
                 className="font-extrabold text-base tracking-tight uppercase font-mono"
-                style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+                style={{ color: 'var(--crm-text-primary, #1C1917)' }}
               >
-                {siteSettings?.companyName || 'emirate hub'}
+                emirate hub
               </span>
             </div>
             
             <button 
               className="lg:hidden p-1 rounded-lg transition-colors cursor-pointer"
-              style={{ color: 'var(--sanity-text-secondary, #A8A29E)' }}
+              style={{ color: 'var(--crm-text-secondary, #A8A29E)' }}
               onClick={() => setIsOpenMobile(false)}
               aria-label="Close Sidebar"
             >
@@ -104,7 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <nav className="p-4 space-y-1.5">
             <div 
               className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider"
-              style={{ color: 'var(--sanity-text-muted, #78716C)' }}
+              style={{ color: 'var(--crm-text-muted, #78716C)' }}
             >
               Consultancy Portal
             </div>
@@ -124,14 +121,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   style={
                     isActive
                       ? {
-                          backgroundColor: 'var(--sanity-sidebar-active-start, #E02126)',
-                          color: 'var(--sanity-btn-primary-txt, #FFFFFF)',
+                          backgroundColor: 'var(--crm-sidebar-active-start, #E02126)',
+                          color: 'var(--crm-btn-primary-txt, #FFFFFF)',
                           borderColor: 'transparent',
                           fontWeight: 600,
                         }
                       : {
                           backgroundColor: 'transparent',
-                          color: 'var(--sanity-text-secondary, #A8A29E)',
+                          color: 'var(--crm-text-secondary, #A8A29E)',
                           borderColor: 'transparent',
                         }
                   }
@@ -139,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="flex items-center gap-3">
                     <Icon 
                       className="w-4 h-4 transition-colors" 
-                      style={{ color: isActive ? 'var(--sanity-btn-primary-txt, #FFFFFF)' : 'var(--sanity-text-muted, #78716C)' }}
+                      style={{ color: isActive ? 'var(--crm-btn-primary-txt, #FFFFFF)' : 'var(--crm-text-muted, #78716C)' }}
                     />
                     <span>{item.label}</span>
                   </div>
@@ -152,13 +149,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           isActive
                             ? {
                                 backgroundColor: '#FFFFFF',
-                                color: 'var(--sanity-accent-primary, #E02126)',
+                                color: 'var(--crm-accent-primary, #E02126)',
                                 borderColor: '#FFFFFF',
                               }
                             : {
-                                backgroundColor: 'var(--sanity-pill-bg, #E021261A)',
-                                color: 'var(--sanity-pill-txt, #F0A8A8)',
-                                borderColor: 'var(--sanity-pill-border, #E0212640)',
+                                backgroundColor: 'var(--crm-pill-bg, #E021261A)',
+                                color: 'var(--crm-pill-txt, #F0A8A8)',
+                                borderColor: 'var(--crm-pill-border, #E0212640)',
                               }
                         }
                       >
@@ -167,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     )}
                     <ChevronRight 
                       className="w-3.5 h-3.5 transition-opacity" 
-                      style={{ color: isActive ? '#FFFFFF' : 'var(--sanity-text-muted, #78716C)' }}
+                      style={{ color: isActive ? '#FFFFFF' : 'var(--crm-text-muted, #78716C)' }}
                     />
                   </div>
                 </button>
@@ -180,23 +177,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div 
           className="p-4 border-t space-y-3"
           style={{
-            backgroundColor: 'var(--sanity-header-bg, #FFFFFF)',
-            borderColor: 'var(--sanity-sidebar-border, #E7E5E4)',
+            backgroundColor: 'var(--crm-header-bg, #FFFFFF)',
+            borderColor: 'var(--crm-sidebar-border, #E7E5E4)',
           }}
         >
           {/* Business Admin Profile & Logout */}
           <div 
             className="flex items-center gap-2.5 p-2.5 rounded-xl border"
             style={{
-              backgroundColor: 'var(--sanity-inner-card-bg, #FAF9F6)',
-              borderColor: 'var(--sanity-card-border, #E7E5E4)',
+              backgroundColor: 'var(--crm-inner-card-bg, #FAF9F6)',
+              borderColor: 'var(--crm-card-border, #E7E5E4)',
             }}
           >
             <div 
               className="w-8 h-8 rounded-lg text-white flex items-center justify-center text-xs font-bold shrink-0 border"
               style={{
-                backgroundColor: 'var(--sanity-accent-primary, #E02126)',
-                borderColor: 'var(--sanity-card-border, #E7E5E4)',
+                backgroundColor: 'var(--crm-accent-primary, #E02126)',
+                borderColor: 'var(--crm-card-border, #E7E5E4)',
               }}
             >
               {userInitials}
@@ -204,13 +201,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex flex-col min-w-0 flex-1">
               <span 
                 className="text-xs font-bold truncate"
-                style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+                style={{ color: 'var(--crm-text-primary, #1C1917)' }}
               >
                 {user?.name || 'Emirate Hub Admin'}
               </span>
               <span 
                 className="text-[10px] truncate"
-                style={{ color: 'var(--sanity-text-secondary, #A8A29E)' }}
+                style={{ color: 'var(--crm-text-secondary, #A8A29E)' }}
               >
                 {user?.email || 'admin@emirate.com'}
               </span>
@@ -218,7 +215,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => setShowLogoutConfirm(true)}
               className="p-1.5 rounded-lg transition-colors shrink-0 cursor-pointer hover:bg-[#E0212633]"
-              style={{ color: 'var(--sanity-text-secondary, #A8A29E)' }}
+              style={{ color: 'var(--crm-text-secondary, #A8A29E)' }}
               title="Sign Out"
               aria-label="Sign Out"
             >

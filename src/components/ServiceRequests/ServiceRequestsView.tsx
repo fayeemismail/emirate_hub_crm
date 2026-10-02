@@ -146,7 +146,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
       <div>
         <h2
           className="text-lg font-semibold tracking-tight"
-          style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+          style={{ color: 'var(--crm-text-primary, #1C1917)' }}
         >
           Service inquiries
         </h2>

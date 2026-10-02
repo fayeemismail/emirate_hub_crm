@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-/** Lightweight fallback footer when Sanity footer is not used. */
+/** App footer. */
 export const DashboardFooter: React.FC = () => {
   const year = new Date().getFullYear();
 
@@ -10,15 +10,15 @@ export const DashboardFooter: React.FC = () => {
     <footer
       className="mt-auto border-t"
       style={{
-        backgroundColor: 'var(--sanity-header-bg, #FFFFFF)',
-        borderColor: 'var(--sanity-sidebar-border, #E7E5E4)',
+        backgroundColor: 'var(--crm-header-bg, #FFFFFF)',
+        borderColor: 'var(--crm-sidebar-border, #E7E5E4)',
       }}
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div>
           <p
             className="text-sm font-semibold tracking-tight"
-            style={{ color: 'var(--sanity-text-primary, #1C1917)' }}
+            style={{ color: 'var(--crm-text-primary, #1C1917)' }}
           >
             Emirate Hub
           </p>
