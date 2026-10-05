@@ -194,7 +194,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
   const rangeLabel =
     lookbackDays === 0 ? 'All time' : `Last ${lookbackDays} days`;
 
-  const shownCount = leadsTotal > 0 ? leadsTotal : requests.length;
+  const shownCount = requests.length;
 
   return (
     <div className="relative space-y-5">

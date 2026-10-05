@@ -2,7 +2,13 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { authApi, UserProfile, getStoredToken, clearStoredToken } from '../lib/api';
+import {
+  authApi,
+  UserProfile,
+  getStoredToken,
+  clearStoredToken,
+  AUTH_EXPIRED_EVENT,
+} from '../lib/api';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -22,6 +28,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  const clearSession = useCallback(() => {
+    clearStoredToken();
+    setUser(null);
+    setToken(null);
+  }, []);
+
   const refreshUser = useCallback(async () => {
     const storedToken = getStoredToken();
     if (!storedToken) {
@@ -36,28 +48,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await authApi.getMe();
       if (res.success && res.data) {
         setUser(res.data);
+        setToken(getStoredToken());
       } else {
-        clearStoredToken();
-        setUser(null);
-        setToken(null);
+        clearSession();
       }
     } catch {
-      clearStoredToken();
-      setUser(null);
-      setToken(null);
+      clearSession();
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [clearSession]);
 
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
 
+  useEffect(() => {
+    const onExpired = () => {
+      clearSession();
+      router.replace('/login');
+    };
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
+  }, [clearSession, router]);
+
   const login = async (email: string, password: string) => {
     const res = await authApi.login(email, password);
     if (!res.success || !res.data?.accessToken || !res.data?.user) {
-      clearStoredToken();
+      clearSession();
       throw new Error(res.message || 'Authentication failed. Please verify credentials.');
     }
 
@@ -71,9 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Always clear local session even if the API call fails
     } finally {
-      clearStoredToken();
-      setUser(null);
-      setToken(null);
+      clearSession();
       router.replace('/login');
     }
   };

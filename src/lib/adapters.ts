@@ -132,6 +132,27 @@ export function sortByStatusPipeline(
   };
 }
 
+/** Table toolbar sort modes — applied client-side after kanban fetch. */
+export function sortRequestsForTable(
+  requests: ServiceRequest[],
+  mode: 'priority' | 'status' | 'newest' | 'oldest',
+  pipelineStatuses: PipelineStatus[]
+): ServiceRequest[] {
+  const sorted = [...requests];
+  switch (mode) {
+    case 'oldest':
+      return sorted.sort(sortByCreatedAtAsc);
+    case 'newest':
+      return sorted.sort(sortByCreatedAtDesc);
+    case 'status':
+      return sorted.sort(sortByStatusPipeline(pipelineStatuses));
+    case 'priority':
+    default:
+      // Match BE priority asc: URGENT/HIGH first via getPriorityRank desc.
+      return sorted.sort(sortByPriorityDesc);
+  }
+}
+
 export function requestPriorityToBackendEnum(
   priority: RequestPriority
 ): 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' {

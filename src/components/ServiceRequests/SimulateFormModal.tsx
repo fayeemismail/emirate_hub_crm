@@ -73,6 +73,7 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
   const [requestText, setRequestText] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const wasOpenRef = useRef(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -90,6 +91,10 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
     }
 
     if (!justOpened) return;
+
+    setIsSuccess(false);
+    setSubmitError(null);
+    setIsSubmitting(false);
 
     const preferred =
       defaultService && serviceOptions.some((o) => o.value === defaultService)
@@ -139,6 +144,7 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
     const lastName = nameParts.slice(1).join(' ') || '';
 
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       await onSubmitNewRequest({
         firstName,
@@ -155,6 +161,12 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
         closeTimerRef.current = null;
         onClose();
       }, 1600);
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Could not create lead. Try again.';
+      setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -295,6 +307,20 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
                 style={fieldStyle}
               />
             </div>
+
+            {submitError ? (
+              <p
+                className="rounded-xl border px-3 py-2 text-sm"
+                style={{
+                  color: '#B91C1C',
+                  backgroundColor: '#FEF2F2',
+                  borderColor: '#FECACA',
+                }}
+                role="alert"
+              >
+                {submitError}
+              </p>
+            ) : null}
 
             <div
               className="flex items-center justify-end gap-2 border-t pt-4"

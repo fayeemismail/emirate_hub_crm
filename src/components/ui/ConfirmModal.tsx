@@ -25,10 +25,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   variant = 'warning',
 }) => {
   const [isConfirming, setIsConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
       setIsConfirming(false);
+      setError(null);
       return;
     }
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -50,10 +52,16 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const handleConfirm = async () => {
     if (isConfirming) return;
     setIsConfirming(true);
+    setError(null);
     try {
       await onConfirm();
       onClose();
-    } catch {
+    } catch (err) {
+      const messageText =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Something went wrong. Try again.';
+      setError(messageText);
       setIsConfirming(false);
     }
   };
@@ -86,6 +94,19 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         >
           {message}
         </p>
+        {error ? (
+          <p
+            className="mt-3 rounded-lg border px-3 py-2 text-sm"
+            style={{
+              color: '#B91C1C',
+              backgroundColor: '#FEF2F2',
+              borderColor: '#FECACA',
+            }}
+            role="alert"
+          >
+            {error}
+          </p>
+        ) : null}
 
         <div className="mt-6 flex items-center justify-end gap-2">
           <button

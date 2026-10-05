@@ -13,14 +13,23 @@ import {
   ServiceAnalyticsResponse,
   FunnelAnalyticsResponse,
 } from '../types';
-import { leadsApi, analyticsApi, LeadItem, ApiResponse } from '../lib/api';
+import { leadsApi, analyticsApi, LeadItem } from '../lib/api';
 import {
   leadToServiceRequest,
   sortByCreatedAtDesc,
+  sortRequestsForTable,
   requestPriorityToBackendEnum,
 } from '../lib/adapters';
-import { lookbackStartIso, tableSortToApi, type TableSortMode } from '../lib/crmSettings';
+import { lookbackStartIso, type TableSortMode } from '../lib/crmSettings';
 import { useCrmSettings } from './useCrmSettings';
+
+function flattenLeadsPayload(
+  raw: LeadItem[] | Record<string, LeadItem[]> | null | undefined
+): LeadItem[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  return Object.values(raw).flat();
+}
 
 /** Inquiry list filters driven by the BE admin leads query. */
 export interface InquiryListQuery {
@@ -74,9 +83,6 @@ export function useDashboardData({
 
     const lookbackStart = lookbackStartIso(lookbackDays);
     const isTable = inquiryQuery.viewMode === 'table';
-    const sort = isTable
-      ? tableSortToApi(inquiryQuery.tableSort)
-      : { sortBy: 'boardOrder' as const, sortOrder: 'asc' as const };
 
     const search = inquiryQuery.search.trim();
     const service = inquiryQuery.service;
@@ -93,15 +99,14 @@ export function useDashboardData({
         servicesRes,
         funnelRes,
       ] = await Promise.allSettled([
+        // Always use kanban (ungrouped full filtered set). List view rejects limit>100,
+        // which previously emptied the table when we asked for 500.
         leadsApi.getAdminLeads({
-          view: 'list',
-          limit: 100,
+          view: 'kanban',
           lookbackDays: lookbackDays > 0 ? lookbackDays : undefined,
           ...(search ? { search } : {}),
           ...(service !== 'All' ? { service } : {}),
           ...(isTable && status !== 'All' ? { status } : {}),
-          sortBy: sort.sortBy,
-          sortOrder: sort.sortOrder,
         }),
         leadsApi.getLeadStatuses(),
         leadsApi.getLeadServices(),
@@ -120,14 +125,15 @@ export function useDashboardData({
 
       if (gen !== loadGen.current) return;
 
+      let nextPipeline: PipelineStatus[] = [];
       if (statusesRes.status === 'fulfilled' && statusesRes.value?.data) {
         const payload = statusesRes.value.data;
-        const sorted = [...(payload.statuses || [])].sort((a, b) => a.order - b.order);
-        setPipelineStatuses(sorted);
+        nextPipeline = [...(payload.statuses || [])].sort((a, b) => a.order - b.order);
+        setPipelineStatuses(nextPipeline);
         setDefaultStatusSlug(
           payload.defaultStatus ||
-            sorted.find((s) => s.isDefault)?.slug ||
-            sorted[0]?.slug ||
+            nextPipeline.find((s) => s.isDefault)?.slug ||
+            nextPipeline[0]?.slug ||
             ''
         );
       } else {
@@ -144,20 +150,19 @@ export function useDashboardData({
       }
 
       if (leadsRes.status === 'fulfilled' && leadsRes.value?.data) {
-        const raw = leadsRes.value.data;
-        const rawList = Array.isArray(raw) ? raw : [];
-        const mapped = rawList
+        const rawList = flattenLeadsPayload(leadsRes.value.data);
+        let mapped = rawList
           .filter((l) => !(l as LeadItem & { isDeleted?: boolean }).isDeleted)
           .map(leadToServiceRequest);
+        if (isTable) {
+          mapped = sortRequestsForTable(
+            mapped,
+            inquiryQuery.tableSort,
+            nextPipeline
+          );
+        }
         setRequests(mapped);
-        const pagination = (
-          leadsRes.value as ApiResponse<LeadItem[]> & {
-            pagination?: { totalItems?: number };
-          }
-        ).pagination;
-        setLeadsTotal(
-          typeof pagination?.totalItems === 'number' ? pagination.totalItems : mapped.length
-        );
+        setLeadsTotal(mapped.length);
       } else {
         setRequests([]);
         setLeadsTotal(0);
@@ -446,7 +451,11 @@ export function useDashboardData({
 
   const handleDeleteRequest = useCallback(
     async (id: string) => {
-      setRequests((prev) => prev.filter((req) => req.id !== id));
+      let snapshot: ServiceRequest | undefined;
+      setRequests((prev) => {
+        snapshot = prev.find((req) => req.id === id);
+        return prev.filter((req) => req.id !== id);
+      });
       setLeadsTotal((t) => Math.max(0, t - 1));
 
       if (onModalRequestUpdate) {
@@ -454,14 +463,27 @@ export function useDashboardData({
       }
 
       const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
-      if (!isMongoId) return;
+      if (!isMongoId) {
+        throw new Error('This lead cannot be archived (invalid id).');
+      }
 
       try {
         await leadsApi.deleteLead(id);
         loadBackendData();
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
-        console.warn(`Could not soft delete lead ${id} on backend:`, message);
+        if (snapshot) {
+          const rollback = snapshot;
+          setRequests((prev) => {
+            if (prev.some((req) => req.id === id)) return prev;
+            return [...prev, rollback].sort(sortByCreatedAtDesc);
+          });
+          setLeadsTotal((t) => t + 1);
+          if (onModalRequestUpdate) {
+            onModalRequestUpdate((prev) => (prev?.id === id ? rollback : prev ?? rollback));
+          }
+        }
+        throw new Error(message || 'Could not archive inquiry. Try again.');
       }
     },
     [loadBackendData, onModalRequestUpdate]
@@ -529,78 +551,37 @@ export function useDashboardData({
     async (
       newReqData: Omit<ServiceRequest, 'id' | 'createdAt' | 'status' | 'priority'>
     ) => {
-      const initialStatus = defaultStatusSlug || pipelineStatuses.find((s) => s.isDefault)?.slug;
-      if (!initialStatus) {
-        console.warn(
-          'Cannot create local lead fallback: Sanity default status is not loaded yet.'
-        );
-      }
-      try {
-        const clientFullName =
-          newReqData.name ||
-          `${newReqData.firstName} ${newReqData.lastName}`.trim();
-        const res = await leadsApi.createPublicLead({
-          name: clientFullName,
-          firstName: newReqData.firstName,
-          lastName: newReqData.lastName,
-          email: newReqData.email,
-          phone: newReqData.phone,
-          service: newReqData.service,
-          message: newReqData.message,
-          source: 'manual',
-          formData: {
-            companyName: newReqData.companyName,
-          },
-        });
+      const clientFullName =
+        newReqData.name ||
+        `${newReqData.firstName} ${newReqData.lastName}`.trim();
 
-        if (res.data) {
-          const mappedNewLead = leadToServiceRequest(res.data);
-          setRequests((prev) => [mappedNewLead, ...prev].sort(sortByCreatedAtDesc));
-          loadBackendData();
-        } else if (initialStatus) {
-          const newId = `REQ-2026-${String(requests.length + 1).padStart(3, '0')}`;
-          const newRequest: ServiceRequest = {
-            ...newReqData,
-            name: clientFullName,
-            id: newId,
-            createdAt: new Date().toISOString(),
-            status: initialStatus,
-            priority: 'High',
-            boardOrder: Date.now(),
-            notes: [],
-            source: 'manual',
-            isDeleted: false,
-          };
-          setRequests((prev) => [newRequest, ...prev].sort(sortByCreatedAtDesc));
-        }
-      } catch (err) {
-        console.warn('Backend submission failed, saving locally:', err);
-        if (!initialStatus) {
-          loadBackendData();
-          return;
-        }
-        const newId = `REQ-2026-${String(requests.length + 1).padStart(3, '0')}`;
-        const clientFullName =
-          newReqData.name ||
-          `${newReqData.firstName} ${newReqData.lastName}`.trim();
-        const newRequest: ServiceRequest = {
-          ...newReqData,
-          name: clientFullName,
-          id: newId,
-          createdAt: new Date().toISOString(),
-          status: initialStatus,
-          priority: 'High',
-          boardOrder: Date.now(),
-          notes: [],
-          source: 'manual',
-          isDeleted: false,
-        };
-        setRequests((prev) => [newRequest, ...prev].sort(sortByCreatedAtDesc));
+      const res = await leadsApi.createPublicLead({
+        name: clientFullName,
+        firstName: newReqData.firstName,
+        lastName: newReqData.lastName,
+        email: newReqData.email,
+        phone: newReqData.phone,
+        service: newReqData.service,
+        message: newReqData.message,
+        source: 'manual',
+        formData: {
+          companyName: newReqData.companyName,
+        },
+      });
+
+      if (!res.data) {
+        throw new Error(res.message || 'Lead was not created. Try again.');
       }
 
+      const mappedNewLead = leadToServiceRequest({
+        ...res.data,
+        source: 'manual',
+      });
+      setRequests((prev) => [mappedNewLead, ...prev].sort(sortByCreatedAtDesc));
+      setLeadsTotal((t) => t + 1);
       loadBackendData();
     },
-    [loadBackendData, requests.length, defaultStatusSlug, pipelineStatuses]
+    [loadBackendData]
   );
 
   return {

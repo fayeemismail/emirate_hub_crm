@@ -186,6 +186,7 @@ export interface CatalogServiceListResponse {
 
 // Token helper
 export const TOKEN_STORAGE_KEY = 'foundx_crm_access_token';
+export const AUTH_EXPIRED_EVENT = 'crm:auth-expired';
 
 export const getStoredToken = (): string | null => {
   if (typeof window === 'undefined') return null;
@@ -204,10 +205,62 @@ export const clearStoredToken = (): void => {
   }
 };
 
+function notifyAuthExpired(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
+}
+
+let refreshInFlight: Promise<string | null> | null = null;
+
 /**
- * Core fetch wrapper
+ * Exchange the HTTP-only refresh cookie for a new access token.
+ * Dedupes concurrent callers so a burst of 401s only hits /refresh once.
  */
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+async function refreshAccessToken(): Promise<string | null> {
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    try {
+      const response = await fetch(`${API_BASE}/v1/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) return null;
+
+      const payload = await response.json();
+      const nextToken = payload?.data?.accessToken as string | undefined;
+      if (!nextToken) return null;
+
+      setStoredToken(nextToken);
+      return nextToken;
+    } catch {
+      return null;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
+}
+
+function isAuthEndpoint(endpoint: string): boolean {
+  return (
+    endpoint.includes('/auth/login') ||
+    endpoint.includes('/auth/refresh') ||
+    endpoint.includes('/auth/logout')
+  );
+}
+
+/**
+ * Core fetch wrapper with Bearer auth, cookie credentials, and one-shot 401 refresh.
+ */
+async function request<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  retried = false
+): Promise<ApiResponse<T>> {
   const url = `${API_BASE}${endpoint}`;
   const token = getStoredToken();
 
@@ -237,6 +290,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   if (!response.ok) {
+    if (response.status === 401 && !retried && !isAuthEndpoint(endpoint)) {
+      const nextToken = await refreshAccessToken();
+      if (nextToken) {
+        return request<T>(endpoint, options, true);
+      }
+      clearStoredToken();
+      notifyAuthExpired();
+    }
+
     let errorMessage = data?.message || 'Request failed';
     if (data?.errors) {
       if (Array.isArray(data.errors)) {
@@ -316,7 +378,7 @@ export const leadsApi = {
     lookbackDays?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
-  }): Promise<ApiResponse<LeadItem[]>> => {
+  }): Promise<ApiResponse<LeadItem[] | Record<string, LeadItem[]>>> => {
     const query = new URLSearchParams();
     if (params?.view) query.append('view', params.view);
     if (params?.page) query.append('page', String(params.page));
@@ -332,7 +394,7 @@ export const leadsApi = {
     if (params?.sortOrder) query.append('sortOrder', params.sortOrder);
 
     const queryString = query.toString() ? `?${query.toString()}` : '';
-    return request<LeadItem[]>(`/v1/admin/leads${queryString}`, {
+    return request<LeadItem[] | Record<string, LeadItem[]>>(`/v1/admin/leads${queryString}`, {
       method: 'GET',
     });
   },
