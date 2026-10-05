@@ -54,7 +54,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6 font-sans selection:bg-[#E02126] selection:text-white"
+      className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6 font-sans"
       style={{
         backgroundColor: '#F7F5F1',
         color: '#1C1917',

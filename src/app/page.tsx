@@ -150,7 +150,7 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen flex font-sans antialiased selection:bg-[#E02126] selection:text-white"
+      className="min-h-screen flex font-sans antialiased"
       style={{
         backgroundColor: 'var(--crm-bg-main, #F7F5F1)',
         background: 'var(--crm-page-bg, #F7F5F1)',
