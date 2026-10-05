@@ -19,7 +19,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
   return (
     <div
-      className={`absolute inset-0 z-10 flex items-center justify-center rounded-[inherit] ${className}`}
+      className={`absolute inset-0 z-10 flex items-center justify-center rounded-[inherit] crm-fade-enter ${className}`}
       style={{ backgroundColor: 'rgba(247, 245, 241, 0.55)' }}
       role="status"
       aria-live="polite"

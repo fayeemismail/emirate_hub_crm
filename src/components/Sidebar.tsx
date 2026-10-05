@@ -5,6 +5,7 @@ import {
   LayoutDashboard, 
   Inbox,
   AlertTriangle,
+  Archive,
   Settings,
   ChevronRight, 
   X, 
@@ -59,6 +60,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           },
         ]
       : []),
+    {
+      id: 'archives' as const,
+      label: 'Archives',
+      icon: Archive,
+      badge: null as number | null,
+    },
     {
       id: 'settings' as const,
       label: 'Settings',
@@ -138,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     setActiveTab(item.id);
                     setIsOpenMobile(false);
                   }}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs transition-all duration-200 group cursor-pointer border"
+                  className="crm-interactive w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs group cursor-pointer border"
                   style={
                     isActive
                       ? {

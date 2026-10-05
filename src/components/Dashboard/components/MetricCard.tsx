@@ -11,6 +11,7 @@ interface MetricCardProps {
   iconBorderColor?: string;
   cardBgColor?: string;
   cardBorderColor?: string;
+  valueColor?: string;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -23,10 +24,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   iconBorderColor = '#FECACA',
   cardBgColor = 'var(--crm-card-bg, #FFFFFF)',
   cardBorderColor = 'var(--crm-card-border, #E7E5E4)',
+  valueColor = 'var(--crm-text-primary, #1C1917)',
 }) => {
   return (
     <div 
-      className="rounded-2xl p-5 border transition-all duration-200 hover:-translate-y-0.5"
+      className="crm-lift rounded-2xl p-5 border"
       style={{
         backgroundColor: cardBgColor,
         borderColor: cardBorderColor,
@@ -47,7 +49,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           <Icon className="w-4 h-4" style={{ color: iconColor }} />
         </div>
       </div>
-      <span className="text-3xl font-extrabold tracking-tight" style={{ color: 'var(--crm-text-primary, #1C1917)' }}>
+      <span className="text-3xl font-extrabold tracking-tight tabular-nums" style={{ color: valueColor }}>
         {value}
       </span>
       {hint ? (

@@ -25,6 +25,12 @@ export interface CatalogService {
   isActive: boolean;
 }
 
+export interface LeadNote {
+  text: string;
+  createdAt: string;
+  createdBy: string;
+}
+
 export interface ServiceRequest {
   id: string;
   name?: string;
@@ -49,11 +55,14 @@ export interface ServiceRequest {
   }>;
   priority: RequestPriority;
   boardOrder?: number;
-  notes?: string[];
+  notes?: LeadNote[];
   /** online = website form; manual = CRM-created. */
   source?: 'online' | 'manual';
   companyName?: string;
   isDeleted?: boolean;
+  /** Present when the inquiry is archived (soft-deleted). */
+  deletedAt?: string;
+  updatedAt?: string;
 }
 
 export interface MessagesGraphData {

@@ -14,7 +14,7 @@ export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
     status: 'new',
     priority: 'High',
     companyName: 'TechVentures Inc.',
-    notes: ['Initial review conducted by sales team. High lead value.'],
+    notes: [{ text: 'Initial review conducted by sales team. High lead value.', createdAt: '2026-07-28T12:00:00Z', createdBy: 'SYSTEM' }],
     isDeleted: false,
   },
   {
@@ -30,7 +30,7 @@ export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
     status: 'in_review',
     priority: 'High',
     companyName: 'Nexus Design Studio',
-    notes: ['Assigned to Senior Frontend Developer.'],
+    notes: [{ text: 'Assigned to Senior Frontend Developer.', createdAt: '2026-07-28T12:00:00Z', createdBy: 'SYSTEM' }],
     isDeleted: false,
   },
   {
@@ -62,7 +62,7 @@ export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
     status: 'in_review',
     priority: 'High',
     companyName: 'Fintech Pulse',
-    notes: ['Audit agreement signed.'],
+    notes: [{ text: 'Audit agreement signed.', createdAt: '2026-07-28T12:00:00Z', createdBy: 'SYSTEM' }],
     isDeleted: false,
   },
   {
@@ -78,7 +78,7 @@ export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
     status: 'won',
     priority: 'Medium',
     companyName: 'BioMend Labs',
-    notes: ['Project completed and approved by client.'],
+    notes: [{ text: 'Project completed and approved by client.', createdAt: '2026-07-28T12:00:00Z', createdBy: 'SYSTEM' }],
     isDeleted: false,
   },
   {
@@ -94,7 +94,7 @@ export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
     status: 'won',
     priority: 'Low',
     companyName: 'Vargas Legal Group',
-    notes: ['Client onboarded.'],
+    notes: [{ text: 'Client onboarded.', createdAt: '2026-07-28T12:00:00Z', createdBy: 'SYSTEM' }],
     isDeleted: false,
   },
   {
@@ -126,7 +126,7 @@ export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
     status: 'in_review',
     priority: 'Medium',
     companyName: 'Bloom Fashion',
-    notes: ['Wireframes sent to client for review.'],
+    notes: [{ text: 'Wireframes sent to client for review.', createdAt: '2026-07-28T12:00:00Z', createdBy: 'SYSTEM' }],
     isDeleted: false,
   },
   {

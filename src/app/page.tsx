@@ -21,10 +21,12 @@ import {
   type InquiryFiltersState,
 } from '../components/ServiceRequests/ServiceRequestsView';
 import { OrphanRequestsView } from '../components/ServiceRequests/OrphanRequestsView';
+import { ArchivesView } from '../components/ServiceRequests/ArchivesView';
 import { SettingsView } from '../components/SettingsView';
 import { RequestDetailModal } from '../components/ServiceRequests/RequestDetailModal';
 import { SimulateFormModal } from '../components/ServiceRequests/SimulateFormModal';
 import { AuthLoadingScreen } from '../components/AuthLoadingScreen';
+import { PageEnter } from '../components/ui/motion';
 
 export default function Home() {
   const router = useRouter();
@@ -70,6 +72,7 @@ export default function Home() {
   const [selectedRequestModal, setSelectedRequestModal] = useState<ServiceRequest | null>(null);
   const [isSimulateModalOpen, setIsSimulateModalOpen] = useState(false);
   const [isOpenMobileSidebar, setIsOpenMobileSidebar] = useState(false);
+  const [archivesRefreshKey, setArchivesRefreshKey] = useState(0);
 
   const {
     requests,
@@ -84,10 +87,12 @@ export default function Home() {
     funnelAnalytics,
     isInitialLoading,
     isRefreshing,
+    loadBackendData,
     handleUpdateStatus,
     handleKanbanSync,
     handleUpdatePriority,
     handleDeleteRequest,
+    handleRestoreRequest,
     handleAddNote,
     handleSubmitNewRequest,
   } = useDashboardData({
@@ -95,6 +100,22 @@ export default function Home() {
     inquiryQuery,
     onModalRequestUpdate: (updater) => setSelectedRequestModal((prev) => updater(prev)),
   });
+
+  const onRestoreRequest = useCallback(
+    async (id: string) => {
+      await handleRestoreRequest(id);
+      setArchivesRefreshKey((k) => k + 1);
+    },
+    [handleRestoreRequest]
+  );
+
+  const onArchiveRequest = useCallback(
+    async (id: string) => {
+      await handleDeleteRequest(id);
+      setArchivesRefreshKey((k) => k + 1);
+    },
+    [handleDeleteRequest]
+  );
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -151,7 +172,8 @@ export default function Home() {
           onCreateLead={() => setIsSimulateModalOpen(true)}
         />
 
-        <main className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl w-full mx-auto space-y-6">
+        <main className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl w-full mx-auto">
+          <PageEnter resetKey={activeTab} className="space-y-6">
           {activeTab === 'dashboard' && (
             <DashboardOverview
               requests={requests}
@@ -182,7 +204,7 @@ export default function Home() {
               onSelectRequest={(req) => setSelectedRequestModal(req)}
               onUpdateStatus={handleUpdateStatus}
               onKanbanSync={handleKanbanSync}
-              onDeleteRequest={handleDeleteRequest}
+              onDeleteRequest={onArchiveRequest}
             />
           )}
 
@@ -198,17 +220,33 @@ export default function Home() {
             />
           )}
 
+          {activeTab === 'archives' && (
+            <ArchivesView
+              pipelineStatuses={pipelineStatuses}
+              refreshKey={archivesRefreshKey}
+              onRestored={async () => {
+                await loadBackendData();
+              }}
+              onSelectRequest={(req) =>
+                setSelectedRequestModal({ ...req, isDeleted: true })
+              }
+            />
+          )}
+
           {activeTab === 'settings' && <SettingsView />}
+          </PageEnter>
         </main>
       </div>
 
       <RequestDetailModal
         request={selectedRequestModal}
         pipelineStatuses={pipelineStatuses}
+        archivedView={activeTab === 'archives'}
         onClose={() => setSelectedRequestModal(null)}
         onUpdateStatus={handleUpdateStatus}
         onUpdatePriority={handleUpdatePriority}
-        onDeleteRequest={handleDeleteRequest}
+        onDeleteRequest={onArchiveRequest}
+        onRestoreRequest={onRestoreRequest}
         onAddNote={handleAddNote}
       />
 

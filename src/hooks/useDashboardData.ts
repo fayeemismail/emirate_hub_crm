@@ -19,6 +19,7 @@ import {
   sortByCreatedAtDesc,
   sortRequestsForTable,
   requestPriorityToBackendEnum,
+  normalizeLeadNotes,
 } from '../lib/adapters';
 import { tableSortToApi, type TableSortMode } from '../lib/crmSettings';
 import { useCrmSettings } from './useCrmSettings';
@@ -46,7 +47,7 @@ export const DEFAULT_INQUIRY_LIST_QUERY: InquiryListQuery = {
   search: '',
   service: 'All',
   status: 'All',
-  tableSort: 'priority',
+  tableSort: 'newest',
   viewMode: 'kanban',
   applyLookback: false,
 };
@@ -154,8 +155,8 @@ export function useDashboardData({
       if (leadsRes.status === 'fulfilled' && leadsRes.value?.data) {
         const rawList = flattenLeadsPayload(leadsRes.value.data);
         let mapped = rawList
-          .filter((l) => !(l as LeadItem & { isDeleted?: boolean }).isDeleted)
-          .map(leadToServiceRequest);
+          .map(leadToServiceRequest)
+          .filter((req) => !req.isDeleted);
         if (isTable) {
           mapped = sortRequestsForTable(
             mapped,
@@ -472,7 +473,7 @@ export function useDashboardData({
 
       try {
         await leadsApi.deleteLead(id);
-        loadBackendData();
+        await loadBackendData();
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         if (snapshot) {
@@ -492,10 +493,37 @@ export function useDashboardData({
     [loadBackendData, onModalRequestUpdate]
   );
 
+  const handleRestoreRequest = useCallback(
+    async (id: string) => {
+      const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
+      if (!isMongoId) {
+        throw new Error('This lead cannot be restored (invalid id).');
+      }
+
+      try {
+        await leadsApi.restoreLead(id);
+        if (onModalRequestUpdate) {
+          onModalRequestUpdate((prev) => (prev?.id === id ? null : prev));
+        }
+        await loadBackendData();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(message || 'Could not restore inquiry. Try again.');
+      }
+    },
+    [loadBackendData, onModalRequestUpdate]
+  );
+
   const handleAddNote = useCallback(
     async (id: string, noteText: string) => {
       const trimmed = noteText.trim();
       if (!trimmed) return;
+
+      const optimisticNote = {
+        text: trimmed,
+        createdAt: new Date().toISOString(),
+        createdBy: 'You',
+      };
 
       let snapshot: ServiceRequest | undefined;
 
@@ -503,7 +531,7 @@ export function useDashboardData({
         snapshot = prev.find((req) => req.id === id);
         return prev.map((req) => {
           if (req.id === id) {
-            return { ...req, notes: [...(req.notes || []), trimmed] };
+            return { ...req, notes: [...(req.notes || []), optimisticNote] };
           }
           return req;
         });
@@ -512,7 +540,7 @@ export function useDashboardData({
       if (onModalRequestUpdate) {
         onModalRequestUpdate((prev) => {
           if (prev?.id === id) {
-            return { ...prev, notes: [...(prev.notes || []), trimmed] };
+            return { ...prev, notes: [...(prev.notes || []), optimisticNote] };
           }
           return prev;
         });
@@ -523,16 +551,17 @@ export function useDashboardData({
 
       try {
         const res = await leadsApi.updateLeadDetails(id, { note: trimmed });
-        const savedNotes = res.data?.notes;
-        if (Array.isArray(savedNotes)) {
-          setRequests((prev) =>
-            prev.map((req) => (req.id === id ? { ...req, notes: savedNotes } : req))
+        const savedNotes = normalizeLeadNotes(
+          res.data?.notes,
+          res.data?.updatedAt
+        );
+        setRequests((prev) =>
+          prev.map((req) => (req.id === id ? { ...req, notes: savedNotes } : req))
+        );
+        if (onModalRequestUpdate) {
+          onModalRequestUpdate((prev) =>
+            prev?.id === id ? { ...prev, notes: savedNotes } : prev
           );
-          if (onModalRequestUpdate) {
-            onModalRequestUpdate((prev) =>
-              prev?.id === id ? { ...prev, notes: savedNotes } : prev
-            );
-          }
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -607,6 +636,7 @@ export function useDashboardData({
     handleKanbanSync,
     handleUpdatePriority,
     handleDeleteRequest,
+    handleRestoreRequest,
     handleAddNote,
     handleSubmitNewRequest,
   };

@@ -4,14 +4,22 @@ const LOOKBACK_KEY = 'emirate_inquiry_lookback_days';
 const TABLE_SORT_KEY = 'emirate_inquiry_table_sort';
 const SETTINGS_EVENT = 'emirate-crm-settings';
 
-export const LOOKBACK_PRESETS = [7, 30, 60, 90] as const;
+/** Preset windows for Settings chips + inquiries dropdown (1 = Today). */
+export const LOOKBACK_PRESETS = [1, 7, 30, 60, 90] as const;
 
 /** 0 = all time. Default 30. */
 export const DEFAULT_LOOKBACK_DAYS = 30;
 
 export type TableSortMode = 'priority' | 'status' | 'newest' | 'oldest';
 
-export const DEFAULT_TABLE_SORT: TableSortMode = 'priority';
+export const DEFAULT_TABLE_SORT: TableSortMode = 'newest';
+
+/** Human label for a lookback window (1 = Today, 0 = All time). */
+export function lookbackLabel(days: number): string {
+  if (days === 0) return 'All time';
+  if (days === 1) return 'Today';
+  return `Last ${days} days`;
+}
 
 function emitSettingsChange() {
   if (typeof window === 'undefined') return;
@@ -89,7 +97,9 @@ export function tableSortToApi(mode: TableSortMode): {
     case 'status':
       return { sortBy: 'status', sortOrder: 'asc' };
     case 'priority':
-    default:
       return { sortBy: 'priority', sortOrder: 'asc' };
+    case 'newest':
+    default:
+      return { sortBy: 'createdAt', sortOrder: 'desc' };
   }
 }

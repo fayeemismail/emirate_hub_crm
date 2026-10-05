@@ -1,8 +1,15 @@
 'use client';
 
 import React from 'react';
-import { Inbox, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
+import {
+  Inbox,
+  AlertCircle,
+  Clock,
+  CheckCircle2,
+  Target,
+} from 'lucide-react';
 import { MetricCard } from './MetricCard';
+import { Stagger } from '../../ui/motion';
 
 interface OverviewMetricsProps {
   totalCount: number;
@@ -13,8 +20,15 @@ interface OverviewMetricsProps {
   inProgressLabel?: string;
   resolvedLabel?: string;
   resolvedHint?: string;
-  momGrowth?: number | null;
   winRate?: number | null;
+  wonLeads?: number | null;
+  lostLeads?: number | null;
+}
+
+function formatPercent(value: number | null | undefined, digits = 1): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return '—';
+  const rounded = Number(value.toFixed(digits));
+  return `${rounded % 1 === 0 ? String(Math.round(rounded)) : rounded.toFixed(digits)}%`;
 }
 
 export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
@@ -26,9 +40,18 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
   inProgressLabel = 'In Progress',
   resolvedLabel = 'Resolved',
   resolvedHint = 'Final pipeline stage — still on the board, not archived',
+  winRate = null,
+  wonLeads = null,
+  lostLeads = null,
 }) => {
+  const closed = (wonLeads ?? 0) + (lostLeads ?? 0);
+  const winHint =
+    closed > 0
+      ? `${wonLeads ?? 0} won · ${lostLeads ?? 0} lost`
+      : 'Share of closed inquiries that were won';
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <Stagger className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
       <MetricCard
         label="Total Inquiries"
         hint="Active inquiries only — archived ones are hidden"
@@ -66,6 +89,16 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
         iconBorderColor="#BBF7D0"
         value={resolvedCount}
       />
-    </div>
+
+      <MetricCard
+        label="Win rate"
+        hint={winHint}
+        icon={Target}
+        iconColor="#1C1917"
+        iconBgColor="#F5F5F4"
+        iconBorderColor="#E7E5E4"
+        value={formatPercent(winRate)}
+      />
+    </Stagger>
   );
 };

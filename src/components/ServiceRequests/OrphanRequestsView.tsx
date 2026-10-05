@@ -12,7 +12,7 @@ import {
 import { PipelineStatus, RequestStatus, ServiceRequest } from '../../types';
 import { getOrphanRequests } from '../../lib/orphans';
 import { EmptyState } from '../ui/EmptyState';
-import { LoadingOverlay, Spinner, TableSkeleton } from '../ui/loading';
+import { LoadingOverlay, Spinner, OrphansPageSkeleton } from '../ui/loading';
 
 interface OrphanRequestsViewProps {
   requests: ServiceRequest[];
@@ -173,12 +173,13 @@ export const OrphanRequestsView: React.FC<OrphanRequestsViewProps> = ({
         ? '#15803D'
         : '#A8A29E';
 
+  if (isLoading) {
+    return <OrphansPageSkeleton />;
+  }
+
   return (
     <div className="relative space-y-5">
-      <LoadingOverlay
-        visible={isRefreshing && !isLoading}
-        label="Refreshing…"
-      />
+      <LoadingOverlay visible={isRefreshing} label="Refreshing…" />
 
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
@@ -189,7 +190,7 @@ export const OrphanRequestsView: React.FC<OrphanRequestsViewProps> = ({
             >
               Off-pipeline
             </h2>
-            {!isLoading && orphans.length > 0 ? (
+            {orphans.length > 0 ? (
               <span
                 className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold tabular-nums"
                 style={{
@@ -203,15 +204,13 @@ export const OrphanRequestsView: React.FC<OrphanRequestsViewProps> = ({
             ) : null}
           </div>
           <p className="mt-1 text-sm max-w-xl" style={{ color: '#78716C' }}>
-            {isLoading
-              ? 'Loading…'
-              : orphans.length === 0
-                ? 'All inquiries use an active pipeline stage.'
-                : 'These inquiries sit on a stage that is no longer in your live pipeline. Move each one onto a current stage.'}
+            {orphans.length === 0
+              ? 'All inquiries use an active pipeline stage.'
+              : 'These inquiries sit on a stage that is no longer in your live pipeline. Move each one onto a current stage.'}
           </p>
         </div>
 
-        {defaultStage && orphans.length > 0 && !isLoading ? (
+        {defaultStage && orphans.length > 0 ? (
           <p className="text-xs sm:text-right shrink-0" style={{ color: '#A8A29E' }}>
             Suggested:{' '}
             <span className="font-medium" style={{ color: '#57534E' }}>
@@ -222,7 +221,7 @@ export const OrphanRequestsView: React.FC<OrphanRequestsViewProps> = ({
       </header>
 
       {/* Fixed-height feedback strip — same pattern as kanban */}
-      {!isLoading && orphans.length > 0 ? (
+      {orphans.length > 0 ? (
         <div
           className="flex min-h-[1.25rem] flex-wrap items-center gap-1.5 text-xs"
           style={{ color: stripColor }}
@@ -260,7 +259,7 @@ export const OrphanRequestsView: React.FC<OrphanRequestsViewProps> = ({
         </div>
       ) : null}
 
-      {!isLoading && orphans.length > 0 && !tipDismissed ? (
+      {orphans.length > 0 && !tipDismissed ? (
         <div
           className="flex gap-3 rounded-2xl border px-4 py-3"
           style={{
@@ -292,9 +291,7 @@ export const OrphanRequestsView: React.FC<OrphanRequestsViewProps> = ({
         </div>
       ) : null}
 
-      {isLoading ? (
-        <TableSkeleton rows={4} />
-      ) : orphans.length === 0 ? (
+      {orphans.length === 0 ? (
         <div className="space-y-3">
           {banner.kind === 'success' ? (
             <div

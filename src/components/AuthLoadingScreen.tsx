@@ -1,30 +1,38 @@
 'use client';
 
 import React from 'react';
-import { Spinner } from './ui/loading';
+import { AppShellSkeleton } from './ui/loading';
 
 interface AuthLoadingScreenProps {
   message?: string;
 }
 
+/** Session bootstrap — full CRM chrome skeleton, not a blank spinner page. */
 export const AuthLoadingScreen: React.FC<AuthLoadingScreenProps> = ({
   message = 'Checking your session…',
 }) => {
   return (
-    <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ backgroundColor: '#F7F5F1' }}
-    >
-      <div className="flex flex-col items-center gap-3" style={{ color: '#78716C' }}>
+    <div className="relative">
+      <AppShellSkeleton />
+      <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center lg:bottom-8">
         <div
-          className="mb-1 flex h-10 w-10 items-center justify-center rounded-xl font-mono text-lg font-bold text-white"
-          style={{ backgroundColor: '#E02126' }}
-          aria-hidden
+          className="flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-medium"
+          style={{
+            backgroundColor: '#FFFFFF',
+            borderColor: '#E7E5E4',
+            color: '#78716C',
+            boxShadow: '0 8px 24px rgba(28, 25, 23, 0.08)',
+          }}
+          role="status"
+          aria-live="polite"
         >
-          E
+          <span
+            className="inline-block h-1.5 w-1.5 animate-pulse rounded-full"
+            style={{ backgroundColor: '#E02126' }}
+            aria-hidden
+          />
+          {message}
         </div>
-        <Spinner size="md" />
-        <span className="text-xs font-medium">{message}</span>
       </div>
     </div>
   );

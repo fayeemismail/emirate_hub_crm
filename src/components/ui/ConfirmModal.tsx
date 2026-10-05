@@ -68,14 +68,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 crm-modal-backdrop"
       style={{ backgroundColor: 'rgba(28, 25, 23, 0.28)' }}
       onClick={() => {
         if (!isConfirming) onClose();
       }}
     >
       <div
-        className="w-full max-w-sm rounded-2xl p-6 animate-in zoom-in-95 duration-150"
+        className="w-full max-w-sm rounded-2xl p-6 crm-modal-panel"
         style={{
           backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
           boxShadow: '0 16px 40px rgba(28, 25, 23, 0.12)',
@@ -113,7 +113,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isConfirming}
-            className="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="crm-interactive px-3.5 py-2 rounded-lg text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ color: 'var(--crm-text-secondary, #78716C)' }}
             onMouseEnter={(e) => {
               if (!isConfirming) e.currentTarget.style.backgroundColor = '#F5F5F4';
@@ -128,7 +128,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             onClick={handleConfirm}
             disabled={isConfirming}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold text-white transition-opacity cursor-pointer hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed min-w-[5.5rem]"
+            className="crm-interactive inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold text-white cursor-pointer hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed min-w-[5.5rem]"
             style={{ backgroundColor: confirmBg }}
           >
             {isConfirming ? (

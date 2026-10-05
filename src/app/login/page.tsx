@@ -62,7 +62,7 @@ export default function LoginPage() {
           'radial-gradient(ellipse 80% 50% at 50% -10%, #FEE2E2 0%, transparent 55%), radial-gradient(ellipse 60% 40% at 100% 100%, #F5F5F4 0%, transparent 50%)',
       }}
     >
-      <div className="relative z-10 w-full max-w-sm space-y-8">
+      <div className="crm-page-enter relative z-10 w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center text-center">
           <BrandMark size="lg" className="mb-5" />
           <h1
@@ -187,7 +187,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="group mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold tracking-wide text-white transition-opacity hover:opacity-95 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            className="crm-interactive group mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold tracking-wide text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
             style={{ backgroundColor: '#E02126' }}
           >
             {isSubmitting ? (

@@ -14,13 +14,7 @@ import { MessagesGraph } from './MessagesGraph';
 import { OverviewMetrics } from './components/OverviewMetrics';
 import { RecentInquiries } from './components/RecentInquiries';
 import { DemandBreakdown } from './components/DemandBreakdown';
-import {
-  MetricsSkeleton,
-  ChartSkeleton,
-  RecentInquiriesSkeleton,
-  DemandSkeleton,
-  LoadingOverlay,
-} from '../ui/loading';
+import { DashboardSkeleton } from '../ui/loading';
 import { getRecentInquiries } from '../../lib/adapters';
 
 interface DashboardOverviewProps {
@@ -83,22 +77,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   );
 
   if (isInitialLoading) {
-    return (
-      <div className="space-y-6" aria-busy="true" aria-label="Loading dashboard">
-        <MetricsSkeleton />
-        <ChartSkeleton />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <RecentInquiriesSkeleton />
-          <DemandSkeleton />
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
     <div className="relative space-y-6">
-      <LoadingOverlay visible={isRefreshing} label="Refreshing dashboard…" />
-
       <OverviewMetrics
         totalCount={overviewKpi?.activeLeads ?? requests.length}
         pendingCount={pendingCount}
@@ -112,8 +95,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           ordered.find((s) => s.slug === lastSlug)?.title || 'Resolved'
         }
         resolvedHint="Final pipeline stage — still on the board, not archived"
-        momGrowth={overviewKpi?.momGrowthPercentage}
         winRate={overviewKpi?.winRatePercentage}
+        wonLeads={overviewKpi?.wonLeads}
+        lostLeads={overviewKpi?.lostLeads}
       />
 
       <MessagesGraph
@@ -123,6 +107,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         funnelAnalytics={funnelAnalytics}
         overviewKpi={overviewKpi}
         isLoading={false}
+        isRefreshing={isRefreshing}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

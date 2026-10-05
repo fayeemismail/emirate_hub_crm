@@ -1,5 +1,39 @@
-import { LeadItem } from './api';
-import { ServiceRequest, RequestPriority, PipelineStatus } from '../types';
+import { LeadItem, LeadNote as ApiLeadNote } from './api';
+import { ServiceRequest, RequestPriority, PipelineStatus, LeadNote } from '../types';
+
+/** Normalize BE notes (legacy strings or structured) into LeadNote[]. */
+export function normalizeLeadNotes(
+  raw: unknown,
+  fallbackIso?: string
+): LeadNote[] {
+  if (!Array.isArray(raw)) return [];
+  const fallback = fallbackIso || new Date().toISOString();
+
+  return raw
+    .map((item): LeadNote | null => {
+      if (typeof item === 'string') {
+        const text = item.trim();
+        if (!text) return null;
+        return { text, createdAt: fallback, createdBy: 'SYSTEM' };
+      }
+      if (item && typeof item === 'object') {
+        const entry = item as Partial<ApiLeadNote>;
+        const text = String(entry.text ?? '').trim();
+        if (!text) return null;
+        const parsed = entry.createdAt ? new Date(entry.createdAt) : null;
+        return {
+          text,
+          createdAt:
+            parsed && !Number.isNaN(parsed.getTime())
+              ? parsed.toISOString()
+              : fallback,
+          createdBy: (entry.createdBy || 'SYSTEM').trim() || 'SYSTEM',
+        };
+      }
+      return null;
+    })
+    .filter((note): note is LeadNote => note !== null);
+}
 
 /**
  * Maps a backend LeadItem to frontend ServiceRequest.
@@ -25,6 +59,13 @@ export function leadToServiceRequest(lead: LeadItem): ServiceRequest {
       ? lead.lastName
       : nameParts.slice(1).join(' ') || '';
 
+  const createdAtIso = (() => {
+    const raw = lead.createdAt;
+    if (!raw) return new Date().toISOString();
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+  })();
+
   return {
     id: lead.id || (lead as { _id?: string })._id || lead.referenceId,
     name: fullName,
@@ -35,12 +76,7 @@ export function leadToServiceRequest(lead: LeadItem): ServiceRequest {
     service: lead.service,
     ...(lead.serviceSlug ? { serviceSlug: lead.serviceSlug } : {}),
     message: lead.message || '',
-    createdAt: (() => {
-      const raw = lead.createdAt;
-      if (!raw) return new Date().toISOString();
-      const parsed = new Date(raw);
-      return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
-    })(),
+    createdAt: createdAtIso,
     status: rawStatus || 'unknown',
     statusChangedAt: (() => {
       const raw = lead.statusChangedAt || lead.createdAt;
@@ -58,10 +94,26 @@ export function leadToServiceRequest(lead: LeadItem): ServiceRequest {
       : [],
     priority,
     boardOrder: typeof lead.boardOrder === 'number' ? lead.boardOrder : 0,
-    notes: Array.isArray(lead.notes) ? lead.notes : [],
+    notes: normalizeLeadNotes(lead.notes, lead.updatedAt || createdAtIso),
     source: lead.source === 'manual' ? 'manual' : 'online',
     companyName: lead.formData?.companyName as string | undefined,
-    isDeleted: (lead as { isDeleted?: boolean }).isDeleted || false,
+    isDeleted: Boolean(
+      (lead as { isDeleted?: boolean }).isDeleted ||
+        (lead as { isArchived?: boolean }).isArchived
+    ),
+    ...(() => {
+      const parseIso = (raw?: string) => {
+        if (!raw) return undefined;
+        const d = new Date(raw);
+        return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+      };
+      const deletedAt = parseIso((lead as { deletedAt?: string }).deletedAt);
+      const updatedAt = parseIso(lead.updatedAt);
+      return {
+        ...(deletedAt ? { deletedAt } : {}),
+        ...(updatedAt ? { updatedAt } : {}),
+      };
+    })(),
   };
 }
 
@@ -102,9 +154,24 @@ export function getRecentInquiries(
   return [...requests].sort(sortByCreatedAtDesc).slice(0, limit);
 }
 
+/**
+ * Kanban column order.
+ * - Drag-assigned indices (0..n) keep manual order (top → bottom).
+ * - Legacy Date.now() boardOrders and default 0 peers → newest createdAt first.
+ */
+const BOARD_ORDER_TIMESTAMP_FLOOR = 1_000_000_000_000; // ~ Sep 2001 in ms
+
 export const sortByBoardOrder = (a: ServiceRequest, b: ServiceRequest): number => {
-  const orderDiff = (a.boardOrder ?? 0) - (b.boardOrder ?? 0);
-  if (orderDiff !== 0) return orderDiff;
+  const ao = a.boardOrder ?? 0;
+  const bo = b.boardOrder ?? 0;
+  const aIndexed = ao < BOARD_ORDER_TIMESTAMP_FLOOR;
+  const bIndexed = bo < BOARD_ORDER_TIMESTAMP_FLOOR;
+
+  if (aIndexed && bIndexed) {
+    const orderDiff = ao - bo;
+    if (orderDiff !== 0) return orderDiff;
+  }
+
   return sortByCreatedAtDesc(a, b);
 };
 
@@ -142,14 +209,13 @@ export function sortRequestsForTable(
   switch (mode) {
     case 'oldest':
       return sorted.sort(sortByCreatedAtAsc);
-    case 'newest':
-      return sorted.sort(sortByCreatedAtDesc);
     case 'status':
       return sorted.sort(sortByStatusPipeline(pipelineStatuses));
     case 'priority':
-    default:
-      // Match BE priority asc: URGENT/HIGH first via getPriorityRank desc.
       return sorted.sort(sortByPriorityDesc);
+    case 'newest':
+    default:
+      return sorted.sort(sortByCreatedAtDesc);
   }
 }
 

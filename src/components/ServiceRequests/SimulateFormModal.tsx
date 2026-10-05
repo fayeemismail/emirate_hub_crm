@@ -30,9 +30,10 @@ const IS_DEV = process.env.NODE_ENV === 'development';
 
 /** Prefill only in local/dev so create-lead testing is one click. Never ships to production builds. */
 function getDevMockDefaults(preferredServiceSlug: string) {
+  const stamp = Date.now().toString(36).slice(-4);
   return {
-    name: 'Alex Morgan',
-    email: 'alex.morgan@example.com',
+    name: `Alex Morgan ${stamp}`,
+    email: `alex.morgan+${stamp}@example.com`,
     phone: '+971 50 123 4567',
     requestText:
       'Dev mock inquiry — interested in corporate setup timelines and required documents.',
@@ -174,12 +175,12 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto crm-modal-backdrop"
       style={{ backgroundColor: '#1C191755' }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-2xl border bg-white my-auto"
+        className="w-full max-w-lg rounded-2xl border bg-white my-auto crm-modal-panel"
         style={{ borderColor: '#E7E5E4' }}
         onClick={(e) => e.stopPropagation()}
       >

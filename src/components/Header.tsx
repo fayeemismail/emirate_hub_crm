@@ -24,7 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onOpenMobileMenu}
           aria-label="Open Mobile Menu"
-          className="lg:hidden p-2 rounded-xl transition-colors shrink-0 cursor-pointer"
+          className="crm-interactive lg:hidden p-2 rounded-xl shrink-0 cursor-pointer"
           style={{ color: 'var(--crm-text-secondary, #A8A29E)' }}
         >
           <Menu className="w-5 h-5" />
@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={onCreateLead}
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold tracking-wide transition-colors cursor-pointer shrink-0"
+          className="crm-interactive inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold tracking-wide cursor-pointer shrink-0"
           style={{
             color: 'var(--crm-accent-primary, #E02126)',
             borderColor: 'var(--crm-accent-primary, #E02126)',

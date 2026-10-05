@@ -28,7 +28,7 @@ export const DemandBreakdown: React.FC<DemandBreakdownProps> = ({
 
   return (
     <div
-      className="rounded-2xl border px-5 py-5"
+      className="crm-enter rounded-2xl border px-5 py-5"
       style={{
         backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
         borderColor: 'var(--crm-card-border, #E7E5E4)',

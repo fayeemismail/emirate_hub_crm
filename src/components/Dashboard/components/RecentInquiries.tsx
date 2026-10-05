@@ -39,7 +39,7 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
 }) => {
   return (
     <div
-      className="lg:col-span-2 rounded-2xl border px-5 py-5"
+      className="crm-enter lg:col-span-2 rounded-2xl border px-5 py-5"
       style={{
         backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
         borderColor: 'var(--crm-card-border, #E7E5E4)',
@@ -80,7 +80,7 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
               <li
                 key={req.id}
                 onClick={() => onSelectRequest(req)}
-                className="flex cursor-pointer items-start gap-3 py-3.5 transition-colors hover:bg-[#FAF9F6] -mx-2 px-2 rounded-xl"
+                className="crm-interactive flex cursor-pointer items-start gap-3 py-3.5 hover:bg-[#FAF9F6] -mx-2 px-2 rounded-xl"
                 style={{
                   borderTop: index === 0 ? undefined : '1px solid #F5F5F4',
                 }}

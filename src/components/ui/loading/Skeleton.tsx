@@ -17,17 +17,15 @@ const ROUND: Record<NonNullable<SkeletonProps['rounded']>, string> = {
   full: 'rounded-full',
 };
 
+/** Base shimmer block — prefer page/section skeletons over raw usage. */
 export const Skeleton: React.FC<SkeletonProps> = ({
   className = '',
   style,
   rounded = 'lg',
 }) => (
   <div
-    className={`animate-pulse ${ROUND[rounded]} ${className}`}
-    style={{
-      backgroundColor: '#F5F5F4',
-      ...style,
-    }}
+    className={`crm-skeleton ${ROUND[rounded]} ${className}`}
+    style={style}
     aria-hidden
   />
 );
@@ -57,4 +55,28 @@ export const SkeletonCircle: React.FC<{ size?: number; className?: string }> = (
     rounded="full"
     style={{ width: size, height: size }}
   />
+);
+
+/** Soft bordered panel matching CRM cards. */
+export const SkeletonPanel: React.FC<{
+  className?: string;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+} & React.HTMLAttributes<HTMLDivElement>> = ({
+  className = '',
+  children,
+  style,
+  ...rest
+}) => (
+  <div
+    className={`rounded-2xl border ${className}`}
+    style={{
+      backgroundColor: '#FFFFFF',
+      borderColor: '#E7E5E4',
+      ...style,
+    }}
+    {...rest}
+  >
+    {children}
+  </div>
 );

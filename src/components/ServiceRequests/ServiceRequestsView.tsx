@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ServiceRequest, RequestPriority, PipelineStatus, CatalogService } from '../../types';
-import { LOOKBACK_PRESETS, type TableSortMode } from '../../lib/crmSettings';
+import { LOOKBACK_PRESETS, lookbackLabel, type TableSortMode } from '../../lib/crmSettings';
 import { useCrmSettings } from '../../hooks/useCrmSettings';
 import { KanbanBoard } from './KanbanBoard';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { CustomSelect } from '../ui/CustomSelect';
 import { RequestStatusBadge } from '../ui/RequestStatusBadge';
 import { EmptyState } from '../ui/EmptyState';
-import { KanbanSkeleton, TableSkeleton, LoadingOverlay } from '../ui/loading';
+import { InquiriesPageSkeleton, Spinner } from '../ui/loading';
+import { Enter } from '../ui/motion';
 import {
   ARCHIVE_CONFIRM_BUTTON,
   ARCHIVE_CONFIRM_TITLE,
@@ -21,7 +22,7 @@ import {
   Search,
   Kanban,
   Table as TableIcon,
-  Trash2,
+  Archive,
   RotateCcw,
 } from 'lucide-react';
 
@@ -92,10 +93,10 @@ const PRIORITY_DOT: Record<RequestPriority, string> = {
 };
 
 const TABLE_SORT_OPTIONS: { value: TableSortMode; label: string }[] = [
-  { value: 'priority', label: 'Sort: Priority' },
-  { value: 'status', label: 'Sort: Status' },
   { value: 'newest', label: 'Sort: Newest' },
   { value: 'oldest', label: 'Sort: Oldest' },
+  { value: 'priority', label: 'Sort: Priority' },
+  { value: 'status', label: 'Sort: Status' },
 ];
 
 export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
@@ -170,12 +171,12 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
     () => [
       ...LOOKBACK_PRESETS.map((d) => ({
         value: String(d),
-        label: `Last ${d} days`,
+        label: lookbackLabel(d),
       })),
       ...(LOOKBACK_PRESETS.includes(lookbackDays as (typeof LOOKBACK_PRESETS)[number]) ||
       lookbackDays === 0
         ? []
-        : [{ value: String(lookbackDays), label: `Last ${lookbackDays} days` }]),
+        : [{ value: String(lookbackDays), label: lookbackLabel(lookbackDays) }]),
       { value: '0', label: 'All time' },
     ],
     [lookbackDays]
@@ -191,15 +192,16 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
     onFiltersChange({ search: '', service: 'All', status: 'All' });
   };
 
-  const rangeLabel =
-    lookbackDays === 0 ? 'All time' : `Last ${lookbackDays} days`;
+  const rangeLabel = lookbackLabel(lookbackDays);
 
   const shownCount = requests.length;
 
+  if (isLoading) {
+    return <InquiriesPageSkeleton viewMode={filters.viewMode} />;
+  }
+
   return (
     <div className="relative space-y-5">
-      <LoadingOverlay visible={isRefreshing && !isLoading} label="Refreshing inquiries…" />
-
       <div>
         <h2
           className="text-lg font-semibold tracking-tight"
@@ -207,10 +209,26 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
         >
           Service inquiries
         </h2>
-        <p className="mt-1 text-sm" style={{ color: '#78716C' }}>
-          {shownCount} shown
-          {' · '}
-          {rangeLabel}
+        <p
+          className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"
+          style={{ color: '#78716C' }}
+        >
+          <span>
+            {shownCount} shown
+            {' · '}
+            {rangeLabel}
+          </span>
+          {isRefreshing ? (
+            <span
+              className="crm-fade-enter inline-flex items-center gap-1.5 text-xs font-medium"
+              style={{ color: '#A8A29E' }}
+              role="status"
+              aria-live="polite"
+            >
+              <Spinner size="xs" color="#A8A29E" />
+              Updating…
+            </span>
+          ) : null}
         </p>
       </div>
 
@@ -285,7 +303,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
             type="button"
             onClick={resetFilters}
             disabled={!hasActiveFilters}
-            className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors shrink-0"
+            className="crm-interactive inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium shrink-0"
             style={{
               borderColor: '#E7E5E4',
               color: hasActiveFilters ? '#78716C' : '#D6D3D1',
@@ -310,11 +328,15 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           <div
             className="inline-flex rounded-lg border p-0.5"
             style={{ borderColor: '#E7E5E4' }}
+            role="tablist"
+            aria-label="Inquiries view"
           >
             <button
               type="button"
+              role="tab"
+              aria-selected={filters.viewMode === 'kanban'}
               onClick={() => onFiltersChange({ viewMode: 'kanban' })}
-              className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium cursor-pointer transition-colors"
+              className="crm-interactive inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium cursor-pointer"
               style={{
                 backgroundColor: filters.viewMode === 'kanban' ? '#FEE2E2' : 'transparent',
                 color: filters.viewMode === 'kanban' ? '#E02126' : '#78716C',
@@ -325,8 +347,10 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={filters.viewMode === 'table'}
               onClick={() => onFiltersChange({ viewMode: 'table' })}
-              className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium cursor-pointer transition-colors"
+              className="crm-interactive inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium cursor-pointer"
               style={{
                 backgroundColor: filters.viewMode === 'table' ? '#FEE2E2' : 'transparent',
                 color: filters.viewMode === 'table' ? '#E02126' : '#78716C',
@@ -339,13 +363,8 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
         </div>
       </div>
 
-      {isLoading ? (
-        filters.viewMode === 'kanban' ? (
-          <KanbanSkeleton />
-        ) : (
-          <TableSkeleton />
-        )
-      ) : pipelineStatuses.length === 0 ? (
+      <Enter key={filters.viewMode} className="min-w-0">
+      {pipelineStatuses.length === 0 ? (
         <EmptyState
           icon="pipeline"
           title="Pipeline not configured"
@@ -427,7 +446,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                     <tr
                       key={req.id}
                       onClick={() => onSelectRequest(req)}
-                      className="border-b last:border-b-0 cursor-pointer transition-colors"
+                      className="border-b last:border-b-0 cursor-pointer crm-interactive"
                       style={{
                         borderColor: '#E7E5E4',
                         backgroundColor: stale ? '#FFFBEB' : 'transparent',
@@ -494,9 +513,10 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                             }}
                             className="p-1.5 rounded-lg cursor-pointer"
                             style={{ color: '#B91C1C' }}
-                            aria-label="Archive"
+                            aria-label="Archive inquiry"
+                            title="Archive"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Archive className="h-3.5 w-3.5" />
                           </button>
                         </td>
                       ) : null}
@@ -508,6 +528,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           </div>
         </div>
       )}
+      </Enter>
 
       {confirmAction && (
         <ConfirmModal

@@ -29,7 +29,7 @@ import { daysInStage, formatStageAge, isStaleInStage } from '../../lib/stageAge'
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { Spinner } from '../ui/loading';
 import { EmptyState } from '../ui/EmptyState';
-import { GripVertical, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { GripVertical, Archive, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import {
   ARCHIVE_CONFIRM_BUTTON,
   ARCHIVE_CONFIRM_TITLE,
@@ -210,9 +210,10 @@ function CardChrome({
             }}
             className="p-1 rounded-md cursor-pointer shrink-0"
             style={{ color: '#B91C1C' }}
-            aria-label="Archive"
+            aria-label="Archive inquiry"
+            title="Archive"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Archive className="h-3.5 w-3.5" />
           </button>
         )}
       </div>

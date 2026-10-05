@@ -2,9 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-export type DashboardTab = 'dashboard' | 'requests' | 'off-pipeline' | 'settings';
+export type DashboardTab =
+  | 'dashboard'
+  | 'requests'
+  | 'off-pipeline'
+  | 'archives'
+  | 'settings';
 
-const VALID_TABS: DashboardTab[] = ['dashboard', 'requests', 'off-pipeline', 'settings'];
+const VALID_TABS: DashboardTab[] = [
+  'dashboard',
+  'requests',
+  'off-pipeline',
+  'archives',
+  'settings',
+];
 
 /** Older bookmark / localStorage id → current tab. */
 const LEGACY_TAB_MAP: Record<string, DashboardTab> = {

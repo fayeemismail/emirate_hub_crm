@@ -18,6 +18,12 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateProfile: (details: { name?: string; email?: string }) => Promise<UserProfile>;
+  changePassword: (details: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -94,6 +100,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfile = async (details: { name?: string; email?: string }) => {
+    const res = await authApi.updateProfile(details);
+    if (!res.success || !res.data) {
+      throw new Error(res.message || 'Could not update profile.');
+    }
+    setUser(res.data);
+    return res.data;
+  };
+
+  const changePassword = async (details: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
+    const res = await authApi.changePassword(details);
+    if (!res.success) {
+      throw new Error(res.message || 'Could not change password.');
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -104,6 +130,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         refreshUser,
+        updateProfile,
+        changePassword,
       }}
     >
       {children}

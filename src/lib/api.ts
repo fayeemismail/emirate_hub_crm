@@ -30,6 +30,8 @@ export interface UserProfile {
   email: string;
   role: string;
   isActive: boolean;
+  /** Protected primary admin — cannot be deactivated. */
+  isProtected?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -46,6 +48,12 @@ export interface StatusHistoryEntry {
   changedBy: string;
 }
 
+export interface LeadNote {
+  text: string;
+  createdAt: string;
+  createdBy: string;
+}
+
 export interface LeadItem {
   id: string;
   referenceId: string;
@@ -59,7 +67,7 @@ export interface LeadItem {
   serviceSlug?: string;
   message?: string;
   /** Internal admin notes. */
-  notes?: string[];
+  notes?: LeadNote[] | string[];
   /** online = website form; manual = CRM-created. */
   source?: 'online' | 'manual';
   status: string;
@@ -70,6 +78,9 @@ export interface LeadItem {
   formData?: Record<string, any>;
   createdAt: string;
   updatedAt: string;
+  isDeleted?: boolean;
+  isArchived?: boolean;
+  deletedAt?: string;
 }
 
 export interface OverviewKpi {
@@ -277,6 +288,8 @@ async function request<T>(
     ...options,
     headers,
     credentials: 'include', // for HTTP-only cookies
+    // Admin lists mutate often (archive/restore); never reuse a stale 304 body.
+    cache: 'no-store',
   });
 
   let data: any;
@@ -340,6 +353,27 @@ export const authApi = {
     });
   },
 
+  updateProfile: async (details: {
+    name?: string;
+    email?: string;
+  }): Promise<ApiResponse<UserProfile>> => {
+    return request<UserProfile>('/v1/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(details),
+    });
+  },
+
+  changePassword: async (details: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }): Promise<ApiResponse<void>> => {
+    return request<void>('/v1/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(details),
+    });
+  },
+
   logout: async (): Promise<ApiResponse<void>> => {
     try {
       const res = await request<void>('/v1/auth/logout', {
@@ -364,6 +398,39 @@ export const authApi = {
 };
 
 /**
+ * Admin Users API (team management — ADMIN only)
+ */
+export const usersApi = {
+  listUsers: async (): Promise<ApiResponse<UserProfile[]>> => {
+    return request<UserProfile[]>('/v1/admin/users', {
+      method: 'GET',
+    });
+  },
+
+  createUser: async (details: {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+  }): Promise<ApiResponse<UserProfile>> => {
+    return request<UserProfile>('/v1/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(details),
+    });
+  },
+
+  setUserActive: async (
+    id: string,
+    isActive: boolean
+  ): Promise<ApiResponse<UserProfile>> => {
+    return request<UserProfile>(`/v1/admin/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isActive }),
+    });
+  },
+};
+
+/**
  * Admin Leads API
  */
 export const leadsApi = {
@@ -376,6 +443,8 @@ export const leadsApi = {
     priority?: string;
     service?: string;
     lookbackDays?: number;
+    /** When true, return soft-deleted (archived) leads only. */
+    archived?: boolean;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<ApiResponse<LeadItem[] | Record<string, LeadItem[]>>> => {
@@ -390,6 +459,7 @@ export const leadsApi = {
     if (params?.lookbackDays !== undefined && params.lookbackDays > 0) {
       query.append('lookbackDays', String(params.lookbackDays));
     }
+    if (params?.archived === true) query.append('archived', 'true');
     if (params?.sortBy) query.append('sortBy', params.sortBy);
     if (params?.sortOrder) query.append('sortOrder', params.sortOrder);
 
@@ -458,6 +528,12 @@ export const leadsApi = {
   deleteLead: async (id: string): Promise<ApiResponse<any>> => {
     return request<any>(`/v1/admin/leads/${id}`, {
       method: 'DELETE',
+    });
+  },
+
+  restoreLead: async (id: string): Promise<ApiResponse<LeadItem>> => {
+    return request<LeadItem>(`/v1/admin/leads/${id}/restore`, {
+      method: 'POST',
     });
   },
 

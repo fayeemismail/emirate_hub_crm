@@ -44,11 +44,21 @@
   --crm-priority-med-color: #B45309;
   --crm-priority-low-bg: #F5F5F4;
   --crm-priority-low-color: #57534E;
+
+  /* Motion tokens — short, soft, enterprise */
+  --crm-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --crm-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --crm-dur-fast: 140ms;
+  --crm-dur: 220ms;
+  --crm-dur-slow: 300ms;
+  --crm-stagger: 0ms;
 }
 
 @layer base {
   html {
     font-family: var(--font-sans);
+    /* Reserve scrollbar width so content doesn’t jump when pages overflow */
+    scrollbar-gutter: stable;
   }
 
   body {
@@ -80,4 +90,281 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #A8A29E;
+}
+
+/* Enterprise skeleton shimmer — used by crm-fe loading primitives */
+@keyframes crm-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.crm-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: #EDECEA;
+}
+
+.crm-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 45%,
+    rgba(255, 255, 255, 0.75) 50%,
+    rgba(255, 255, 255, 0.55) 55%,
+    transparent 100%
+  );
+  animation: crm-shimmer 1.35s ease-in-out infinite;
+}
+
+/* ——— CRM motion system ——— */
+@keyframes crm-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes crm-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    /* `none` — identity transforms break @dnd-kit DragOverlay offsets */
+    transform: none;
+  }
+}
+
+@keyframes crm-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes crm-slide-down-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Route / tab content */
+.crm-page-enter {
+  animation: crm-rise-in var(--crm-dur-slow) var(--crm-ease-out) both;
+}
+
+/* Single block (cards, panels, empty states) */
+.crm-enter {
+  animation: crm-rise-in var(--crm-dur) var(--crm-ease-out) both;
+  animation-delay: var(--crm-stagger, 0ms);
+}
+
+/* Soft fade only (overlays, toasts chrome) */
+.crm-fade-enter {
+  animation: crm-fade-in var(--crm-dur-fast) var(--crm-ease-soft) both;
+}
+
+/* Modal / dialog */
+.crm-modal-backdrop {
+  animation: crm-fade-in var(--crm-dur-fast) var(--crm-ease-soft) both;
+}
+
+.crm-modal-panel {
+  animation: crm-scale-in var(--crm-dur) var(--crm-ease-out) both;
+}
+
+/* Inline feedback / banners */
+.crm-feedback-enter {
+  animation: crm-slide-down-in var(--crm-dur-fast) var(--crm-ease-out) both;
+}
+
+/* Dropdown popovers (portaled menus in filters + modals) */
+@keyframes crm-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes crm-popover-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes crm-popover-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.crm-popover-enter {
+  animation: crm-popover-in var(--crm-dur) var(--crm-ease-out) both;
+  transform-origin: top center;
+}
+
+.crm-popover-enter.crm-popover-up {
+  animation-name: crm-popover-in-up;
+  transform-origin: bottom center;
+}
+
+.crm-popover-item {
+  animation: crm-popover-item-in var(--crm-dur-fast) var(--crm-ease-out) both;
+  animation-delay: calc(var(--crm-item-i, 0) * 28ms + 40ms);
+}
+
+/* Staggered children (metrics row, etc.) */
+.crm-stagger > * {
+  animation: crm-rise-in var(--crm-dur) var(--crm-ease-out) both;
+}
+.crm-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.crm-stagger > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+.crm-stagger > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+.crm-stagger > *:nth-child(4) {
+  animation-delay: 120ms;
+}
+.crm-stagger > *:nth-child(5) {
+  animation-delay: 160ms;
+}
+.crm-stagger > *:nth-child(6) {
+  animation-delay: 200ms;
+}
+.crm-stagger > *:nth-child(n + 7) {
+  animation-delay: 220ms;
+}
+
+/* Analytics tab underline */
+@keyframes crm-tab-underline {
+  from {
+    opacity: 0;
+    transform: scaleX(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.crm-tab-indicator {
+  animation: crm-tab-underline var(--crm-dur-fast) var(--crm-ease-out) both;
+  transform-origin: center bottom;
+}
+
+/* Expandable sections (notes / activity) */
+@keyframes crm-expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.crm-expand-enter {
+  animation: crm-expand-in var(--crm-dur) var(--crm-ease-out) both;
+}
+
+.crm-expand-enter .crm-expand-item {
+  animation: crm-popover-item-in var(--crm-dur-fast) var(--crm-ease-out) both;
+  animation-delay: calc(var(--crm-item-i, 0) * 28ms + 30ms);
+}
+
+/* Shared interactive transitions */
+.crm-interactive {
+  transition:
+    background-color var(--crm-dur-fast) var(--crm-ease-soft),
+    border-color var(--crm-dur-fast) var(--crm-ease-soft),
+    color var(--crm-dur-fast) var(--crm-ease-soft),
+    opacity var(--crm-dur-fast) var(--crm-ease-soft),
+    transform var(--crm-dur-fast) var(--crm-ease-soft),
+    box-shadow var(--crm-dur-fast) var(--crm-ease-soft);
+}
+
+button.crm-interactive:active:not(:disabled),
+a.crm-interactive:active {
+  transform: scale(0.985);
+}
+
+.crm-lift {
+  transition:
+    transform var(--crm-dur-fast) var(--crm-ease-out),
+    border-color var(--crm-dur-fast) var(--crm-ease-soft),
+    box-shadow var(--crm-dur-fast) var(--crm-ease-soft);
+}
+
+.crm-lift:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crm-skeleton::after {
+    animation: none;
+  }
+
+  .crm-skeleton {
+    background-color: #E7E5E4;
+  }
+
+  .crm-page-enter,
+  .crm-enter,
+  .crm-fade-enter,
+  .crm-modal-backdrop,
+  .crm-modal-panel,
+  .crm-feedback-enter,
+  .crm-popover-enter,
+  .crm-popover-item,
+  .crm-tab-indicator,
+  .crm-expand-enter,
+  .crm-expand-enter .crm-expand-item,
+  .crm-stagger > * {
+    animation: none !important;
+  }
+
+  .crm-interactive,
+  .crm-lift,
+  .crm-lift:hover,
+  button.crm-interactive:active:not(:disabled),
+  a.crm-interactive:active {
+    transition: none !important;
+    transform: none !important;
+  }
 }

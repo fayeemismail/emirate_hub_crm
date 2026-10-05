@@ -8,33 +8,104 @@ import {
   X,
   Copy,
   Check,
-  Trash2,
+  Archive,
+  RotateCcw,
   Send,
   CheckCircle2,
   AlertCircle,
+  StickyNote,
+  ChevronDown,
 } from 'lucide-react';
 import { Spinner } from '../ui/loading';
 import { EmptyState } from '../ui/EmptyState';
-import { formatStageAge, daysInStage } from '../../lib/stageAge';
 import { statusTitle } from '../../lib/adapters';
 import { leadSourceHint, leadSourceLabel } from '../../lib/leadSource';
 import {
   ARCHIVE_CONFIRM_BUTTON,
   ARCHIVE_CONFIRM_TITLE,
   archiveConfirmMessage,
+  RESTORE_CONFIRM_BUTTON,
+  RESTORE_CONFIRM_TITLE,
+  restoreConfirmMessage,
 } from '../../lib/archiveCopy';
+import type { LeadNote } from '../../types';
 
 interface RequestDetailModalProps {
   request: ServiceRequest | null;
   pipelineStatuses: PipelineStatus[];
+  /** When true, treat the open lead as archived (Restore UI) even if flags are missing. */
+  archivedView?: boolean;
   onClose: () => void;
   onUpdateStatus: (id: string, newStatus: RequestStatus) => void | Promise<void | boolean>;
   onUpdatePriority?: (id: string, newPriority: RequestPriority) => void | Promise<void | boolean>;
   onDeleteRequest?: (id: string) => void | Promise<void>;
+  onRestoreRequest?: (id: string) => void | Promise<void>;
   onAddNote?: (id: string, note: string) => void | Promise<void>;
 }
 
 const PRIORITIES: RequestPriority[] = ['High', 'Medium', 'Low'];
+
+function formatNoteWhen(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'Unknown time';
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function sortNotesNewestFirst(notes: LeadNote[]): LeadNote[] {
+  return [...notes].sort((a, b) => {
+    const aTime = Date.parse(a.createdAt) || 0;
+    const bTime = Date.parse(b.createdAt) || 0;
+    return bTime - aTime;
+  });
+}
+
+function NoteCard({
+  note,
+  className = '',
+  style,
+}: {
+  note: LeadNote;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <li
+      className={`rounded-xl border px-3.5 py-3 ${className}`}
+      style={{
+        backgroundColor: '#FAF9F6',
+        borderColor: '#E7E5E4',
+        borderLeftWidth: 3,
+        borderLeftColor: '#E02126',
+        ...style,
+      }}
+    >
+      <p
+        className="text-sm leading-relaxed whitespace-pre-wrap"
+        style={{ color: '#1C1917' }}
+      >
+        {note.text}
+      </p>
+      <p
+        className="mt-2 flex flex-wrap items-center gap-x-1.5 text-[11px]"
+        style={{ color: '#A8A29E' }}
+      >
+        <time dateTime={note.createdAt}>{formatNoteWhen(note.createdAt)}</time>
+        {note.createdBy ? (
+          <>
+            <span aria-hidden>·</span>
+            <span>{note.createdBy}</span>
+          </>
+        ) : null}
+      </p>
+    </li>
+  );
+}
 
 type FieldFeedback =
   | { kind: 'saving' }
@@ -74,16 +145,20 @@ function FeedbackLine({ feedback }: { feedback: FieldFeedback }) {
 export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   request,
   pipelineStatuses,
+  archivedView = false,
   onClose,
   onUpdateStatus,
   onUpdatePriority,
   onDeleteRequest,
+  onRestoreRequest,
   onAddNote,
 }) => {
   const [copied, setCopied] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [noteSaved, setNoteSaved] = useState(false);
   const [isSavingNote, setIsSavingNote] = useState(false);
+  const [showAllNotes, setShowAllNotes] = useState(false);
+  const [showAllActivity, setShowAllActivity] = useState(false);
   const [statusFeedback, setStatusFeedback] = useState<FieldFeedback>(null);
   const [priorityFeedback, setPriorityFeedback] = useState<FieldFeedback>(null);
   const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -111,6 +186,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     setPriorityFeedback(null);
     setNoteText('');
     setNoteSaved(false);
+    setShowAllNotes(false);
+    setShowAllActivity(false);
     if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
     if (priorityTimerRef.current) clearTimeout(priorityTimerRef.current);
   }, [request?.id]);
@@ -123,6 +200,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   }, []);
 
   if (!request) return null;
+
+  const isArchived = Boolean(
+    archivedView || request.isDeleted || request.deletedAt
+  );
 
   const displayName =
     request.name ||
@@ -150,6 +231,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   };
 
   const handleStatusChange = async (newStatus: RequestStatus) => {
+    if (isArchived) return;
     if (newStatus === request.status || statusFeedback?.kind === 'saving') return;
 
     const statusLabel =
@@ -183,6 +265,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   };
 
   const handlePriorityChange = async (newPriority: RequestPriority) => {
+    if (isArchived) return;
     if (
       newPriority === request.priority ||
       !onUpdatePriority ||
@@ -227,6 +310,22 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     });
   };
 
+  const handleRestoreRequest = () => {
+    const stageLabel =
+      pipelineStatuses.find((s) => s.slug === request.status)?.title || request.status;
+    setConfirmAction({
+      isOpen: true,
+      title: RESTORE_CONFIRM_TITLE,
+      message: restoreConfirmMessage(displayName, stageLabel),
+      confirmText: RESTORE_CONFIRM_BUTTON,
+      variant: 'info',
+      onConfirm: async () => {
+        await onRestoreRequest?.(request.id);
+        onClose();
+      },
+    });
+  };
+
   const handleCopyEmail = () => {
     navigator.clipboard.writeText(request.email);
     setCopied(true);
@@ -235,7 +334,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!noteText.trim() || isSavingNote) return;
+    if (isArchived || !noteText.trim() || isSavingNote) return;
     setIsSavingNote(true);
     try {
       await onAddNote?.(request.id, noteText.trim());
@@ -255,12 +354,12 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto crm-modal-backdrop"
         style={{ backgroundColor: 'rgba(28, 25, 23, 0.28)' }}
         onClick={onClose}
       >
         <div
-          className="w-full max-w-2xl rounded-2xl my-auto animate-in zoom-in-95 duration-150"
+          className="w-full max-w-2xl rounded-2xl my-auto crm-modal-panel"
           style={{
             backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
             boxShadow: '0 16px 40px rgba(28, 25, 23, 0.12)',
@@ -270,20 +369,22 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           {/* Header */}
           <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
             <div className="min-w-0 space-y-1.5">
-              <p className="text-sm" style={{ color: '#78716C' }}>
-                Submitted {submittedAt}
-              </p>
-              <span
-                className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold"
-                title={leadSourceHint(request.source)}
-                style={{
-                  color: request.source === 'manual' ? '#57534E' : '#1D4ED8',
-                  backgroundColor: request.source === 'manual' ? '#F5F5F4' : '#EFF6FF',
-                  borderColor: request.source === 'manual' ? '#E7E5E4' : '#BFDBFE',
-                }}
-              >
-                {leadSourceLabel(request.source)}
-              </span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="text-sm" style={{ color: '#78716C' }}>
+                  Submitted {submittedAt}
+                </p>
+                <span
+                  className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold"
+                  title={leadSourceHint(request.source)}
+                  style={{
+                    color: request.source === 'manual' ? '#57534E' : '#1D4ED8',
+                    backgroundColor: request.source === 'manual' ? '#F5F5F4' : '#EFF6FF',
+                    borderColor: request.source === 'manual' ? '#E7E5E4' : '#BFDBFE',
+                  }}
+                >
+                  {leadSourceLabel(request.source)}
+                </span>
+              </div>
             </div>
             <button
               type="button"
@@ -309,8 +410,13 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
           {/* Body */}
           <div className="px-5 py-5 sm:px-6 space-y-5 max-h-[70vh] overflow-y-auto">
-            {/* Name · Email · Phone */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+            {/*
+              One 3-col grid so row1 (Name/Email/Phone) and row2 (Service/Status/Priority)
+              share the same tracks. Email gets a slightly wider track (longer content).
+            */}
+            <div
+              className="grid grid-cols-1 gap-x-4 gap-y-4 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)]"
+            >
               <div className="min-w-0">
                 <p className="text-xs" style={{ color: '#A8A29E' }}>
                   Name
@@ -378,15 +484,12 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   </p>
                 )}
               </div>
-            </div>
 
-            {/* Service · Status · Priority */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="min-w-0 space-y-1.5">
                 <p className="text-xs" style={{ color: '#A8A29E' }}>
                   Service
                 </p>
-                <p className="font-medium truncate text-sm" style={{ color: '#1C1917' }}>
+                <p className="font-medium truncate" style={{ color: '#1C1917' }}>
                   {request.service}
                 </p>
               </div>
@@ -431,8 +534,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                       ariaLabel="Update status"
                       align="left"
                       minWidth={120}
-                      disabled={statusBusy}
-                      className="w-full [&>button]:w-full"
+                      disabled={statusBusy || isArchived}
+                      className="w-full max-w-[11.5rem] [&>button]:w-full"
                     />
                     <FeedbackLine feedback={statusFeedback} />
                   </>
@@ -456,7 +559,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                       <button
                         key={p}
                         type="button"
-                        disabled={priorityBusy}
+                        disabled={priorityBusy || isArchived}
                         onClick={() => void handlePriorityChange(p)}
                         className="rounded-md py-1.5 text-xs font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
                         style={{
@@ -486,24 +589,85 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               </p>
             </section>
 
-            {/* Notes */}
-            <section className="space-y-2">
-              <h3 className="text-xs" style={{ color: '#A8A29E' }}>
-                Notes
-              </h3>
+            {/* Notes — latest visible; older notes on demand */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h3
+                  className="inline-flex items-center gap-1.5 text-xs font-medium"
+                  style={{ color: '#78716C' }}
+                >
+                  <StickyNote className="h-3.5 w-3.5" style={{ color: '#A8A29E' }} />
+                  Internal notes
+                </h3>
+                {(request.notes?.length || 0) > 0 && (
+                  <span className="text-[11px] tabular-nums" style={{ color: '#A8A29E' }}>
+                    {request.notes!.length}{' '}
+                    {request.notes!.length === 1 ? 'note' : 'notes'}
+                  </span>
+                )}
+              </div>
 
-              {request.notes && request.notes.length > 0 && (
-                <ul className="space-y-1.5 mb-2">
-                  {request.notes.map((note, i) => (
-                    <li
-                      key={`${i}-${note.slice(0, 12)}`}
-                      className="text-sm leading-relaxed"
-                      style={{ color: '#1C1917' }}
-                    >
-                      {note}
-                    </li>
-                  ))}
-                </ul>
+              {request.notes && request.notes.length > 0 ? (
+                (() => {
+                  const sorted = sortNotesNewestFirst(request.notes);
+                  const latest = sorted[0];
+                  const older = sorted.slice(1);
+                  return (
+                    <div className="space-y-2">
+                      <ul className="space-y-2">
+                        <NoteCard note={latest} />
+                      </ul>
+                      {showAllNotes ? (
+                        <ul className="crm-expand-enter space-y-2">
+                          {older.map((note, i) => (
+                            <NoteCard
+                              key={`${note.createdAt}-${i}-${note.text.slice(0, 16)}`}
+                              note={note}
+                              className="crm-expand-item"
+                              style={
+                                {
+                                  ['--crm-item-i' as string]: i,
+                                } as React.CSSProperties
+                              }
+                            />
+                          ))}
+                        </ul>
+                      ) : null}
+                      {older.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllNotes((v) => !v)}
+                          className="crm-interactive inline-flex items-center gap-1 text-xs font-medium cursor-pointer"
+                          style={{ color: '#78716C' }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#E02126';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#78716C';
+                          }}
+                        >
+                          <ChevronDown
+                            className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                              showAllNotes ? 'rotate-180' : ''
+                            }`}
+                          />
+                          {showAllNotes
+                            ? 'Hide earlier notes'
+                            : `Show ${older.length} earlier ${
+                                older.length === 1 ? 'note' : 'notes'
+                              }`}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()
+              ) : (
+                <p
+                  className="rounded-xl border border-dashed px-3.5 py-3 text-sm"
+                  style={{ borderColor: '#E7E5E4', color: '#A8A29E' }}
+                >
+                  No internal notes yet. Add context for teammates here.
+                </p>
               )}
 
               {noteSaved ? (
@@ -518,14 +682,18 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 <textarea
                   id="lead-note-input"
                   form="lead-note-form"
-                  rows={3}
+                  rows={2}
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="Add an internal note…"
-                  disabled={isSavingNote}
+                  placeholder={
+                    isArchived
+                      ? 'Restore this inquiry to add notes…'
+                      : 'Add an internal note…'
+                  }
+                  disabled={isSavingNote || isArchived}
                   className="w-full rounded-xl border px-3 py-2.5 text-sm leading-relaxed focus:outline-none resize-none disabled:opacity-60"
                   style={{
-                    backgroundColor: '#FAF9F6',
+                    backgroundColor: '#FFFFFF',
                     borderColor: '#E7E5E4',
                     color: '#1C1917',
                   }}
@@ -533,67 +701,103 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               )}
             </section>
 
-            {/* Activity */}
+            {/* Activity — fully collapsed by default (secondary to notes) */}
             <section className="space-y-2">
-              <div className="flex items-baseline justify-between gap-2">
-                <h3 className="text-xs" style={{ color: '#A8A29E' }}>
+              <button
+                type="button"
+                onClick={() => setShowAllActivity((v) => !v)}
+                className="crm-interactive flex w-full items-center justify-between gap-2 text-left cursor-pointer"
+                aria-expanded={showAllActivity}
+              >
+                <h3
+                  className="inline-flex items-center gap-1 text-xs font-medium"
+                  style={{ color: '#A8A29E' }}
+                >
                   Activity
+                  {(request.statusHistory?.length || 0) > 0 && (
+                    <span className="tabular-nums font-normal">
+                      ({request.statusHistory!.length})
+                    </span>
+                  )}
                 </h3>
-                <span className="text-[11px] tabular-nums" style={{ color: '#A8A29E' }}>
-                  {formatStageAge(daysInStage(request.statusChangedAt, request.createdAt))}
+                <span
+                  className="inline-flex items-center gap-1 text-[11px] font-medium"
+                  style={{ color: '#78716C' }}
+                >
+                  {showAllActivity ? 'Hide' : 'Show'}
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                      showAllActivity ? 'rotate-180' : ''
+                    }`}
+                  />
                 </span>
-              </div>
+              </button>
 
-              {request.statusHistory && request.statusHistory.length > 0 ? (
-                <ol className="space-y-0 border-l" style={{ borderColor: '#E7E5E4' }}>
-                  {[...request.statusHistory].reverse().map((entry, index) => {
-                    const when = (() => {
-                      const d = new Date(entry.changedAt);
-                      if (Number.isNaN(d.getTime())) return '—';
-                      return d.toLocaleString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      });
-                    })();
-                    const fromLabel =
-                      !entry.fromStatus || entry.fromStatus === 'none'
-                        ? 'New inquiry'
-                        : statusTitle(pipelineStatuses, entry.fromStatus);
-                    const toLabel = statusTitle(pipelineStatuses, entry.toStatus);
-                    return (
-                      <li key={`${entry.changedAt}-${entry.toStatus}-${index}`} className="relative pl-4 py-2">
-                        <span
-                          className="absolute left-0 top-3 h-2 w-2 -translate-x-1/2 rounded-full border"
-                          style={{
-                            backgroundColor: index === 0 ? '#E02126' : '#FFFFFF',
-                            borderColor: index === 0 ? '#E02126' : '#D6D3D1',
-                          }}
-                        />
-                        <p className="text-sm" style={{ color: '#1C1917' }}>
-                          {fromLabel === 'New inquiry' ? (
-                            <>Opened as <span className="font-medium">{toLabel}</span></>
-                          ) : (
-                            <>
-                              Moved from <span className="font-medium">{fromLabel}</span> to{' '}
-                              <span className="font-medium">{toLabel}</span>
-                            </>
-                          )}
-                        </p>
-                        <p className="mt-0.5 text-[11px]" style={{ color: '#A8A29E' }}>
-                          {when}
-                          {entry.changedBy ? ` · ${entry.changedBy}` : ''}
-                        </p>
-                      </li>
-                    );
-                  })}
-                </ol>
-              ) : (
-                <p className="text-sm" style={{ color: '#A8A29E' }}>
-                  No status changes recorded yet.
-                </p>
-              )}
+              {showAllActivity ? (
+                <div className="crm-expand-enter">
+                  {request.statusHistory && request.statusHistory.length > 0 ? (
+                    <ol className="space-y-0 border-l" style={{ borderColor: '#E7E5E4' }}>
+                      {[...request.statusHistory].reverse().map((entry, index) => {
+                        const when = (() => {
+                          const d = new Date(entry.changedAt);
+                          if (Number.isNaN(d.getTime())) return '—';
+                          return d.toLocaleString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          });
+                        })();
+                        const fromLabel =
+                          !entry.fromStatus || entry.fromStatus === 'none'
+                            ? 'New inquiry'
+                            : statusTitle(pipelineStatuses, entry.fromStatus);
+                        const toLabel = statusTitle(pipelineStatuses, entry.toStatus);
+                        const isLatest = index === 0;
+                        return (
+                          <li
+                            key={`${entry.changedAt}-${entry.toStatus}-${index}`}
+                            className="crm-expand-item relative pl-4 py-2"
+                            style={
+                              {
+                                ['--crm-item-i' as string]: index,
+                              } as React.CSSProperties
+                            }
+                          >
+                            <span
+                              className="absolute left-0 top-3 h-2 w-2 -translate-x-1/2 rounded-full border"
+                              style={{
+                                backgroundColor: isLatest ? '#E02126' : '#FFFFFF',
+                                borderColor: isLatest ? '#E02126' : '#D6D3D1',
+                              }}
+                            />
+                            <p className="text-sm" style={{ color: '#1C1917' }}>
+                              {fromLabel === 'New inquiry' ? (
+                                <>
+                                  Opened as <span className="font-medium">{toLabel}</span>
+                                </>
+                              ) : (
+                                <>
+                                  Moved from <span className="font-medium">{fromLabel}</span> to{' '}
+                                  <span className="font-medium">{toLabel}</span>
+                                </>
+                              )}
+                            </p>
+                            <p className="mt-0.5 text-[11px]" style={{ color: '#A8A29E' }}>
+                              {when}
+                              {entry.changedBy ? ` · ${entry.changedBy}` : ''}
+                            </p>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  ) : (
+                    <p className="text-sm" style={{ color: '#A8A29E' }}>
+                      No status changes recorded yet.
+                    </p>
+                  )}
+                </div>
+              ) : null}
             </section>
           </div>
 
@@ -604,21 +808,39 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             className="flex items-center justify-between gap-3 px-5 py-4 sm:px-6 border-t"
             style={{ borderColor: '#E7E5E4' }}
           >
-            <button
-              type="button"
-              onClick={handleDeleteChangeRequest}
-              className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors cursor-pointer"
-              style={{ color: '#B91C1C' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '0.8';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = '1';
-              }}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Archive
-            </button>
+            {isArchived ? (
+              <button
+                type="button"
+                onClick={handleRestoreRequest}
+                className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors cursor-pointer"
+                style={{ color: '#15803D' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = '0.8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '1';
+                }}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Restore
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleDeleteChangeRequest}
+                className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors cursor-pointer"
+                style={{ color: '#B91C1C' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = '0.8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '1';
+                }}
+              >
+                <Archive className="w-3.5 h-3.5" />
+                Archive
+              </button>
+            )}
 
             <div className="flex items-center gap-2">
               <button
@@ -635,24 +857,26 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               >
                 Close
               </button>
-              <button
-                type="submit"
-                disabled={!noteText.trim() || isSavingNote || noteSaved}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold text-white transition-opacity cursor-pointer disabled:opacity-40 hover:opacity-90"
-                style={{ backgroundColor: '#E02126' }}
-              >
-                {isSavingNote ? (
-                  <>
-                    <Spinner size="xs" color="#FFFFFF" />
-                    Saving…
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5" />
-                    Add note
-                  </>
-                )}
-              </button>
+              {!isArchived ? (
+                <button
+                  type="submit"
+                  disabled={!noteText.trim() || isSavingNote || noteSaved}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold text-white transition-opacity cursor-pointer disabled:opacity-40 hover:opacity-90"
+                  style={{ backgroundColor: '#E02126' }}
+                >
+                  {isSavingNote ? (
+                    <>
+                      <Spinner size="xs" color="#FFFFFF" />
+                      Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      Add note
+                    </>
+                  )}
+                </button>
+              ) : null}
             </div>
           </form>
         </div>

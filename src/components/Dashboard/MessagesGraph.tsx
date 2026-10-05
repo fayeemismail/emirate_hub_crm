@@ -11,8 +11,9 @@ import {
 } from '../../types';
 import { analyticsApi } from '../../lib/api';
 import { CustomSelect } from '../ui/CustomSelect';
-import { Spinner, ChartSkeleton, LoadingOverlay } from '../ui/loading';
+import { Spinner, ChartSkeleton } from '../ui/loading';
 import { EmptyState } from '../ui/EmptyState';
+import { Enter } from '../ui/motion';
 
 interface MessagesGraphProps {
   monthlyTrends?: MonthlyTrendsResponse | null;
@@ -21,6 +22,8 @@ interface MessagesGraphProps {
   funnelAnalytics?: FunnelAnalyticsResponse | null;
   overviewKpi?: OverviewKpi | null;
   isLoading?: boolean;
+  /** Dashboard-wide refresh (metrics + analytics). */
+  isRefreshing?: boolean;
 }
 
 const TABS = [
@@ -36,6 +39,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
   funnelAnalytics,
   overviewKpi,
   isLoading = false,
+  isRefreshing = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'monthly' | 'funnel' | 'services'>('monthly');
   const currentYear = availableYears?.currentYear ?? new Date().getFullYear();
@@ -178,24 +182,37 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     return <ChartSkeleton />;
   }
 
+  const showUpdating = isRefreshing || isFilterLoading;
+
   return (
     <div
-      className="relative rounded-2xl border px-5 py-5 sm:px-6 sm:py-6 space-y-6"
+      className="crm-enter relative rounded-2xl border px-5 py-5 sm:px-6 sm:py-6 space-y-6"
       style={{
         backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
         borderColor: 'var(--crm-card-border, #E7E5E4)',
       }}
     >
-      <LoadingOverlay visible={isFilterLoading} label="Updating chart…" />
-
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2
-          className="text-base font-semibold tracking-tight"
-          style={{ color: 'var(--crm-text-primary, #1C1917)' }}
-        >
-          Analytics
-        </h2>
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <h2
+            className="text-base font-semibold tracking-tight"
+            style={{ color: 'var(--crm-text-primary, #1C1917)' }}
+          >
+            Analytics
+          </h2>
+          {showUpdating ? (
+            <span
+              className="crm-fade-enter inline-flex items-center gap-1.5 text-xs font-medium"
+              style={{ color: '#A8A29E' }}
+              role="status"
+              aria-live="polite"
+            >
+              <Spinner size="xs" color="#A8A29E" />
+              Updating…
+            </span>
+          ) : null}
+        </div>
 
         <div className="flex items-center gap-1 border-b sm:border-b-0" style={{ borderColor: '#E7E5E4' }}>
           {TABS.map((tab) => {
@@ -205,7 +222,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className="relative px-3 py-2 text-sm font-medium transition-colors cursor-pointer"
+                className="crm-interactive relative px-3 py-2 text-sm font-medium cursor-pointer"
                 style={{
                   color: active
                     ? 'var(--crm-text-primary, #1C1917)'
@@ -215,7 +232,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 {tab.label}
                 {active && (
                   <span
-                    className="absolute inset-x-2 -bottom-px h-0.5 rounded-full sm:bottom-0"
+                    className="crm-tab-indicator absolute inset-x-2 -bottom-px h-0.5 rounded-full sm:bottom-0"
                     style={{ backgroundColor: 'var(--crm-accent-primary, #E02126)' }}
                   />
                 )}
@@ -225,6 +242,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
         </div>
       </div>
 
+      <Enter key={activeTab} className="min-w-0">
       {/* Trends */}
       {activeTab === 'monthly' && (
         <div>
@@ -268,7 +286,6 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              {isFilterLoading && <Spinner size="xs" color="#A8A29E" />}
               {availableServices.length > 0 && (
                 <CustomSelect
                   value={selectedService}
@@ -533,6 +550,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
           )}
         </div>
       )}
+      </Enter>
     </div>
   );
 };

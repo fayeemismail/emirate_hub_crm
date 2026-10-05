@@ -32,7 +32,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center text-center ${
+      className={`${compact ? '' : 'crm-enter '}flex flex-col items-center justify-center text-center ${
         compact ? 'py-8 px-4' : 'py-16 px-6'
       } ${className}`}
       role="status"
