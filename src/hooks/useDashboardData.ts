@@ -20,11 +20,7 @@ import {
   sortRequestsForTable,
   requestPriorityToBackendEnum,
 } from '../lib/adapters';
-import {
-  lookbackStartIso,
-  tableSortToApi,
-  type TableSortMode,
-} from '../lib/crmSettings';
+import { tableSortToApi, type TableSortMode } from '../lib/crmSettings';
 import { useCrmSettings } from './useCrmSettings';
 
 function flattenLeadsPayload(
@@ -42,6 +38,8 @@ export interface InquiryListQuery {
   status: string; // 'All' = no filter; otherwise Sanity status slug
   tableSort: TableSortMode;
   viewMode: 'kanban' | 'table';
+  /** When true, apply Settings lookback to the leads fetch (Service Inquiries only). */
+  applyLookback: boolean;
 }
 
 export const DEFAULT_INQUIRY_LIST_QUERY: InquiryListQuery = {
@@ -50,6 +48,7 @@ export const DEFAULT_INQUIRY_LIST_QUERY: InquiryListQuery = {
   status: 'All',
   tableSort: 'priority',
   viewMode: 'kanban',
+  applyLookback: false,
 };
 
 interface UseDashboardDataOptions {
@@ -85,9 +84,11 @@ export function useDashboardData({
     const gen = ++loadGen.current;
     setIsDataLoading(true);
 
-    const lookbackStart = lookbackStartIso(lookbackDays);
     const isTable = inquiryQuery.viewMode === 'table';
     const { sortBy, sortOrder } = tableSortToApi(inquiryQuery.tableSort);
+    // Lookback is Service Inquiries only — never clip dashboard analytics.
+    const inquiryLookbackDays =
+      inquiryQuery.applyLookback && lookbackDays > 0 ? lookbackDays : undefined;
 
     const search = inquiryQuery.search.trim();
     const service = inquiryQuery.service;
@@ -108,7 +109,7 @@ export function useDashboardData({
         // which previously emptied the table when we asked for 500.
         leadsApi.getAdminLeads({
           view: 'kanban',
-          lookbackDays: lookbackDays > 0 ? lookbackDays : undefined,
+          lookbackDays: inquiryLookbackDays,
           sortBy,
           sortOrder,
           ...(search ? { search } : {}),
@@ -117,17 +118,11 @@ export function useDashboardData({
         }),
         leadsApi.getLeadStatuses(),
         leadsApi.getLeadServices(),
-        analyticsApi.getOverview(
-          lookbackStart ? { startDate: lookbackStart } : undefined
-        ),
+        analyticsApi.getOverview(),
         analyticsApi.getMonthlyTrends({ year: new Date().getFullYear() }),
         analyticsApi.getAvailableYears(),
-        analyticsApi.getServiceAnalytics(
-          lookbackStart ? { startDate: lookbackStart } : undefined
-        ),
-        analyticsApi.getFunnelAnalytics(
-          lookbackStart ? { startDate: lookbackStart } : undefined
-        ),
+        analyticsApi.getServiceAnalytics(),
+        analyticsApi.getFunnelAnalytics(),
       ]);
 
       if (gen !== loadGen.current) return;
@@ -208,6 +203,7 @@ export function useDashboardData({
     isAuthenticated,
     settingsHydrated,
     lookbackDays,
+    inquiryQuery.applyLookback,
     inquiryQuery.search,
     inquiryQuery.service,
     inquiryQuery.status,

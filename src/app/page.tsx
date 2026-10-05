@@ -51,8 +51,8 @@ export default function Home() {
     setInquiryFilters((prev) => ({ ...prev, ...patch }));
   }, []);
 
-  // Dashboard / orphans / settings: lookback only (no inquiry toolbar filters).
-  // Requests tab: full BE-driven filter/sort query.
+  // Dashboard / orphans / settings: all-time leads + analytics (no lookback).
+  // Requests tab: BE filters including Settings lookback (Service Inquiries only).
   const inquiryQuery: InquiryListQuery = useMemo(() => {
     if (activeTab !== 'requests') {
       return DEFAULT_INQUIRY_LIST_QUERY;
@@ -63,6 +63,7 @@ export default function Home() {
       status: inquiryFilters.status,
       tableSort: inquiryFilters.tableSort,
       viewMode: inquiryFilters.viewMode,
+      applyLookback: true,
     };
   }, [activeTab, inquiryFilters]);
 

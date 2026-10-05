@@ -76,21 +76,6 @@ export function subscribeCrmSettings(onChange: () => void): () => void {
   };
 }
 
-/** Keep inquiries created within the last `days` (inclusive of today). 0 = no filter. */
-export function isWithinLookback(iso: string, days: number, now = Date.now()): boolean {
-  if (days <= 0) return true;
-  const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return false;
-  const cutoff = now - days * 24 * 60 * 60 * 1000;
-  return t >= cutoff;
-}
-
-/** ISO start bound for BE lookback (undefined = all time). */
-export function lookbackStartIso(days: number, now = Date.now()): string | undefined {
-  if (days <= 0) return undefined;
-  return new Date(now - days * 24 * 60 * 60 * 1000).toISOString();
-}
-
 /** Map table sort UI mode → admin leads API sort params. */
 export function tableSortToApi(mode: TableSortMode): {
   sortBy: 'createdAt' | 'priority' | 'status';
