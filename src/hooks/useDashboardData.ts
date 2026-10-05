@@ -20,7 +20,11 @@ import {
   sortRequestsForTable,
   requestPriorityToBackendEnum,
 } from '../lib/adapters';
-import { lookbackStartIso, type TableSortMode } from '../lib/crmSettings';
+import {
+  lookbackStartIso,
+  tableSortToApi,
+  type TableSortMode,
+} from '../lib/crmSettings';
 import { useCrmSettings } from './useCrmSettings';
 
 function flattenLeadsPayload(
@@ -83,6 +87,7 @@ export function useDashboardData({
 
     const lookbackStart = lookbackStartIso(lookbackDays);
     const isTable = inquiryQuery.viewMode === 'table';
+    const { sortBy, sortOrder } = tableSortToApi(inquiryQuery.tableSort);
 
     const search = inquiryQuery.search.trim();
     const service = inquiryQuery.service;
@@ -104,6 +109,8 @@ export function useDashboardData({
         leadsApi.getAdminLeads({
           view: 'kanban',
           lookbackDays: lookbackDays > 0 ? lookbackDays : undefined,
+          sortBy,
+          sortOrder,
           ...(search ? { search } : {}),
           ...(service !== 'All' ? { service } : {}),
           ...(isTable && status !== 'All' ? { status } : {}),
