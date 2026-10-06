@@ -214,165 +214,272 @@ export const TeamUsersSection: React.FC<TeamUsersSectionProps> = ({ onToast }) =
         style={{ backgroundColor: '#FFFFFF', borderColor: '#E7E5E4' }}
       >
         <div
-          className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+          className="flex items-center justify-between gap-3 border-b px-4 py-3.5 sm:px-5 sm:py-4"
           style={{ borderColor: '#F5F5F4', backgroundColor: '#FAFAF9' }}
         >
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4" style={{ color: '#78716C' }} />
-            <div>
-              <h3 className="text-sm font-semibold" style={{ color: '#1C1917' }}>
-                Team
+          <div className="flex items-center gap-2 min-w-0">
+            <Users className="h-4 w-4 shrink-0" style={{ color: '#78716C' }} />
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold truncate" style={{ color: '#1C1917' }}>
+                Team & access
               </h3>
-              <p className="text-xs" style={{ color: '#A8A29E' }}>
-                Admin accounts only · {activeCount} active
+              <p className="text-xs truncate" style={{ color: '#A8A29E' }}>
+                {activeCount} active {activeCount === 1 ? 'admin' : 'admins'}
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={openAdd}
-            className="inline-flex items-center gap-1.5 self-start rounded-lg px-3.5 py-2.5 text-sm font-semibold text-white cursor-pointer sm:self-auto"
+            className="inline-flex items-center gap-1.5 shrink-0 rounded-xl px-3 py-2 sm:px-3.5 sm:py-2.5 text-xs sm:text-sm font-semibold text-white cursor-pointer active:scale-95"
             style={{ backgroundColor: '#E02126' }}
           >
             <UserPlus className="h-3.5 w-3.5" />
-            Add admin
+            <span>Add admin</span>
           </button>
         </div>
 
-        <div className="px-5 py-4">
-            <div className="overflow-x-auto rounded-xl border" style={{ borderColor: '#F5F5F4' }}>
-              <table className="w-full min-w-[560px] text-left">
-                <thead>
-                  <tr
-                    className="border-b text-xs"
-                    style={{ borderColor: '#F5F5F4', color: '#A8A29E' }}
-                  >
-                    <th className="px-3 py-2 font-medium">Name</th>
-                    <th className="px-3 py-2 font-medium">Email</th>
-                    <th className="px-3 py-2 font-medium">Status</th>
-                    <th className="px-3 py-2 font-medium text-right"> </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((u) => {
-                    const isMe = u.id === me?.id;
-                    const isProtected = Boolean(u.isProtected);
-                    const busy = togglingId === u.id || deletingId === u.id;
-                    const canToggle = !isMe && !isProtected;
-                    const canDelete = canDeleteUsers && !isMe && !isProtected;
-                    return (
-                      <tr
-                        key={u.id}
-                        className="border-b last:border-b-0"
-                        style={{ borderColor: '#F5F5F4' }}
-                      >
-                        <td className="px-3 py-2.5">
-                          <span className="text-sm font-medium" style={{ color: '#1C1917' }}>
-                            {u.name}
-                            {isMe ? (
-                              <span className="ml-1.5 text-[11px]" style={{ color: '#A8A29E' }}>
-                                you
-                              </span>
-                            ) : null}
-                            {isProtected ? (
-                              <span
-                                className="ml-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
-                                style={{
-                                  color: '#57534E',
+        <div className="p-4 sm:p-5">
+          {/* Desktop Table View */}
+          <div className="hidden sm:block overflow-x-auto rounded-xl border" style={{ borderColor: '#F5F5F4' }}>
+            <table className="w-full min-w-[560px] text-left">
+              <thead>
+                <tr
+                  className="border-b text-xs"
+                  style={{ borderColor: '#F5F5F4', color: '#A8A29E' }}
+                >
+                  <th className="px-3 py-2 font-medium">Name</th>
+                  <th className="px-3 py-2 font-medium">Email</th>
+                  <th className="px-3 py-2 font-medium">Status</th>
+                  <th className="px-3 py-2 font-medium text-right"> </th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => {
+                  const isMe = u.id === me?.id;
+                  const isProtected = Boolean(u.isProtected);
+                  const busy = togglingId === u.id || deletingId === u.id;
+                  const canToggle = !isMe && !isProtected;
+                  const canDelete = canDeleteUsers && !isMe && !isProtected;
+                  return (
+                    <tr
+                      key={u.id}
+                      className="border-b last:border-b-0"
+                      style={{ borderColor: '#F5F5F4' }}
+                    >
+                      <td className="px-3 py-2.5">
+                        <span className="text-sm font-medium" style={{ color: '#1C1917' }}>
+                          {u.name}
+                          {isMe ? (
+                            <span className="ml-1.5 text-[11px]" style={{ color: '#A8A29E' }}>
+                              you
+                            </span>
+                          ) : null}
+                          {isProtected ? (
+                            <span
+                              className="ml-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
+                              style={{
+                                color: '#57534E',
+                                backgroundColor: '#F5F5F4',
+                                borderColor: '#E7E5E4',
+                              }}
+                            >
+                              Protected
+                            </span>
+                          ) : null}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span className="text-sm" style={{ color: '#78716C' }}>
+                          {u.email}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span
+                          className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold"
+                          style={
+                            u.isActive
+                              ? {
+                                  color: '#15803D',
+                                  backgroundColor: '#DCFCE7',
+                                  borderColor: '#BBF7D0',
+                                }
+                              : {
+                                  color: '#78716C',
                                   backgroundColor: '#F5F5F4',
                                   borderColor: '#E7E5E4',
-                                }}
-                              >
-                                Protected
-                              </span>
-                            ) : null}
+                                }
+                          }
+                        >
+                          {u.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        {isProtected && !canDelete ? (
+                          <span className="text-[11px]" style={{ color: '#A8A29E' }}>
+                            —
                           </span>
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <span className="text-sm" style={{ color: '#78716C' }}>
-                            {u.email}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <span
-                            className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold"
-                            style={
-                              u.isActive
-                                ? {
-                                    color: '#15803D',
-                                    backgroundColor: '#DCFCE7',
-                                    borderColor: '#BBF7D0',
-                                  }
-                                : {
-                                    color: '#78716C',
-                                    backgroundColor: '#F5F5F4',
-                                    borderColor: '#E7E5E4',
-                                  }
-                            }
-                          >
-                            {u.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          {isProtected && !canDelete ? (
-                            <span className="text-[11px]" style={{ color: '#A8A29E' }}>
-                              —
-                            </span>
-                          ) : (
-                            <div className="inline-flex items-center justify-end gap-1.5">
-                              {!isProtected ? (
-                                <button
-                                  type="button"
-                                  disabled={busy || !canToggle}
-                                  onClick={() => setConfirmToggle(u)}
-                                  title={
-                                    isMe
-                                      ? 'You cannot deactivate your own account'
-                                      : u.isActive
-                                        ? 'Deactivate'
-                                        : 'Reactivate'
-                                  }
-                                  className="rounded-lg border px-3 py-2 text-xs font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-                                  style={{
-                                    borderColor: '#E7E5E4',
-                                    color: u.isActive ? '#B91C1C' : '#15803D',
-                                    backgroundColor: '#FFFFFF',
-                                  }}
-                                >
-                                  {togglingId === u.id
-                                    ? '…'
+                        ) : (
+                          <div className="inline-flex items-center justify-end gap-1.5">
+                            {!isProtected ? (
+                              <button
+                                type="button"
+                                disabled={busy || !canToggle}
+                                onClick={() => setConfirmToggle(u)}
+                                title={
+                                  isMe
+                                    ? 'You cannot deactivate your own account'
                                     : u.isActive
                                       ? 'Deactivate'
-                                      : 'Reactivate'}
-                                </button>
-                              ) : null}
-                              {canDelete ? (
-                                <button
-                                  type="button"
-                                  disabled={busy}
-                                  onClick={() => setConfirmDelete(u)}
-                                  title="Permanently delete"
-                                  aria-label={`Delete ${u.name}`}
-                                  className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-2 text-xs font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-                                  style={{
-                                    borderColor: '#FECACA',
-                                    color: '#B91C1C',
-                                    backgroundColor: '#FEF2F2',
-                                  }}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                  {deletingId === u.id ? '…' : 'Delete'}
-                                </button>
-                              ) : null}
-                            </div>
+                                      : 'Reactivate'
+                                }
+                                className="rounded-lg border px-3 py-2 text-xs font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                                style={{
+                                  borderColor: '#E7E5E4',
+                                  color: u.isActive ? '#B91C1C' : '#15803D',
+                                  backgroundColor: '#FFFFFF',
+                                }}
+                              >
+                                {togglingId === u.id
+                                  ? '…'
+                                  : u.isActive
+                                    ? 'Deactivate'
+                                    : 'Reactivate'}
+                              </button>
+                            ) : null}
+                            {canDelete ? (
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => setConfirmDelete(u)}
+                                title="Permanently delete"
+                                aria-label={`Delete ${u.name}`}
+                                className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-2 text-xs font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                                style={{
+                                  borderColor: '#FECACA',
+                                  color: '#B91C1C',
+                                  backgroundColor: '#FEF2F2',
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                                {deletingId === u.id ? '…' : 'Delete'}
+                              </button>
+                            ) : null}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile User Card List */}
+          <div className="space-y-2.5 sm:hidden">
+            {users.map((u) => {
+              const isMe = u.id === me?.id;
+              const isProtected = Boolean(u.isProtected);
+              const busy = togglingId === u.id || deletingId === u.id;
+              const canToggle = !isMe && !isProtected;
+              const canDelete = canDeleteUsers && !isMe && !isProtected;
+              const initials = (u.name?.trim()?.charAt(0) || u.email?.charAt(0) || 'U').toUpperCase();
+
+              return (
+                <div
+                  key={u.id}
+                  className="rounded-xl border p-3.5 space-y-2.5 transition-all"
+                  style={{
+                    backgroundColor: '#FAF9F6',
+                    borderColor: '#E7E5E4',
+                  }}
+                >
+                  {/* Top: User info + Status badge */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-stone-700 bg-stone-200"
+                      >
+                        {initials}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-semibold text-stone-900 truncate">
+                            {u.name}
+                          </span>
+                          {isMe && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-stone-200 text-stone-600">
+                              you
+                            </span>
                           )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          {isProtected && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              Protected
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-stone-500 truncate mt-0.5">
+                          {u.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold shrink-0"
+                      style={
+                        u.isActive
+                          ? { color: '#15803D', backgroundColor: '#DCFCE7', borderColor: '#BBF7D0' }
+                          : { color: '#78716C', backgroundColor: '#F5F5F4', borderColor: '#E7E5E4' }
+                      }
+                    >
+                      {u.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  {/* Actions Row */}
+                  {(canToggle || canDelete) && (
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-200/60">
+                      {!isProtected && (
+                        <button
+                          type="button"
+                          disabled={busy || !canToggle}
+                          onClick={() => setConfirmToggle(u)}
+                          className="rounded-lg border px-3 py-1.5 text-xs font-semibold cursor-pointer disabled:opacity-40"
+                          style={{
+                            borderColor: '#E7E5E4',
+                            color: u.isActive ? '#B91C1C' : '#15803D',
+                            backgroundColor: '#FFFFFF',
+                          }}
+                        >
+                          {togglingId === u.id
+                            ? '…'
+                            : u.isActive
+                              ? 'Deactivate'
+                              : 'Reactivate'}
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setConfirmDelete(u)}
+                          className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold cursor-pointer disabled:opacity-40"
+                          style={{
+                            borderColor: '#FECACA',
+                            color: '#B91C1C',
+                            backgroundColor: '#FEF2F2',
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          <span>Delete</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
       )}

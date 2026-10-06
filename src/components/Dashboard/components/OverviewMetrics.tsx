@@ -91,7 +91,7 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       />
 
       <MetricCard
-        className="col-span-2 xl:col-span-1"
+        className="hidden sm:block col-span-2 xl:col-span-1"
         label="Win rate"
         hint={winHint}
         icon={Target}

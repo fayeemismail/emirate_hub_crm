@@ -43,6 +43,14 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
   isRefreshing = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'monthly' | 'funnel' | 'services'>('monthly');
+
+  // On mobile (< sm), Trends graph is hidden; default to 'funnel' (Pipeline)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      setActiveTab((prev) => (prev === 'monthly' ? 'funnel' : prev));
+    }
+  }, []);
+
   const currentYear = availableYears?.currentYear ?? new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedService, setSelectedService] = useState<string>('all');
@@ -232,8 +240,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
         </div>
 
         <div
-          className="-mx-1 flex items-stretch gap-0 overflow-x-auto border-b px-1 sm:mx-0 sm:items-center sm:gap-1 sm:overflow-visible sm:border-b-0 sm:px-0"
-          style={{ borderColor: '#E7E5E4' }}
+          className="flex items-center gap-1 rounded-xl bg-stone-100/90 p-1 sm:rounded-none sm:bg-transparent sm:p-0"
         >
           {TABS.map((tab) => {
             const active = activeTab === tab.id;
@@ -242,7 +249,13 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className="crm-interactive relative min-h-10 flex-1 touch-manipulation px-3 py-2.5 text-sm font-medium cursor-pointer sm:min-h-0 sm:flex-none sm:py-2"
+                className={`crm-interactive relative touch-manipulation px-3 py-1.5 text-xs font-semibold cursor-pointer rounded-lg transition-all sm:min-h-0 sm:flex-none sm:rounded-none sm:py-2 sm:text-sm sm:font-medium ${
+                  tab.id === 'monthly' ? 'hidden sm:inline-flex' : 'inline-flex flex-1 sm:flex-none items-center justify-center'
+                } ${
+                  active
+                    ? 'bg-white text-stone-900 shadow-xs sm:bg-transparent sm:shadow-none'
+                    : 'text-stone-500 hover:text-stone-800'
+                }`}
                 style={{
                   color: active
                     ? 'var(--crm-text-primary, #1C1917)'
@@ -252,7 +265,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 {tab.label}
                 {active && (
                   <span
-                    className="crm-tab-indicator absolute inset-x-2 -bottom-px h-0.5 rounded-full sm:bottom-0"
+                    className="crm-tab-indicator hidden sm:block absolute inset-x-2 -bottom-px h-0.5 rounded-full"
                     style={{ backgroundColor: 'var(--crm-accent-primary, #E02126)' }}
                   />
                 )}
@@ -263,9 +276,9 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
       </div>
 
       <Enter key={activeTab} className="min-w-0">
-      {/* Trends */}
+      {/* Trends: Desktop only (sm:), completely hidden on mobile */}
       {activeTab === 'monthly' && (
-        <div>
+        <div className="hidden sm:block">
           <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
             <div>
               <p className="text-sm" style={{ color: '#78716C' }}>
@@ -371,38 +384,87 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
           </div>
 
           {funnelAnalytics?.stages && funnelAnalytics.stages.length > 0 ? (
-            <div className="mx-auto flex w-full max-w-md flex-col items-center gap-1.5">
-              {funnelAnalytics.stages.map((stage, index) => {
-                const stageCount = funnelAnalytics.stages.length;
-                // Narrow from ~100% at top to ~42% at bottom
-                const widthPct = 100 - (index / Math.max(stageCount - 1, 1)) * 58;
-                const opacity = 0.28 + (1 - index / Math.max(stageCount - 1, 1)) * 0.72;
+            <>
+              {/* Desktop: Exact tapering polygon funnel */}
+              <div className="mx-auto hidden w-full max-w-md flex-col items-center gap-1.5 sm:flex">
+                {funnelAnalytics.stages.map((stage, index) => {
+                  const stageCount = funnelAnalytics.stages.length;
+                  // Narrow from ~100% at top to ~42% at bottom
+                  const widthPct = 100 - (index / Math.max(stageCount - 1, 1)) * 58;
+                  const opacity = 0.28 + (1 - index / Math.max(stageCount - 1, 1)) * 0.72;
 
-                return (
-                  <div
-                    key={stage.slug}
-                    className="flex min-h-10 min-w-[12rem] items-center justify-between gap-2 px-3 py-2.5 transition-all sm:min-h-0 sm:min-w-0 sm:gap-3 sm:px-4"
-                    style={{
-                      width: `${widthPct}%`,
-                      backgroundColor: `rgba(224, 33, 38, ${opacity.toFixed(2)})`,
-                      clipPath:
-                        index === stageCount - 1
-                          ? 'polygon(8% 0, 92% 0, 100% 100%, 0 100%)'
-                          : 'polygon(0 0, 100% 0, 96% 100%, 4% 100%)',
-                      color: opacity > 0.55 ? '#FFFFFF' : '#1C1917',
-                    }}
-                  >
-                    <span className="min-w-0 truncate text-xs font-medium sm:text-sm">{stage.title}</span>
-                    <span className="shrink-0 text-xs font-semibold tabular-nums sm:text-sm">
-                      {stage.leadCount}
-                      <span className="ml-1 text-[10px] font-normal opacity-80 sm:ml-1.5 sm:text-[11px]">
-                        {stage.percentageOfTotal}%
+                  return (
+                    <div
+                      key={stage.slug}
+                      className="flex min-h-10 min-w-[12rem] items-center justify-between gap-3 px-4 transition-all"
+                      style={{
+                        width: `${widthPct}%`,
+                        backgroundColor: `rgba(224, 33, 38, ${opacity.toFixed(2)})`,
+                        clipPath:
+                          index === stageCount - 1
+                            ? 'polygon(8% 0, 92% 0, 100% 100%, 0 100%)'
+                            : 'polygon(0 0, 100% 0, 96% 100%, 4% 100%)',
+                        color: opacity > 0.55 ? '#FFFFFF' : '#1C1917',
+                      }}
+                    >
+                      <span className="min-w-0 truncate text-sm font-medium">{stage.title}</span>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums">
+                        {stage.leadCount}
+                        <span className="ml-1.5 text-[11px] font-normal opacity-80">
+                          {stage.percentageOfTotal}%
+                        </span>
                       </span>
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Mobile: High-clarity progression cards */}
+              <div className="flex flex-col gap-2 sm:hidden">
+                {funnelAnalytics.stages.map((stage, index) => {
+                  const stageCount = funnelAnalytics.stages.length;
+                  const opacity = 0.35 + (1 - index / Math.max(stageCount - 1, 1)) * 0.65;
+                  return (
+                    <div
+                      key={stage.slug}
+                      className="rounded-xl border p-2.5 transition-colors"
+                      style={{ borderColor: '#E7E5E4', backgroundColor: '#FAF9F6' }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                            style={{ backgroundColor: 'var(--crm-accent-primary, #E02126)' }}
+                          >
+                            {index + 1}
+                          </span>
+                          <span className="truncate text-xs font-semibold text-stone-900">
+                            {stage.title}
+                          </span>
+                        </div>
+                        <div className="flex items-baseline gap-1.5 shrink-0">
+                          <span className="text-xs font-bold tabular-nums text-stone-900">
+                            {stage.leadCount} leads
+                          </span>
+                          <span className="text-[10px] font-medium text-stone-500 tabular-nums">
+                            ({stage.percentageOfTotal}%)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2 h-1.5 w-full rounded-full bg-stone-200 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${Math.max(stage.percentageOfTotal, 3)}%`,
+                            backgroundColor: `rgba(224, 33, 38, ${opacity.toFixed(2)})`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           ) : (
             <EmptyState
               compact
@@ -428,8 +490,9 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
 
           {serviceAnalytics?.services && serviceAnalytics.services.length > 0 ? (
             <div>
+              {/* Desktop 4-column table */}
               <div
-                className="mb-2 grid grid-cols-[2rem_1fr_4.5rem_3.5rem] gap-2 px-1 text-[11px] font-medium uppercase tracking-wide"
+                className="mb-2 hidden sm:grid sm:grid-cols-[2rem_1fr_4.5rem_3.5rem] gap-2 px-1 text-[11px] font-medium uppercase tracking-wide"
                 style={{ color: '#A8A29E' }}
               >
                 <span>#</span>
@@ -437,7 +500,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 <span className="text-right">Leads</span>
                 <span className="text-right">Share</span>
               </div>
-              <ul className="divide-y" style={{ borderColor: '#E7E5E4' }}>
+              <ul className="hidden sm:block divide-y" style={{ borderColor: '#E7E5E4' }}>
                 {[...serviceAnalytics.services]
                   .sort((a, b) => b.totalInquiries - a.totalInquiries)
                   .map((svc, index) => (
@@ -475,6 +538,89 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                     </li>
                   ))}
               </ul>
+
+              {/* Mobile: Redesigned modern visual demand cards */}
+              <div className="space-y-2.5 sm:hidden">
+                {[...serviceAnalytics.services]
+                  .sort((a, b) => b.totalInquiries - a.totalInquiries)
+                  .map((svc, index) => {
+                    const isTop = index === 0;
+                    return (
+                      <div
+                        key={svc.service}
+                        className={`rounded-2xl border p-3.5 transition-all ${
+                          isTop
+                            ? 'bg-gradient-to-br from-red-50/40 via-white to-stone-50/50 border-red-200/80 shadow-xs'
+                            : 'bg-white border-stone-200/90'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2.5">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span
+                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                                isTop
+                                  ? 'bg-red-600 text-white shadow-xs'
+                                  : 'bg-stone-100 text-stone-600'
+                              }`}
+                            >
+                              {index + 1}
+                            </span>
+                            <span className="text-sm font-bold text-stone-900 truncate">
+                              {svc.service}
+                            </span>
+                          </div>
+
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-extrabold tabular-nums ${
+                              isTop
+                                ? 'bg-red-100/80 text-red-700'
+                                : 'bg-stone-100 text-stone-700'
+                            }`}
+                          >
+                            {svc.sharePercentage}%
+                          </span>
+                        </div>
+
+                        {/* Visual fill bar */}
+                        <div className="mt-2.5 h-1.5 w-full rounded-full bg-stone-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-300 ${
+                              isTop
+                                ? 'bg-gradient-to-r from-red-500 to-rose-600'
+                                : 'bg-stone-700'
+                            }`}
+                            style={{
+                              width: `${Math.max(svc.sharePercentage, 3)}%`,
+                            }}
+                          />
+                        </div>
+
+                        {/* Metric pills */}
+                        <div className="mt-2.5 flex items-center justify-between text-xs text-stone-600">
+                          <span className="font-semibold text-stone-900 tabular-nums">
+                            {svc.totalInquiries}{' '}
+                            <span className="font-normal text-stone-500">
+                              {svc.totalInquiries === 1 ? 'inquiry' : 'inquiries'}
+                            </span>
+                          </span>
+
+                          <div className="flex items-center gap-2 text-[11px] tabular-nums">
+                            {svc.wonCount > 0 && (
+                              <span className="font-semibold text-emerald-700">
+                                {svc.wonCount} won
+                              </span>
+                            )}
+                            {svc.winRatePercentage > 0 && (
+                              <span className="rounded-md bg-stone-100 px-1.5 py-0.5 font-medium text-stone-700">
+                                {svc.winRatePercentage}% win rate
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
             </div>
           ) : (
             <EmptyState

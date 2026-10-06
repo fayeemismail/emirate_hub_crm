@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   KeyRound,
+  LogOut,
   UserRound,
 } from 'lucide-react';
 import { LOOKBACK_PRESETS, lookbackLabel } from '../lib/crmSettings';
@@ -15,6 +16,7 @@ import { useCrmSettings } from '../hooks/useCrmSettings';
 import { useAuth } from '../context/AuthContext';
 import { Spinner } from './ui/loading';
 import { FormModal } from './ui/FormModal';
+import { ConfirmModal } from './ui/ConfirmModal';
 import { TeamUsersSection } from './TeamUsersSection';
 
 type Feedback =
@@ -87,15 +89,17 @@ function PasswordInput({
 function GhostButton({
   children,
   onClick,
+  className = '',
 }: {
   children: React.ReactNode;
   onClick: () => void;
+  className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-semibold cursor-pointer"
+      className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm font-semibold cursor-pointer active:scale-98 transition-all whitespace-nowrap ${className}`}
       style={{ borderColor: '#E7E5E4', backgroundColor: '#FFFFFF', color: '#57534E' }}
     >
       {children}
@@ -147,10 +151,11 @@ function ModalActions({
 type ModalKind = null | 'profile' | 'password';
 
 export const SettingsView: React.FC = () => {
-  const { user, updateProfile, changePassword } = useAuth();
+  const { user, updateProfile, changePassword, logout } = useAuth();
   const { lookbackDays, setLookbackDays } = useCrmSettings();
 
   const [modal, setModal] = useState<ModalKind>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [pageFeedback, setPageFeedback] = useState<Feedback>(null);
 
   const [name, setName] = useState(user?.name || '');
@@ -317,58 +322,58 @@ export const SettingsView: React.FC = () => {
   const initials = (user?.name?.trim()?.charAt(0) || user?.email?.charAt(0) || 'A').toUpperCase();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5 pb-16 sm:pb-0">
       <header>
         <h2
-          className="text-lg font-semibold tracking-tight"
+          className="text-base sm:text-lg font-semibold tracking-tight"
           style={{ color: 'var(--crm-text-primary, #1C1917)' }}
         >
           Settings
         </h2>
-        <p className="mt-0.5 text-sm" style={{ color: '#78716C' }}>
+        <p className="hidden sm:block mt-0.5 text-sm" style={{ color: '#78716C' }}>
           Account on the server · preferences on this device
         </p>
       </header>
 
       {pageFeedback ? <FeedbackLine feedback={pageFeedback} /> : null}
 
-      {/* Account — compact strip, no empty stretch */}
+      {/* Account — compact strip */}
       <div
-        className="rounded-2xl border px-5 py-4"
+        className="rounded-2xl border p-4 sm:px-5 sm:py-4"
         style={{ backgroundColor: '#FFFFFF', borderColor: '#E7E5E4' }}
       >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <div className="flex min-w-0 items-center gap-3.5">
+        <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex min-w-0 items-center gap-3">
             <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white shadow-2xs"
               style={{ backgroundColor: '#E02126' }}
               aria-hidden
             >
               {initials}
             </span>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-wide" style={{ color: '#A8A29E' }}>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
                 Admin profile
               </p>
               <p
-                className="truncate text-[15px] font-semibold tracking-tight"
+                className="truncate text-base font-semibold tracking-tight"
                 style={{ color: '#1C1917' }}
               >
                 {user?.name || '—'}
               </p>
-              <p className="truncate text-sm" style={{ color: '#78716C' }}>
+              <p className="truncate text-xs text-stone-500">
                 {user?.email || '—'}
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-            <GhostButton onClick={openProfile}>
-              <UserRound className="h-3.5 w-3.5" />
-              Edit profile
+          <div className="flex flex-col sm:flex-row sm:items-center sm:shrink-0 gap-2 w-full sm:w-auto pt-2.5 sm:pt-0 border-t border-stone-100 sm:border-0">
+            <GhostButton onClick={openProfile} className="w-full sm:w-auto">
+              <UserRound className="h-4 w-4" />
+              <span>Edit profile</span>
             </GhostButton>
-            <GhostButton onClick={openPassword}>
-              <KeyRound className="h-3.5 w-3.5" />
-              Change password
+            <GhostButton onClick={openPassword} className="w-full sm:w-auto">
+              <KeyRound className="h-4 w-4" />
+              <span>Change password</span>
             </GhostButton>
           </div>
         </div>
@@ -376,30 +381,32 @@ export const SettingsView: React.FC = () => {
 
       {/* Lookback */}
       <div
-        className="rounded-2xl border px-5 py-5 space-y-3.5"
+        className="rounded-2xl border p-4 sm:px-5 sm:py-5 space-y-3.5"
         style={{ backgroundColor: '#FFFFFF', borderColor: '#E7E5E4' }}
       >
         <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <Clock3 className="h-3.5 w-3.5" style={{ color: '#78716C' }} />
-              <h3 className="text-sm font-semibold" style={{ color: '#1C1917' }}>
+              <Clock3 className="h-4 w-4 text-stone-500" />
+              <h3 className="text-sm font-semibold text-stone-900">
                 Inquiry lookback
               </h3>
             </div>
-            <p className="mt-1 text-xs" style={{ color: '#A8A29E' }}>
-              How far back Service Inquiries loads. Stored on this browser only.
+            <p className="mt-1 text-xs text-stone-400">
+              How far back Service Inquiries loads. Stored on this device.
             </p>
           </div>
-          <p className="text-xs font-medium shrink-0" style={{ color: '#78716C' }}>
-            Current ·{' '}
-            <span style={{ color: '#1C1917' }}>{lookbackLabel(lookbackDays)}</span>
+          <p className="text-xs font-medium shrink-0 flex items-center gap-1.5" style={{ color: '#78716C' }}>
+            <span>Current:</span>
+            <span className="font-semibold px-2 py-0.5 rounded-md bg-stone-100 text-stone-900 tabular-nums">
+              {lookbackLabel(lookbackDays)}
+            </span>
           </p>
         </div>
 
         <FeedbackLine feedback={lookbackFeedback} />
 
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
           {LOOKBACK_PRESETS.map((days) => {
             const active = lookbackDays === days;
             return (
@@ -407,11 +414,12 @@ export const SettingsView: React.FC = () => {
                 key={days}
                 type="button"
                 onClick={() => applyLookback(days)}
-                className="rounded-lg border px-3.5 py-2.5 text-sm font-medium cursor-pointer"
+                className="rounded-xl border py-2.5 px-3 text-xs sm:text-sm font-medium transition-all text-center cursor-pointer active:scale-95"
                 style={{
                   borderColor: active ? '#E02126' : '#E7E5E4',
                   backgroundColor: active ? '#FEE2E2' : '#FFFFFF',
                   color: active ? '#E02126' : '#78716C',
+                  fontWeight: active ? 600 : 500,
                 }}
               >
                 {lookbackLabel(days)}
@@ -421,20 +429,21 @@ export const SettingsView: React.FC = () => {
           <button
             type="button"
             onClick={() => applyLookback(0)}
-            className="rounded-lg border px-3.5 py-2.5 text-sm font-medium cursor-pointer"
+            className="rounded-xl border py-2.5 px-3 text-xs sm:text-sm font-medium transition-all text-center cursor-pointer active:scale-95"
             style={{
               borderColor: lookbackDays === 0 ? '#E02126' : '#E7E5E4',
               backgroundColor: lookbackDays === 0 ? '#FEE2E2' : '#FFFFFF',
               color: lookbackDays === 0 ? '#E02126' : '#78716C',
+              fontWeight: lookbackDays === 0 ? 600 : 500,
             }}
           >
             All time
           </button>
         </div>
 
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="flex w-[7.5rem] flex-col gap-1">
-            <span className="text-[11px] font-medium" style={{ color: '#A8A29E' }}>
+        <div className="flex flex-wrap items-end gap-2 pt-1 border-t border-stone-100">
+          <label className="flex w-[8rem] flex-col gap-1">
+            <span className="text-[11px] font-medium text-stone-400">
               Custom days
             </span>
             <input
@@ -450,22 +459,46 @@ export const SettingsView: React.FC = () => {
                   saveLookbackDraft();
                 }
               }}
-              className="w-full rounded-lg border px-3 py-2.5 text-sm tabular-nums focus:outline-none"
+              placeholder="e.g. 45"
+              className="w-full rounded-xl border px-3 py-2 text-sm tabular-nums focus:outline-none"
               style={fieldStyle(lookbackFeedback?.kind === 'error')}
             />
           </label>
           <button
             type="button"
             onClick={saveLookbackDraft}
-            className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white cursor-pointer"
+            className="rounded-xl px-4 py-2 text-xs font-bold text-white shadow-2xs cursor-pointer active:scale-95"
             style={{ backgroundColor: '#E02126' }}
           >
-            Save
+            Save custom
           </button>
         </div>
       </div>
 
       <TeamUsersSection onToast={flashPage} />
+
+      {/* Mobile-only session sign out section */}
+      <div
+        className="rounded-2xl border p-4 sm:hidden"
+        style={{ backgroundColor: '#FFFFFF', borderColor: '#E7E5E4' }}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-stone-900">Sign out</h3>
+            <p className="mt-0.5 text-xs text-stone-500 truncate">
+              {user?.email || 'admin@emirate.com'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowLogoutConfirm(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 active:scale-95 transition-transform touch-manipulation cursor-pointer shrink-0"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
+          </button>
+        </div>
+      </div>
 
       {/* Profile modal */}
       <FormModal
@@ -567,6 +600,20 @@ export const SettingsView: React.FC = () => {
           />
         </form>
       </FormModal>
+
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={async () => {
+          setShowLogoutConfirm(false);
+          await logout();
+        }}
+        title="Sign out?"
+        message="You will need to sign in again to access the CRM."
+        confirmText="Sign out"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 };

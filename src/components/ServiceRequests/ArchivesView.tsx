@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircle2, RotateCcw, Search } from 'lucide-react';
+import { CheckCircle2, RotateCcw, Search, X, Mail, Phone, Calendar } from 'lucide-react';
 import { PipelineStatus, ServiceRequest } from '../../types';
 import { leadsApi } from '../../lib/api';
 import { leadToServiceRequest } from '../../lib/adapters';
@@ -152,191 +152,382 @@ export const ArchivesView: React.FC<ArchivesViewProps> = ({
   };
 
   return (
-    <div className="relative space-y-4">
+    <div className="relative space-y-4 pb-16 sm:pb-0">
       <LoadingOverlay visible={isRefreshing && !isLoading} label="Refreshing archives…" />
 
       {isLoading ? (
         <ArchivesPageSkeleton />
       ) : (
         <>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-baseline gap-2">
-          <h2
-            className="text-lg font-semibold tracking-tight"
-            style={{ color: '#1C1917' }}
-          >
-            Archives
-          </h2>
-          {total > 0 ? (
-            <span className="text-xs tabular-nums" style={{ color: '#A8A29E' }}>
-              {total}
-            </span>
-          ) : null}
-        </div>
-
-        <label className="relative block w-full sm:w-64">
-          <Search
-            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
-            style={{ color: '#A8A29E' }}
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search archives…"
-            className="w-full rounded-lg border py-1.5 pl-8 pr-3 text-sm outline-none"
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderColor: '#E7E5E4',
-              color: '#1C1917',
-            }}
-          />
-        </label>
-      </div>
-
-      {banner ? (
-        <div
-          className="flex items-center gap-1.5 text-xs"
-          style={{ color: banner.kind === 'success' ? '#15803D' : '#B91C1C' }}
-          role="status"
-        >
-          {banner.kind === 'success' ? (
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-          ) : null}
-          <span>{banner.message}</span>
-        </div>
-      ) : null}
-
-      {items.length === 0 ? (
-        <EmptyState
-          icon="inbox"
-          title={debouncedSearch ? 'No matches' : 'Archives empty'}
-          description={
-            debouncedSearch
-              ? 'Try a different search term.'
-              : 'Archived inquiries show up here. Restore puts them back on the board.'
-          }
-          compact
-        />
-      ) : (
-        <div
-          className="rounded-2xl border overflow-hidden"
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderColor: '#E7E5E4',
-          }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[720px]">
-              <thead>
-                <tr
-                  className="border-b text-xs"
-                  style={{ borderColor: '#E7E5E4', color: '#A8A29E' }}
+          {/* Mobile Header (sm:hidden) */}
+          <div className="flex flex-col gap-2.5 sm:hidden">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <h2
+                  className="text-base font-semibold tracking-tight"
+                  style={{ color: '#1C1917' }}
                 >
-                  <th className="py-2.5 px-4 font-medium">Name</th>
-                  <th className="py-2.5 px-4 font-medium">Email</th>
-                  <th className="py-2.5 px-4 font-medium">Service</th>
-                  <th className="py-2.5 px-4 font-medium">Stage</th>
-                  <th className="py-2.5 px-4 font-medium">Archived</th>
-                  <th className="py-2.5 px-4 font-medium text-right w-28"> </th>
-                </tr>
-              </thead>
-              <tbody>
+                  Archives
+                </h2>
+                {total > 0 ? (
+                  <span
+                    className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full tabular-nums"
+                    style={{ backgroundColor: '#F5F5F4', color: '#78716C' }}
+                  >
+                    {total}
+                  </span>
+                ) : null}
+              </div>
+              {isRefreshing && !isLoading ? (
+                <span
+                  className="crm-fade-enter inline-flex items-center gap-1.5 text-xs font-medium"
+                  style={{ color: '#A8A29E' }}
+                >
+                  <Spinner size="xs" color="#A8A29E" />
+                  Updating…
+                </span>
+              ) : null}
+            </div>
+
+            {/* Mobile Search Bar */}
+            <div className="relative w-full">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                style={{ color: '#A8A29E' }}
+              />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search archived inquiries…"
+                className="w-full rounded-xl border py-2.5 pl-9 pr-9 text-sm outline-none transition-shadow"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderColor: '#E7E5E4',
+                  color: '#1C1917',
+                }}
+              />
+              {search.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full text-stone-400 hover:text-stone-600"
+                  aria-label="Clear search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop Header (hidden sm:flex) */}
+          <div className="hidden sm:flex sm:items-center sm:justify-between gap-3">
+            <div className="flex min-w-0 items-baseline gap-2">
+              <h2
+                className="text-lg font-semibold tracking-tight"
+                style={{ color: '#1C1917' }}
+              >
+                Archives
+              </h2>
+              {total > 0 ? (
+                <span className="text-xs tabular-nums" style={{ color: '#A8A29E' }}>
+                  {total}
+                </span>
+              ) : null}
+            </div>
+
+            <label className="relative block w-full sm:w-64">
+              <Search
+                className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
+                style={{ color: '#A8A29E' }}
+              />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search archives…"
+                className="w-full rounded-lg border py-1.5 pl-8 pr-3 text-sm outline-none"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderColor: '#E7E5E4',
+                  color: '#1C1917',
+                }}
+              />
+            </label>
+          </div>
+
+          {banner ? (
+            <div
+              className="flex items-center gap-1.5 text-xs"
+              style={{ color: banner.kind === 'success' ? '#15803D' : '#B91C1C' }}
+              role="status"
+            >
+              {banner.kind === 'success' ? (
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              ) : null}
+              <span>{banner.message}</span>
+            </div>
+          ) : null}
+
+          {items.length === 0 ? (
+            <EmptyState
+              icon="inbox"
+              title={debouncedSearch ? 'No matches' : 'Archives empty'}
+              description={
+                debouncedSearch
+                  ? 'Try a different search term.'
+                  : 'Archived inquiries show up here. Restore puts them back on the board.'
+              }
+              compact
+            />
+          ) : (
+            <>
+              {/* Desktop Table View */}
+              <div
+                className="hidden sm:block rounded-2xl border overflow-hidden"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderColor: '#E7E5E4',
+                }}
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left min-w-[720px]">
+                    <thead>
+                      <tr
+                        className="border-b text-xs"
+                        style={{ borderColor: '#E7E5E4', color: '#A8A29E' }}
+                      >
+                        <th className="py-2.5 px-4 font-medium">Name</th>
+                        <th className="py-2.5 px-4 font-medium">Email</th>
+                        <th className="py-2.5 px-4 font-medium">Service</th>
+                        <th className="py-2.5 px-4 font-medium">Stage</th>
+                        <th className="py-2.5 px-4 font-medium">Archived</th>
+                        <th className="py-2.5 px-4 font-medium text-right w-28"> </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((req) => {
+                        const name = clientNameOf(req);
+                        const busy = restoringId === req.id;
+                        const archivedAt = req.deletedAt || req.updatedAt;
+
+                        return (
+                          <tr
+                            key={req.id}
+                            onClick={() => onSelectRequest(req)}
+                            className="border-b last:border-b-0 cursor-pointer crm-interactive"
+                            style={{
+                              borderColor: '#F5F5F4',
+                              opacity: busy ? 0.65 : 1,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#FAFAF9';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            <td className="py-2.5 px-4">
+                              <span
+                                className="block truncate text-sm font-medium max-w-[10rem]"
+                                style={{ color: '#1C1917' }}
+                              >
+                                {name}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-4">
+                              <span
+                                className="block truncate text-sm max-w-[12rem]"
+                                style={{ color: '#78716C' }}
+                              >
+                                {req.email || '—'}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-4">
+                              <span
+                                className="block truncate text-sm max-w-[10rem]"
+                                style={{ color: '#57534E' }}
+                              >
+                                {req.service || '—'}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-4">
+                              <RequestStatusBadge
+                                status={req.status}
+                                pipelineStatuses={pipelineStatuses}
+                              />
+                            </td>
+                            <td className="py-2.5 px-4">
+                              <span
+                                className="text-sm tabular-nums whitespace-nowrap"
+                                style={{ color: '#78716C' }}
+                              >
+                                {formatWhen(archivedAt)}
+                              </span>
+                            </td>
+                            <td
+                              className="py-2.5 px-4 text-right"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => setConfirmId(req.id)}
+                                className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium cursor-pointer disabled:opacity-50 hover:opacity-90"
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  borderColor: '#E7E5E4',
+                                  color: '#15803D',
+                                }}
+                              >
+                                {busy ? (
+                                  <>
+                                    <Spinner size="xs" />
+                                    …
+                                  </>
+                                ) : (
+                                  <>
+                                    <RotateCcw className="h-3 w-3" />
+                                    Restore
+                                  </>
+                                )}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Mobile Card List */}
+              <div className="space-y-3 sm:hidden">
                 {items.map((req) => {
                   const name = clientNameOf(req);
                   const busy = restoringId === req.id;
                   const archivedAt = req.deletedAt || req.updatedAt;
 
                   return (
-                    <tr
+                    <div
                       key={req.id}
                       onClick={() => onSelectRequest(req)}
-                      className="border-b last:border-b-0 cursor-pointer crm-interactive"
+                      className="crm-interactive relative rounded-2xl border p-4 transition-all active:scale-[0.99] cursor-pointer"
                       style={{
-                        borderColor: '#F5F5F4',
-                        opacity: busy ? 0.65 : 1,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#FAFAF9';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
+                        backgroundColor: '#FFFFFF',
+                        borderColor: '#E7E5E4',
+                        opacity: busy ? 0.6 : 1,
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                       }}
                     >
-                      <td className="py-2.5 px-4">
-                        <span
-                          className="block truncate text-sm font-medium max-w-[10rem]"
-                          style={{ color: '#1C1917' }}
+                      {/* Top row: Name & Stage Badge */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h3
+                            className="font-semibold text-base leading-tight truncate"
+                            style={{ color: '#1C1917' }}
+                          >
+                            {name}
+                          </h3>
+                          {req.service && (
+                            <div className="mt-1.5 flex items-center gap-2">
+                              <span
+                                className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border"
+                                style={{
+                                  backgroundColor: '#FAF9F6',
+                                  borderColor: '#E7E5E4',
+                                  color: '#1C1917',
+                                }}
+                              >
+                                {req.service}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="shrink-0">
+                          <RequestStatusBadge
+                            status={req.status}
+                            pipelineStatuses={pipelineStatuses}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Contact details */}
+                      {(req.email || req.phone) && (
+                        <div
+                          className="mt-3 grid grid-cols-1 gap-1.5 text-xs border-t pt-2.5"
+                          style={{ borderColor: '#F5F5F4' }}
                         >
-                          {name}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-4">
-                        <span
-                          className="block truncate text-sm max-w-[12rem]"
-                          style={{ color: '#78716C' }}
-                        >
-                          {req.email || '—'}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-4">
-                        <span
-                          className="block truncate text-sm max-w-[10rem]"
-                          style={{ color: '#57534E' }}
-                        >
-                          {req.service || '—'}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-4">
-                        <RequestStatusBadge
-                          status={req.status}
-                          pipelineStatuses={pipelineStatuses}
-                        />
-                      </td>
-                      <td className="py-2.5 px-4">
-                        <span
-                          className="text-sm tabular-nums whitespace-nowrap"
-                          style={{ color: '#78716C' }}
-                        >
-                          {formatWhen(archivedAt)}
-                        </span>
-                      </td>
-                      <td
-                        className="py-2.5 px-4 text-right"
-                        onClick={(e) => e.stopPropagation()}
+                          {req.email && (
+                            <div className="flex items-center gap-2 truncate">
+                              <Mail className="h-3.5 w-3.5 shrink-0" style={{ color: '#A8A29E' }} />
+                              <span className="truncate" style={{ color: '#78716C' }}>
+                                {req.email}
+                              </span>
+                            </div>
+                          )}
+                          {req.phone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-3.5 w-3.5 shrink-0" style={{ color: '#A8A29E' }} />
+                              <a
+                                href={`tel:${req.phone}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="font-medium hover:underline"
+                                style={{ color: '#44403C' }}
+                              >
+                                {req.phone}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Footer row: Archived date + Restore button */}
+                      <div
+                        className="mt-3 flex items-center justify-between pt-2.5 border-t text-xs"
+                        style={{ borderColor: '#F5F5F4' }}
                       >
+                        <div
+                          className="inline-flex items-center gap-1.5 font-medium tabular-nums"
+                          style={{ color: '#78716C' }}
+                        >
+                          <Calendar className="h-3.5 w-3.5 shrink-0 text-stone-400" />
+                          <span>Archived: {formatWhen(archivedAt)}</span>
+                        </div>
+
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => setConfirmId(req.id)}
-                          className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium cursor-pointer disabled:opacity-50 hover:opacity-90"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmId(req.id);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold cursor-pointer disabled:opacity-50 transition-all shadow-2xs -mr-1"
                           style={{
-                            backgroundColor: '#FFFFFF',
-                            borderColor: '#E7E5E4',
+                            backgroundColor: '#F0FDF4',
+                            borderColor: '#BBF7D0',
                             color: '#15803D',
                           }}
                         >
                           {busy ? (
                             <>
-                              <Spinner size="xs" />
-                              …
+                              <Spinner size="xs" color="#15803D" />
+                              <span>Restoring…</span>
                             </>
                           ) : (
                             <>
-                              <RotateCcw className="h-3 w-3" />
-                              Restore
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              <span>Restore</span>
                             </>
                           )}
                         </button>
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+              </div>
+            </>
+          )}
         </>
       )}
 

@@ -35,6 +35,23 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
   chartKey,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [mobileViewRange, setMobileViewRange] = useState<'all' | '6m'>('all');
+
+  // On mobile (< sm), allow 6M zoom for much wider, finger-friendly bars. On desktop (sm:), always show full trends.
+  const displayTrends = useMemo(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640 && mobileViewRange === '6m' && trends.length > 6) {
+      return trends.slice(-6);
+    }
+    return trends;
+  }, [trends, mobileViewRange]);
+
+  const displayPrevTrends = useMemo(() => {
+    if (!previousYearTrends) return null;
+    if (typeof window !== 'undefined' && window.innerWidth < 640 && mobileViewRange === '6m' && previousYearTrends.length > 6) {
+      return previousYearTrends.slice(-6);
+    }
+    return previousYearTrends;
+  }, [previousYearTrends, mobileViewRange]);
 
   const svgWidth = 720;
   const svgHeight = 248;
@@ -46,8 +63,8 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
   const plotH = svgHeight - padT - padB;
   const baselineY = padT + plotH;
 
-  const values = trends.map((t) => t.totalLeads);
-  const prevValues = previousYearTrends?.map((t) => t.totalLeads) ?? [];
+  const values = displayTrends.map((t) => t.totalLeads);
+  const prevValues = displayPrevTrends?.map((t) => t.totalLeads) ?? [];
   const avg =
     values.length > 0
       ? values.reduce((a, b) => a + b, 0) / values.length
@@ -62,19 +79,19 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
     );
   }, [maxVal]);
 
-  const n = Math.max(trends.length, 1);
+  const n = Math.max(displayTrends.length, 1);
   const slot = plotW / n;
-  const barW = Math.min(28, slot * 0.55);
+  const barW = Math.min(36, slot * 0.55);
 
-  const points = trends.map((d, i) => {
+  const points = displayTrends.map((d, i) => {
     const x = padL + slot * i + slot / 2;
     const y = baselineY - (d.totalLeads / maxVal) * plotH;
     return { x, y, val: d.totalLeads, label: d.monthName.slice(0, 3), raw: d, i };
   });
 
   const prevPoints =
-    previousYearTrends && previousYearTrends.length === trends.length
-      ? previousYearTrends.map((d, i) => {
+    displayPrevTrends && displayPrevTrends.length === displayTrends.length
+      ? displayPrevTrends.map((d, i) => {
           const x = padL + slot * i + slot / 2;
           const y = baselineY - (d.totalLeads / maxVal) * plotH;
           return { x, y, val: d.totalLeads };
@@ -99,9 +116,9 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
 
   const avgY = baselineY - (avg / maxVal) * plotH;
 
-  const hovered = hoveredIndex !== null ? points[hoveredIndex] : null;
+  const hovered = hoveredIndex !== null && hoveredIndex < points.length ? points[hoveredIndex] : null;
   const hoveredPrev =
-    hoveredIndex !== null && prevPoints ? prevPoints[hoveredIndex] : null;
+    hoveredIndex !== null && prevPoints && hoveredIndex < prevPoints.length ? prevPoints[hoveredIndex] : null;
 
   const tooltipAnchor = useMemo(() => {
     if (!hovered) return null;
@@ -133,97 +150,136 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
   return (
     <div key={chartKey} className="relative w-full">
       <div className="relative min-w-0 sm:min-w-[560px] sm:overflow-visible">
-        {/* Legend */}
-        <div
-          className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:mb-3 sm:gap-x-4"
-          style={{ color: '#A8A29E' }}
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="inline-block h-0.5 w-3 rounded-full"
-              style={{ backgroundColor: '#E02126' }}
-            />
-            Volume
-          </span>
-          {prevPoints && previousYear != null && (
+        {/* Legend + Mobile Range Controls */}
+        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 sm:mb-3">
+          <div
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:gap-x-4"
+            style={{ color: '#A8A29E' }}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="inline-block h-0.5 w-3 rounded-full"
+                style={{ backgroundColor: '#E02126' }}
+              />
+              Volume
+            </span>
+            {prevPoints && previousYear != null && (
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  className="inline-block h-px w-3 border-t border-dashed"
+                  style={{ borderColor: '#A8A29E' }}
+                />
+                {previousYear}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1.5">
               <span
                 className="inline-block h-px w-3 border-t border-dashed"
-                style={{ borderColor: '#A8A29E' }}
+                style={{ borderColor: '#D6D3D1' }}
               />
-              {previousYear}
+              Avg {avg > 0 ? avg.toFixed(avg >= 10 ? 0 : 1) : '0'}
             </span>
+          </div>
+
+          {/* Mobile-only 6M / 12M segmented toggle */}
+          {trends.length > 6 && (
+            <div className="flex items-center rounded-lg border p-0.5 text-[10px] font-semibold sm:hidden" style={{ borderColor: '#E7E5E4', backgroundColor: '#FAF9F6' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileViewRange('all');
+                  setHoveredIndex(null);
+                }}
+                className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${mobileViewRange === 'all' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-400'}`}
+              >
+                12M
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileViewRange('6m');
+                  setHoveredIndex(null);
+                }}
+                className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${mobileViewRange === '6m' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-400'}`}
+              >
+                6M
+              </button>
+            </div>
           )}
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="inline-block h-px w-3 border-t border-dashed"
-              style={{ borderColor: '#D6D3D1' }}
-            />
-            Avg {avg > 0 ? avg.toFixed(avg >= 10 ? 0 : 1) : '0'}
-          </span>
         </div>
 
-        {/* Mobile tap readout (floating tooltip is desktop-only) */}
-        {hovered && (
-          <div
-            className="crm-chart-tooltip mb-3 rounded-xl border px-3 py-2.5 sm:hidden"
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderColor: '#E7E5E4',
-              boxShadow: '0 8px 20px rgba(28, 25, 23, 0.08)',
-            }}
-          >
-            <div className="flex items-baseline justify-between gap-3">
-              <p
-                className="text-[11px] font-medium uppercase tracking-wide"
-                style={{ color: '#A8A29E' }}
-              >
-                {hovered.raw.monthName}
-              </p>
-              <p
-                className="text-lg font-semibold tabular-nums tracking-tight"
-                style={{ color: '#1C1917' }}
-              >
-                {hovered.val}
-                <span className="ml-1 text-xs font-normal" style={{ color: '#78716C' }}>
-                  leads
-                </span>
-              </p>
-            </div>
-            <div
-              className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px]"
-              style={{ color: '#78716C' }}
-            >
-              {momLabel && (
-                <span
-                  className="inline-flex items-center gap-0.5 font-semibold tabular-nums"
-                  style={{ color: momPositive ? '#15803D' : '#E02126' }}
+        {/* Mobile persistent readout (fixed-height, eliminates layout jumping when tapping months) */}
+        <div
+          className="mb-2.5 flex min-h-[52px] flex-col justify-center rounded-xl border px-3 py-1.5 transition-all duration-150 sm:hidden"
+          style={{
+            backgroundColor: hovered ? '#FFFFFF' : '#FAF9F6',
+            borderColor: hovered ? 'var(--crm-accent-primary, #E02126)' : '#E7E5E4',
+          }}
+        >
+          {hovered ? (
+            <div>
+              <div className="flex items-baseline justify-between gap-2">
+                <p
+                  className="text-[11px] font-bold uppercase tracking-wider"
+                  style={{ color: 'var(--crm-accent-primary, #E02126)' }}
                 >
-                  {momPositive ? (
-                    <TrendingUp className="h-3 w-3" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3" />
-                  )}
-                  {momLabel} MoM
-                </span>
-              )}
-              <span>
-                Won / lost{' '}
-                <span className="font-medium tabular-nums" style={{ color: '#1C1917' }}>
-                  {hovered.raw.wonLeads} · {hovered.raw.lostLeads}
-                </span>
-              </span>
-              {hoveredPrev && previousYear != null && (
-                <span>
-                  {previousYear}{' '}
-                  <span className="font-medium tabular-nums" style={{ color: '#1C1917' }}>
-                    {hoveredPrev.val}
+                  {hovered.raw.monthName} {hovered.raw.year}
+                </p>
+                <p
+                  className="text-base font-extrabold tabular-nums tracking-tight"
+                  style={{ color: '#1C1917' }}
+                >
+                  {hovered.val}
+                  <span className="ml-1 text-xs font-normal" style={{ color: '#78716C' }}>
+                    leads
                   </span>
+                </p>
+              </div>
+              <div
+                className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px]"
+                style={{ color: '#78716C' }}
+              >
+                {momLabel && (
+                  <span
+                    className="inline-flex items-center gap-0.5 font-semibold tabular-nums"
+                    style={{ color: momPositive ? '#15803D' : '#E02126' }}
+                  >
+                    {momPositive ? (
+                      <TrendingUp className="h-3 w-3" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3" />
+                    )}
+                    {momLabel} MoM
+                  </span>
+                )}
+                <span>
+                  Won/Lost:{' '}
+                  <strong className="font-semibold tabular-nums" style={{ color: '#1C1917' }}>
+                    {hovered.raw.wonLeads}·{hovered.raw.lostLeads}
+                  </strong>
                 </span>
-              )}
+                {hoveredPrev && previousYear != null && (
+                  <span>
+                    vs {previousYear}:{' '}
+                    <strong className="font-semibold tabular-nums" style={{ color: '#1C1917' }}>
+                      {hoveredPrev.val}
+                    </strong>
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="flex items-center justify-between text-[11px]" style={{ color: '#78716C' }}>
+              <span className="inline-flex items-center gap-1.5 font-medium">
+                <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#E02126' }} />
+                Tap any month below to inspect details
+              </span>
+              <span className="text-[10px] tabular-nums" style={{ color: '#A8A29E' }}>
+                Avg: {avg > 0 ? avg.toFixed(avg >= 10 ? 0 : 1) : '0'}/mo
+              </span>
+            </div>
+          )}
+        </div>
 
         <svg
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
@@ -345,10 +401,11 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
             return (
               <g
                 key={pt.raw.month}
-                className="cursor-pointer"
+                className="cursor-pointer touch-manipulation"
                 onMouseEnter={() => setHoveredIndex(i)}
                 onMouseLeave={clearHoverIfDesktop}
                 onClick={() => selectPoint(i)}
+                onTouchStart={() => selectPoint(i)}
               >
                 <rect
                   x={pt.x - slot / 2}

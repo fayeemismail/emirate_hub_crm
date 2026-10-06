@@ -741,9 +741,11 @@ export function useDashboardData({
     inquiryScopeReady,
     isDataLoading,
     isInitialLoading: isDataLoading && !hasLoadedOnce,
-    isRefreshing: isDataLoading && hasLoadedOnce,
-    /** True while Service Inquiries would otherwise flash the wrong (all-time) list. */
-    isInquiryListLoading: usingInquiryList && !inquiryScopeReady,
+    isRefreshing:
+      (isDataLoading && hasLoadedOnce) ||
+      (usingInquiryList && !inquiryScopeReady && hasLoadedOnce),
+    /** True while Service Inquiries would otherwise flash the wrong (all-time) list on initial load. */
+    isInquiryListLoading: usingInquiryList && !inquiryScopeReady && !hasLoadedOnce,
     loadBackendData,
     handleUpdateStatus,
     handleKanbanSync,

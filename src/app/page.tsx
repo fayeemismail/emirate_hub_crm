@@ -14,6 +14,7 @@ import { useCrmSettings } from '../hooks/useCrmSettings';
 import { getOrphanRequests } from '../lib/orphans';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
+import { MobileBottomNav } from '../components/MobileBottomNav';
 import { DashboardOverview } from '../components/Dashboard/Overview';
 import {
   ServiceRequestsView,
@@ -167,7 +168,7 @@ export default function Home() {
           onCreateLead={() => setIsSimulateModalOpen(true)}
         />
 
-        <main className="mx-auto w-full max-w-7xl flex-1 p-3 sm:p-6 lg:p-8">
+        <main className="mx-auto w-full max-w-7xl flex-1 p-3 pb-24 sm:p-6 sm:pb-6 lg:p-8">
           <PageEnter resetKey={activeTab} className="space-y-6">
           {activeTab === 'dashboard' && (
             <DashboardOverview
@@ -232,6 +233,14 @@ export default function Home() {
           </PageEnter>
         </main>
       </div>
+
+      <MobileBottomNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        pendingCount={navPendingCount}
+        onCreateLead={() => setIsSimulateModalOpen(true)}
+        onOpenMenu={() => setIsOpenMobileSidebar(true)}
+      />
 
       <RequestDetailModal
         request={selectedRequestModal}

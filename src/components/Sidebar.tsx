@@ -203,7 +203,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Bottom Actions & Profile */}
         <div 
-          className="p-4 border-t space-y-3"
+          className="hidden lg:block p-4 border-t space-y-3"
           style={{
             backgroundColor: 'var(--crm-header-bg, #FFFFFF)',
             borderColor: 'var(--crm-sidebar-border, #E7E5E4)',
