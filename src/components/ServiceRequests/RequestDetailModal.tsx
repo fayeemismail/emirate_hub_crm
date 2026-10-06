@@ -354,20 +354,23 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto crm-modal-backdrop"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto crm-modal-backdrop"
         style={{ backgroundColor: 'rgba(28, 25, 23, 0.28)' }}
         onClick={onClose}
       >
         <div
-          className="w-full max-w-2xl rounded-2xl my-auto crm-modal-panel"
+          className="w-full max-w-2xl rounded-t-3xl sm:rounded-2xl sm:my-auto crm-modal-panel max-h-[92vh] flex flex-col border-t sm:border-t-0 shadow-2xl overflow-hidden"
           style={{
             backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
+            borderColor: 'var(--crm-border-subtle, #E7E5E4)',
             boxShadow: '0 16px 40px rgba(28, 25, 23, 0.12)',
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="w-10 h-1 bg-stone-300 dark:bg-stone-600 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden shrink-0" />
+
           {/* Header */}
-          <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
+          <div className="flex items-start justify-between gap-3 px-5 pt-3.5 pb-3 sm:px-6 sm:pt-6 sm:pb-4 shrink-0">
             <div className="min-w-0 space-y-1.5">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <p className="text-sm" style={{ color: '#78716C' }}>
@@ -404,12 +407,12 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           </div>
 
           <div
-            className="mx-5 sm:mx-6 h-px"
+            className="mx-5 sm:mx-6 h-px shrink-0"
             style={{ backgroundColor: '#E7E5E4' }}
           />
 
           {/* Body */}
-          <div className="px-5 py-5 sm:px-6 space-y-5 max-h-[70vh] overflow-y-auto">
+          <div className="px-5 py-4 sm:px-6 sm:py-5 space-y-5 overflow-y-auto flex-1">
             {/*
               One 3-col grid so row1 (Name/Email/Phone) and row2 (Service/Status/Priority)
               share the same tracks. Email gets a slightly wider track (longer content).
@@ -805,7 +808,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           <form
             id="lead-note-form"
             onSubmit={handleAddNote}
-            className="flex items-center justify-between gap-3 px-5 py-4 sm:px-6 border-t"
+            className="flex items-center justify-between gap-3 px-5 py-3.5 sm:px-6 sm:py-4 border-t shrink-0 pb-[max(0.875rem,env(safe-area-inset-bottom))]"
             style={{ borderColor: '#E7E5E4' }}
           >
             {isArchived ? (

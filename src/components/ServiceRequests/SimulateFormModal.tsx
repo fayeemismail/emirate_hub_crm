@@ -175,24 +175,26 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto crm-modal-backdrop"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto crm-modal-backdrop"
       style={{ backgroundColor: '#1C191755' }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-2xl border bg-white my-auto crm-modal-panel"
+        className="w-full max-w-lg rounded-t-3xl sm:rounded-2xl border bg-white sm:my-auto crm-modal-panel max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
         style={{ borderColor: '#E7E5E4' }}
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="w-10 h-1 bg-stone-300 dark:bg-stone-600 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden shrink-0" />
+
         <div
-          className="flex items-center justify-between gap-3 border-b px-5 py-4"
+          className="flex items-center justify-between gap-3 border-b px-5 py-3.5 sm:py-4 shrink-0"
           style={{ borderColor: '#E7E5E4' }}
         >
           <div>
             <h3 className="text-base font-semibold tracking-tight" style={labelStyle}>
               Create lead
             </h3>
-            <p className="mt-0.5 text-sm" style={{ color: '#78716C' }}>
+            <p className="mt-0.5 text-xs sm:text-sm" style={{ color: '#78716C' }}>
               {IS_DEV
                 ? 'Dev mode — form is prefilled with mock data. Edit or submit as-is.'
                 : 'Add a production inquiry to the CRM pipeline.'}
@@ -202,7 +204,7 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-lg p-1.5 transition-colors hover:bg-[#F5F5F4] cursor-pointer"
+            className="rounded-lg p-1.5 transition-colors hover:bg-[#F5F5F4] cursor-pointer shrink-0"
             style={{ color: '#78716C' }}
           >
             <X className="h-4 w-4" />
@@ -231,7 +233,7 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
             description="Publish active emirateCorporateService documents in Sanity, then refresh."
           />
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5">
+          <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4 overflow-y-auto flex-1 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
             <div className="space-y-1.5">
               <label className="block text-sm font-medium" style={labelStyle}>
                 Service <span style={{ color: '#E02126' }}>*</span>
@@ -324,14 +326,14 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
             ) : null}
 
             <div
-              className="flex items-center justify-end gap-2 border-t pt-4"
+              className="grid grid-cols-2 gap-2.5 sm:flex sm:items-center sm:justify-end sm:gap-2 border-t pt-4"
               style={{ borderColor: '#E7E5E4' }}
             >
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="rounded-xl border px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors hover:bg-[#F5F5F4] disabled:opacity-50"
+                className="w-full sm:w-auto text-center rounded-xl border px-4 py-2.5 sm:py-2 text-sm font-medium cursor-pointer transition-colors hover:bg-[#F5F5F4] disabled:opacity-50"
                 style={{
                   borderColor: '#E7E5E4',
                   color: '#57534E',
@@ -343,7 +345,7 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting || !service}
-                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 sm:py-2 text-sm font-semibold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 style={{ backgroundColor: '#E02126' }}
               >
                 {isSubmitting ? (

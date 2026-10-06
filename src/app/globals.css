@@ -186,8 +186,25 @@
   animation: crm-fade-in var(--crm-dur-fast) var(--crm-ease-soft) both;
 }
 
+@keyframes crm-sheet-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0.95;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .crm-modal-panel {
   animation: crm-scale-in var(--crm-dur) var(--crm-ease-out) both;
+}
+
+@media (max-width: 639px) {
+  .crm-modal-panel {
+    animation: crm-sheet-in 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
 }
 
 /* Inline feedback / banners */
