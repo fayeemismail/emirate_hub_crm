@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Eye, EyeOff, UserPlus, Users } from 'lucide-react';
+import { Eye, EyeOff, Trash2, UserPlus, Users } from 'lucide-react';
 import { usersApi, UserProfile } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -56,7 +56,10 @@ export const TeamUsersSection: React.FC<TeamUsersSectionProps> = ({ onToast }) =
   const [creating, setCreating] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmToggle, setConfirmToggle] = useState<UserProfile | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<UserProfile | null>(null);
+  const canDeleteUsers = Boolean(me?.isProtected);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -180,6 +183,27 @@ export const TeamUsersSection: React.FC<TeamUsersSectionProps> = ({ onToast }) =
     }
   };
 
+  const applyDelete = async () => {
+    if (!confirmDelete) return;
+    const target = confirmDelete;
+    setDeletingId(target.id);
+    try {
+      await usersApi.deleteUser(target.id);
+      setUsers((prev) => prev.filter((u) => u.id !== target.id));
+      setConfirmDelete(null);
+      onToast?.({
+        kind: 'success',
+        message: `${target.name} permanently deleted.`,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Could not delete user.';
+      onToast?.({ kind: 'error', message });
+      throw err instanceof Error ? err : new Error(message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <>
       {loading ? (
@@ -233,8 +257,9 @@ export const TeamUsersSection: React.FC<TeamUsersSectionProps> = ({ onToast }) =
                   {users.map((u) => {
                     const isMe = u.id === me?.id;
                     const isProtected = Boolean(u.isProtected);
-                    const busy = togglingId === u.id;
+                    const busy = togglingId === u.id || deletingId === u.id;
                     const canToggle = !isMe && !isProtected;
+                    const canDelete = canDeleteUsers && !isMe && !isProtected;
                     return (
                       <tr
                         key={u.id}
@@ -289,31 +314,57 @@ export const TeamUsersSection: React.FC<TeamUsersSectionProps> = ({ onToast }) =
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-right">
-                          {isProtected ? (
+                          {isProtected && !canDelete ? (
                             <span className="text-[11px]" style={{ color: '#A8A29E' }}>
                               —
                             </span>
                           ) : (
-                            <button
-                              type="button"
-                              disabled={busy || !canToggle}
-                              onClick={() => setConfirmToggle(u)}
-                              title={
-                                isMe
-                                  ? 'You cannot deactivate your own account'
-                                  : u.isActive
-                                    ? 'Deactivate'
-                                    : 'Reactivate'
-                              }
-                              className="rounded-lg border px-3 py-2 text-xs font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-                              style={{
-                                borderColor: '#E7E5E4',
-                                color: u.isActive ? '#B91C1C' : '#15803D',
-                                backgroundColor: '#FFFFFF',
-                              }}
-                            >
-                              {busy ? '…' : u.isActive ? 'Deactivate' : 'Reactivate'}
-                            </button>
+                            <div className="inline-flex items-center justify-end gap-1.5">
+                              {!isProtected ? (
+                                <button
+                                  type="button"
+                                  disabled={busy || !canToggle}
+                                  onClick={() => setConfirmToggle(u)}
+                                  title={
+                                    isMe
+                                      ? 'You cannot deactivate your own account'
+                                      : u.isActive
+                                        ? 'Deactivate'
+                                        : 'Reactivate'
+                                  }
+                                  className="rounded-lg border px-3 py-2 text-xs font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                                  style={{
+                                    borderColor: '#E7E5E4',
+                                    color: u.isActive ? '#B91C1C' : '#15803D',
+                                    backgroundColor: '#FFFFFF',
+                                  }}
+                                >
+                                  {togglingId === u.id
+                                    ? '…'
+                                    : u.isActive
+                                      ? 'Deactivate'
+                                      : 'Reactivate'}
+                                </button>
+                              ) : null}
+                              {canDelete ? (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => setConfirmDelete(u)}
+                                  title="Permanently delete"
+                                  aria-label={`Delete ${u.name}`}
+                                  className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-2 text-xs font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                                  style={{
+                                    borderColor: '#FECACA',
+                                    color: '#B91C1C',
+                                    backgroundColor: '#FEF2F2',
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                  {deletingId === u.id ? '…' : 'Delete'}
+                                </button>
+                              ) : null}
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -433,6 +484,22 @@ export const TeamUsersSection: React.FC<TeamUsersSectionProps> = ({ onToast }) =
         }
         confirmText={confirmToggle?.isActive ? 'Deactivate' : 'Reactivate'}
         variant={confirmToggle?.isActive ? 'danger' : 'info'}
+      />
+
+      <ConfirmModal
+        isOpen={!!confirmDelete}
+        onClose={() => {
+          if (!deletingId) setConfirmDelete(null);
+        }}
+        onConfirm={applyDelete}
+        title="Delete admin permanently?"
+        message={
+          confirmDelete
+            ? `${confirmDelete.name} (${confirmDelete.email}) will be permanently removed. This cannot be undone.`
+            : 'This admin will be permanently removed. This cannot be undone.'
+        }
+        confirmText="Delete permanently"
+        variant="danger"
       />
     </>
   );

@@ -32,7 +32,7 @@ export interface UserProfile {
   email: string;
   role: string;
   isActive: boolean;
-  /** Protected primary admin — cannot be deactivated. */
+  /** Protected primary admin — cannot be deactivated/deleted; may delete other admins. */
   isProtected?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -428,6 +428,13 @@ export const usersApi = {
     return request<UserProfile>(`/v1/admin/users/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ isActive }),
+    });
+  },
+
+  /** Permanently delete an admin — protected admin only. */
+  deleteUser: async (id: string): Promise<ApiResponse<null>> => {
+    return request<null>(`/v1/admin/users/${id}`, {
+      method: 'DELETE',
     });
   },
 };
