@@ -85,8 +85,10 @@ export default function Home() {
     availableYears,
     serviceAnalytics,
     funnelAnalytics,
+    navPendingCount,
     isInitialLoading,
     isRefreshing,
+    isInquiryListLoading,
     loadBackendData,
     handleUpdateStatus,
     handleKanbanSync,
@@ -123,13 +125,6 @@ export default function Home() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  const pendingSlug =
-    defaultStatusSlug ||
-    pipelineStatuses.find((s) => s.isDefault)?.slug ||
-    pipelineStatuses[0]?.slug;
-  const pendingCount = pendingSlug
-    ? requests.filter((r) => r.status === pendingSlug).length
-    : 0;
   const orphanCount = useMemo(
     () => getOrphanRequests(requests, pipelineStatuses).length,
     [requests, pipelineStatuses]
@@ -160,7 +155,7 @@ export default function Home() {
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        pendingCount={pendingCount}
+        pendingCount={navPendingCount}
         orphanCount={orphanCount}
         isOpenMobile={isOpenMobileSidebar}
         setIsOpenMobile={setIsOpenMobileSidebar}
@@ -197,8 +192,8 @@ export default function Home() {
               leadsTotal={leadsTotal}
               pipelineStatuses={pipelineStatuses}
               catalogServices={catalogServices}
-              isLoading={isInitialLoading}
-              isRefreshing={isRefreshing}
+              isLoading={isInitialLoading || isInquiryListLoading}
+              isRefreshing={isRefreshing && !isInquiryListLoading}
               filters={inquiryFilters}
               onFiltersChange={onInquiryFiltersChange}
               onSelectRequest={(req) => setSelectedRequestModal(req)}

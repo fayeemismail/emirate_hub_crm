@@ -66,7 +66,12 @@ export function useDashboardData({
   onModalRequestUpdate,
 }: UseDashboardDataOptions) {
   const { lookbackDays, hydrated: settingsHydrated } = useCrmSettings();
-  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  /** All-time board (dashboard / orphans). Never clipped by lookback. */
+  const [allTimeRequests, setAllTimeRequests] = useState<ServiceRequest[]>([]);
+  /** Lookback (+ optional inquiry filters) list for Service Inquiries. */
+  const [inquiryRequests, setInquiryRequests] = useState<ServiceRequest[]>([]);
+  /** `lookbackDays` value that `inquiryRequests` was fetched with; null = not loaded. */
+  const [inquiryScopeDays, setInquiryScopeDays] = useState<number | null>(null);
   const [leadsTotal, setLeadsTotal] = useState(0);
   const [pipelineStatuses, setPipelineStatuses] = useState<PipelineStatus[]>([]);
   const [catalogServices, setCatalogServices] = useState<CatalogService[]>([]);
@@ -79,6 +84,50 @@ export function useDashboardData({
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const loadGen = useRef(0);
+  const applyLookbackRef = useRef(false);
+
+  const usingInquiryList =
+    inquiryQuery.applyLookback && lookbackDays > 0;
+  applyLookbackRef.current = usingInquiryList;
+
+  const inquiryScopeReady =
+    !usingInquiryList || inquiryScopeDays === lookbackDays;
+
+  const requests = usingInquiryList ? inquiryRequests : allTimeRequests;
+
+  const patchRequestEverywhere = useCallback(
+    (id: string, fn: (req: ServiceRequest) => ServiceRequest) => {
+      const map = (prev: ServiceRequest[]) =>
+        prev.map((req) => (req.id === id ? fn(req) : req));
+      setAllTimeRequests(map);
+      setInquiryRequests(map);
+    },
+    []
+  );
+
+  const removeRequestEverywhere = useCallback((id: string) => {
+    const filt = (prev: ServiceRequest[]) => prev.filter((req) => req.id !== id);
+    setAllTimeRequests(filt);
+    setInquiryRequests(filt);
+  }, []);
+
+  const syncIdsInto = (
+    prev: ServiceRequest[],
+    incoming: ServiceRequest[]
+  ): ServiceRequest[] => {
+    const byId = new Map(incoming.map((r) => [r.id, r]));
+    return prev.map((r) => byId.get(r.id) ?? r);
+  };
+
+  const replaceActiveRequests = useCallback((next: ServiceRequest[]) => {
+    if (applyLookbackRef.current) {
+      setInquiryRequests(next);
+      setAllTimeRequests((prev) => syncIdsInto(prev, next));
+    } else {
+      setAllTimeRequests(next);
+      setInquiryRequests((prev) => syncIdsInto(prev, next));
+    }
+  }, []);
 
   const loadBackendData = useCallback(async () => {
     if (!isAuthenticated || !settingsHydrated) return;
@@ -87,17 +136,47 @@ export function useDashboardData({
 
     const isTable = inquiryQuery.viewMode === 'table';
     const { sortBy, sortOrder } = tableSortToApi(inquiryQuery.tableSort);
-    // Lookback is Service Inquiries only — never clip dashboard analytics.
-    const inquiryLookbackDays =
-      inquiryQuery.applyLookback && lookbackDays > 0 ? lookbackDays : undefined;
-
+    const applyLookback = inquiryQuery.applyLookback && lookbackDays > 0;
     const search = inquiryQuery.search.trim();
     const service = inquiryQuery.service;
     const status = inquiryQuery.status;
+    const hasInquiryFilters =
+      Boolean(search) ||
+      service !== 'All' ||
+      (isTable && status !== 'All');
 
     try {
+      const workspaceLeadsPromise = leadsApi.getAdminLeads({ view: 'kanban' });
+
+      // Prefetch lookback list whenever Settings lookback is on, so the sidebar
+      // pill and Service Inquiries page share the same count (no 21→3 flash).
+      const lookbackBaselinePromise =
+        lookbackDays > 0
+          ? leadsApi.getAdminLeads({
+              view: 'kanban',
+              lookbackDays,
+              sortBy,
+              sortOrder,
+            })
+          : Promise.resolve(null);
+
+      const filteredInquiryPromise =
+        applyLookback && hasInquiryFilters
+          ? leadsApi.getAdminLeads({
+              view: 'kanban',
+              lookbackDays,
+              sortBy,
+              sortOrder,
+              ...(search ? { search } : {}),
+              ...(service !== 'All' ? { service } : {}),
+              ...(isTable && status !== 'All' ? { status } : {}),
+            })
+          : Promise.resolve(null);
+
       const [
-        leadsRes,
+        workspaceRes,
+        lookbackRes,
+        filteredRes,
         statusesRes,
         servicesCatalogRes,
         overviewRes,
@@ -106,17 +185,9 @@ export function useDashboardData({
         servicesRes,
         funnelRes,
       ] = await Promise.allSettled([
-        // Always use kanban (ungrouped full filtered set). List view rejects limit>100,
-        // which previously emptied the table when we asked for 500.
-        leadsApi.getAdminLeads({
-          view: 'kanban',
-          lookbackDays: inquiryLookbackDays,
-          sortBy,
-          sortOrder,
-          ...(search ? { search } : {}),
-          ...(service !== 'All' ? { service } : {}),
-          ...(isTable && status !== 'All' ? { status } : {}),
-        }),
+        workspaceLeadsPromise,
+        lookbackBaselinePromise,
+        filteredInquiryPromise,
         leadsApi.getLeadStatuses(),
         leadsApi.getLeadServices(),
         analyticsApi.getOverview(),
@@ -152,23 +223,54 @@ export function useDashboardData({
         setCatalogServices([]);
       }
 
-      if (leadsRes.status === 'fulfilled' && leadsRes.value?.data) {
-        const rawList = flattenLeadsPayload(leadsRes.value.data);
+      const mapLeads = (raw: unknown): ServiceRequest[] => {
+        const rawList = flattenLeadsPayload(
+          raw as LeadItem[] | Record<string, LeadItem[]> | null | undefined
+        );
         let mapped = rawList
           .map(leadToServiceRequest)
           .filter((req) => !req.isDeleted);
-        if (isTable) {
+        if (applyLookback && isTable) {
           mapped = sortRequestsForTable(
             mapped,
             inquiryQuery.tableSort,
             nextPipeline
           );
         }
-        setRequests(mapped);
-        setLeadsTotal(mapped.length);
+        return mapped;
+      };
+
+      if (workspaceRes.status === 'fulfilled' && workspaceRes.value?.data) {
+        setAllTimeRequests(mapLeads(workspaceRes.value.data));
       } else {
-        setRequests([]);
-        setLeadsTotal(0);
+        setAllTimeRequests([]);
+      }
+
+      if (lookbackDays > 0) {
+        const baseline =
+          lookbackRes.status === 'fulfilled' && lookbackRes.value?.data
+            ? mapLeads(lookbackRes.value.data)
+            : [];
+        const filtered =
+          filteredRes.status === 'fulfilled' && filteredRes.value?.data
+            ? mapLeads(filteredRes.value.data)
+            : null;
+        const nextInquiry = filtered ?? baseline;
+        setInquiryRequests(nextInquiry);
+        setInquiryScopeDays(lookbackDays);
+        if (applyLookback) {
+          setLeadsTotal(nextInquiry.length);
+        } else if (workspaceRes.status === 'fulfilled' && workspaceRes.value?.data) {
+          setLeadsTotal(mapLeads(workspaceRes.value.data).length);
+        }
+      } else {
+        const all =
+          workspaceRes.status === 'fulfilled' && workspaceRes.value?.data
+            ? mapLeads(workspaceRes.value.data)
+            : [];
+        setInquiryRequests(all);
+        setInquiryScopeDays(0);
+        setLeadsTotal(all.length);
       }
 
       if (overviewRes.status === 'fulfilled' && overviewRes.value?.data) {
@@ -192,7 +294,9 @@ export function useDashboardData({
     } catch (err) {
       if (gen !== loadGen.current) return;
       console.error('Failed to load live backend data:', err);
-      setRequests([]);
+      setAllTimeRequests([]);
+      setInquiryRequests([]);
+      setInquiryScopeDays(null);
       setLeadsTotal(0);
     } finally {
       if (gen === loadGen.current) {
@@ -247,10 +351,10 @@ export function useDashboardData({
         };
       };
 
-      setRequests((prev) => {
-        snapshot = prev.find((r) => r.id === id);
-        return prev.map((req) => (req.id === id ? applyLocal(req) : req));
-      });
+      snapshot = (applyLookbackRef.current ? inquiryRequests : allTimeRequests).find(
+        (r) => r.id === id
+      );
+      patchRequestEverywhere(id, applyLocal);
 
       if (onModalRequestUpdate) {
         onModalRequestUpdate((prev) => (prev?.id === id ? applyLocal(prev) : prev));
@@ -280,9 +384,7 @@ export function useDashboardData({
               statusChangedAt: mapped.statusChangedAt || current?.statusChangedAt || nowIso,
             };
           };
-          setRequests((prev) =>
-            prev.map((req) => (req.id === id ? mergeHistory(req) : req))
-          );
+          patchRequestEverywhere(id, (req) => mergeHistory(req));
           if (onModalRequestUpdate) {
             onModalRequestUpdate((prev) =>
               prev?.id === id ? mergeHistory(prev) : prev
@@ -295,7 +397,7 @@ export function useDashboardData({
         console.warn(`Could not sync status to backend for lead ${id}:`, message);
         if (snapshot) {
           const rollback = snapshot;
-          setRequests((prev) => prev.map((req) => (req.id === id ? rollback : req)));
+          patchRequestEverywhere(id, () => rollback);
           if (onModalRequestUpdate) {
             onModalRequestUpdate((prev) => (prev?.id === id ? rollback : prev));
           }
@@ -303,7 +405,7 @@ export function useDashboardData({
         return false;
       }
     },
-    [onModalRequestUpdate]
+    [allTimeRequests, inquiryRequests, onModalRequestUpdate, patchRequestEverywhere]
   );
 
   const handleKanbanSync = useCallback(
@@ -330,7 +432,7 @@ export function useDashboardData({
         };
       });
 
-      setRequests(enriched);
+      replaceActiveRequests(enriched);
       if (onModalRequestUpdate) {
         onModalRequestUpdate((modal) => {
           if (!modal) return modal;
@@ -367,33 +469,24 @@ export function useDashboardData({
           results.filter((r): r is ServiceRequest => Boolean(r)).map((r) => [r.id, r])
         );
         if (byId.size > 0) {
-          setRequests((prev) =>
-            prev.map((req) => {
-              const mapped = byId.get(req.id);
-              if (!mapped) return req;
-              const apiHistory = mapped.statusHistory || [];
-              const localHistory = req.statusHistory || [];
-              return {
-                ...mapped,
-                statusHistory:
-                  apiHistory.length >= localHistory.length ? apiHistory : localHistory,
-                statusChangedAt: mapped.statusChangedAt || req.statusChangedAt,
-              };
-            })
-          );
+          const mergeMapped = (req: ServiceRequest): ServiceRequest => {
+            const mapped = byId.get(req.id);
+            if (!mapped) return req;
+            const apiHistory = mapped.statusHistory || [];
+            const localHistory = req.statusHistory || [];
+            return {
+              ...mapped,
+              statusHistory:
+                apiHistory.length >= localHistory.length ? apiHistory : localHistory,
+              statusChangedAt: mapped.statusChangedAt || req.statusChangedAt,
+            };
+          };
+          setAllTimeRequests((prev) => prev.map(mergeMapped));
+          setInquiryRequests((prev) => prev.map(mergeMapped));
           if (onModalRequestUpdate) {
             onModalRequestUpdate((modal) => {
               if (!modal) return modal;
-              const mapped = byId.get(modal.id);
-              if (!mapped) return modal;
-              const apiHistory = mapped.statusHistory || [];
-              const localHistory = modal.statusHistory || [];
-              return {
-                ...mapped,
-                statusHistory:
-                  apiHistory.length >= localHistory.length ? apiHistory : localHistory,
-                statusChangedAt: mapped.statusChangedAt || modal.statusChangedAt,
-              };
+              return mergeMapped(modal);
             });
           }
         }
@@ -401,7 +494,7 @@ export function useDashboardData({
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         console.warn('Kanban sync failed, rolling back:', message);
-        setRequests(previousRequests);
+        replaceActiveRequests(previousRequests);
         if (onModalRequestUpdate) {
           onModalRequestUpdate((modal) => {
             if (!modal) return modal;
@@ -411,18 +504,15 @@ export function useDashboardData({
         return false;
       }
     },
-    [onModalRequestUpdate]
+    [onModalRequestUpdate, replaceActiveRequests]
   );
 
   const handleUpdatePriority = useCallback(
     async (id: string, newPriority: RequestPriority) => {
-      let snapshot: ServiceRequest | undefined;
-      setRequests((prev) => {
-        snapshot = prev.find((r) => r.id === id);
-        return prev.map((req) =>
-          req.id === id ? { ...req, priority: newPriority } : req
-        );
-      });
+      const snapshot = (applyLookbackRef.current ? inquiryRequests : allTimeRequests).find(
+        (r) => r.id === id
+      );
+      patchRequestEverywhere(id, (req) => ({ ...req, priority: newPriority }));
 
       if (onModalRequestUpdate) {
         onModalRequestUpdate((prev) =>
@@ -442,7 +532,7 @@ export function useDashboardData({
         console.warn(`Could not sync priority to backend for lead ${id}:`, message);
         if (snapshot) {
           const rollback = snapshot;
-          setRequests((prev) => prev.map((req) => (req.id === id ? rollback : req)));
+          patchRequestEverywhere(id, () => rollback);
           if (onModalRequestUpdate) {
             onModalRequestUpdate((prev) => (prev?.id === id ? rollback : prev));
           }
@@ -450,16 +540,15 @@ export function useDashboardData({
         return false;
       }
     },
-    [onModalRequestUpdate]
+    [allTimeRequests, inquiryRequests, onModalRequestUpdate, patchRequestEverywhere]
   );
 
   const handleDeleteRequest = useCallback(
     async (id: string) => {
-      let snapshot: ServiceRequest | undefined;
-      setRequests((prev) => {
-        snapshot = prev.find((req) => req.id === id);
-        return prev.filter((req) => req.id !== id);
-      });
+      const snapshot = (applyLookbackRef.current ? inquiryRequests : allTimeRequests).find(
+        (req) => req.id === id
+      );
+      removeRequestEverywhere(id);
       setLeadsTotal((t) => Math.max(0, t - 1));
 
       if (onModalRequestUpdate) {
@@ -478,10 +567,12 @@ export function useDashboardData({
         const message = err instanceof Error ? err.message : String(err);
         if (snapshot) {
           const rollback = snapshot;
-          setRequests((prev) => {
+          const restore = (prev: ServiceRequest[]) => {
             if (prev.some((req) => req.id === id)) return prev;
             return [...prev, rollback].sort(sortByCreatedAtDesc);
-          });
+          };
+          setAllTimeRequests(restore);
+          setInquiryRequests(restore);
           setLeadsTotal((t) => t + 1);
           if (onModalRequestUpdate) {
             onModalRequestUpdate((prev) => (prev?.id === id ? rollback : prev ?? rollback));
@@ -490,7 +581,13 @@ export function useDashboardData({
         throw new Error(message || 'Could not archive inquiry. Try again.');
       }
     },
-    [loadBackendData, onModalRequestUpdate]
+    [
+      allTimeRequests,
+      inquiryRequests,
+      loadBackendData,
+      onModalRequestUpdate,
+      removeRequestEverywhere,
+    ]
   );
 
   const handleRestoreRequest = useCallback(
@@ -527,15 +624,13 @@ export function useDashboardData({
 
       let snapshot: ServiceRequest | undefined;
 
-      setRequests((prev) => {
-        snapshot = prev.find((req) => req.id === id);
-        return prev.map((req) => {
-          if (req.id === id) {
-            return { ...req, notes: [...(req.notes || []), optimisticNote] };
-          }
-          return req;
-        });
-      });
+      snapshot = (applyLookbackRef.current ? inquiryRequests : allTimeRequests).find(
+        (req) => req.id === id
+      );
+      patchRequestEverywhere(id, (req) => ({
+        ...req,
+        notes: [...(req.notes || []), optimisticNote],
+      }));
 
       if (onModalRequestUpdate) {
         onModalRequestUpdate((prev) => {
@@ -555,9 +650,7 @@ export function useDashboardData({
           res.data?.notes,
           res.data?.updatedAt
         );
-        setRequests((prev) =>
-          prev.map((req) => (req.id === id ? { ...req, notes: savedNotes } : req))
-        );
+        patchRequestEverywhere(id, (req) => ({ ...req, notes: savedNotes }));
         if (onModalRequestUpdate) {
           onModalRequestUpdate((prev) =>
             prev?.id === id ? { ...prev, notes: savedNotes } : prev
@@ -568,7 +661,7 @@ export function useDashboardData({
         console.warn(`Could not sync note to backend for lead ${id}:`, message);
         if (snapshot) {
           const rollback = snapshot;
-          setRequests((prev) => prev.map((req) => (req.id === id ? rollback : req)));
+          patchRequestEverywhere(id, () => rollback);
           if (onModalRequestUpdate) {
             onModalRequestUpdate((prev) => (prev?.id === id ? rollback : prev));
           }
@@ -576,7 +669,7 @@ export function useDashboardData({
         throw err;
       }
     },
-    [onModalRequestUpdate]
+    [allTimeRequests, inquiryRequests, onModalRequestUpdate, patchRequestEverywhere]
   );
 
   const handleSubmitNewRequest = useCallback(
@@ -609,12 +702,28 @@ export function useDashboardData({
         ...res.data,
         source: 'manual',
       });
-      setRequests((prev) => [mappedNewLead, ...prev].sort(sortByCreatedAtDesc));
+      const prepend = (prev: ServiceRequest[]) =>
+        [mappedNewLead, ...prev].sort(sortByCreatedAtDesc);
+      setAllTimeRequests(prepend);
+      setInquiryRequests(prepend);
       setLeadsTotal((t) => t + 1);
       loadBackendData();
     },
     [loadBackendData]
   );
+
+  const pendingSlug =
+    defaultStatusSlug ||
+    pipelineStatuses.find((s) => s.isDefault)?.slug ||
+    pipelineStatuses[0]?.slug ||
+    '';
+
+  /** Sidebar pill: pending in the Settings lookback window (matches Service Inquiries). */
+  const navPendingCount = pendingSlug
+    ? (lookbackDays > 0 ? inquiryRequests : allTimeRequests).filter(
+        (r) => r.status === pendingSlug
+      ).length
+    : 0;
 
   return {
     requests,
@@ -628,9 +737,13 @@ export function useDashboardData({
     availableYears,
     serviceAnalytics,
     funnelAnalytics,
+    navPendingCount,
+    inquiryScopeReady,
     isDataLoading,
     isInitialLoading: isDataLoading && !hasLoadedOnce,
     isRefreshing: isDataLoading && hasLoadedOnce,
+    /** True while Service Inquiries would otherwise flash the wrong (all-time) list. */
+    isInquiryListLoading: usingInquiryList && !inquiryScopeReady,
     loadBackendData,
     handleUpdateStatus,
     handleKanbanSync,

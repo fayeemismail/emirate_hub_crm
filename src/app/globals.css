@@ -335,6 +335,81 @@ a.crm-interactive:active {
   transform: translateY(-2px);
 }
 
+/* Trends chart draw-in / stagger */
+@keyframes crm-chart-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes crm-chart-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes crm-chart-bar-in {
+  from {
+    opacity: 0;
+    transform: scaleY(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes crm-chart-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.crm-chart-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: crm-chart-draw 720ms var(--crm-ease-out) both;
+}
+
+.crm-chart-line-prev {
+  opacity: 0;
+  animation: crm-chart-fade-in 480ms var(--crm-ease-out) both;
+  animation-delay: 180ms;
+}
+
+.crm-chart-area {
+  opacity: 0;
+  animation: crm-chart-fade-in 480ms var(--crm-ease-out) both;
+  animation-delay: 280ms;
+}
+
+.crm-chart-fade {
+  opacity: 0;
+  animation: crm-chart-fade-in 360ms var(--crm-ease-out) both;
+}
+
+.crm-chart-bar {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: crm-chart-bar-in 420ms var(--crm-ease-out) both;
+  animation-delay: calc(var(--crm-item-i, 0) * 28ms + 40ms);
+}
+
+.crm-chart-tooltip {
+  animation: crm-chart-tooltip-in 160ms var(--crm-ease-out) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .crm-skeleton::after {
     animation: none;
@@ -355,8 +430,24 @@ a.crm-interactive:active {
   .crm-tab-indicator,
   .crm-expand-enter,
   .crm-expand-enter .crm-expand-item,
-  .crm-stagger > * {
+  .crm-stagger > *,
+  .crm-chart-line,
+  .crm-chart-line-prev,
+  .crm-chart-area,
+  .crm-chart-fade,
+  .crm-chart-bar,
+  .crm-chart-tooltip {
     animation: none !important;
+  }
+
+  .crm-chart-line {
+    stroke-dashoffset: 0;
+  }
+
+  .crm-chart-area,
+  .crm-chart-fade,
+  .crm-chart-line-prev {
+    opacity: 1;
   }
 
   .crm-interactive,

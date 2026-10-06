@@ -14,6 +14,7 @@ import { CustomSelect } from '../ui/CustomSelect';
 import { Spinner, ChartSkeleton } from '../ui/loading';
 import { EmptyState } from '../ui/EmptyState';
 import { Enter } from '../ui/motion';
+import { TrendsChart } from './TrendsChart';
 
 interface MessagesGraphProps {
   monthlyTrends?: MonthlyTrendsResponse | null;
@@ -48,8 +49,9 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
   const [currentTrends, setCurrentTrends] = useState<MonthlyTrendsResponse | null>(
     initialMonthlyTrends || null
   );
+  const [previousYearTrends, setPreviousYearTrends] =
+    useState<MonthlyTrendsResponse | null>(null);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   // Keep selection valid when BE years arrive / refresh.
   useEffect(() => {
@@ -69,13 +71,46 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     }
   }, [initialMonthlyTrends, selectedYear, selectedService, currentYear]);
 
-  const handleYearChange = async (year: number) => {
-    setSelectedYear(year);
+  // Prior-year compare layer (same service filter).
+  useEffect(() => {
+    let cancelled = false;
+    const prevYear = selectedYear - 1;
+    const years = availableYears?.years;
+    const prevYearKnown = !years?.length || years.includes(prevYear);
+
+    if (!prevYearKnown) {
+      setPreviousYearTrends(null);
+      return;
+    }
+
+    (async () => {
+      try {
+        const res = await analyticsApi.getMonthlyTrends({
+          year: prevYear,
+          service: selectedService !== 'all' ? selectedService : undefined,
+        });
+        if (!cancelled && res.data) {
+          setPreviousYearTrends(res.data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Failed to load previous-year trends:', err);
+          setPreviousYearTrends(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedYear, selectedService, availableYears?.years]);
+
+  const loadTrends = async (year: number, service: string) => {
     setIsFilterLoading(true);
     try {
       const res = await analyticsApi.getMonthlyTrends({
         year,
-        service: selectedService !== 'all' ? selectedService : undefined,
+        service: service !== 'all' ? service : undefined,
       });
       if (res.data) setCurrentTrends(res.data);
     } catch (err) {
@@ -85,20 +120,14 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     }
   };
 
+  const handleYearChange = async (year: number) => {
+    setSelectedYear(year);
+    await loadTrends(year, selectedService);
+  };
+
   const handleServiceChange = async (service: string) => {
     setSelectedService(service);
-    setIsFilterLoading(true);
-    try {
-      const res = await analyticsApi.getMonthlyTrends({
-        year: selectedYear,
-        service: service !== 'all' ? service : undefined,
-      });
-      if (res.data) setCurrentTrends(res.data);
-    } catch (err) {
-      console.error('Failed to load filtered monthly trends:', err);
-    } finally {
-      setIsFilterLoading(false);
-    }
+    await loadTrends(selectedYear, service);
   };
 
   const trendsData = useMemo(() => {
@@ -116,34 +145,14 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
       lostLeads: 0,
       inProgressLeads: 0,
       winRatePercentage: 0,
-      momChangePercentage: 0,
+      momChangePercentage: 0 as number | null,
       statusBreakdown: {},
     }));
   }, [currentTrends, selectedYear]);
 
-  const totalYearVolume = currentTrends?.totalYearLeads ?? trendsData.reduce((acc, t) => acc + t.totalLeads, 0);
-  const maxVal = Math.max(...trendsData.map((d) => d.totalLeads), 5);
-
-  const svgWidth = 720;
-  const svgHeight = 200;
-  const paddingX = 28;
-  const paddingY = 24;
-
-  const points = trendsData.map((d, i) => {
-    const val = d.totalLeads;
-    const x = paddingX + (i / (trendsData.length - 1)) * (svgWidth - 2 * paddingX);
-    const y = svgHeight - paddingY - (val / maxVal) * (svgHeight - 2 * paddingY);
-    return { x, y, val, label: d.monthName.slice(0, 3), raw: d };
-  });
-
-  const pathD = points.reduce((acc, pt, i) => {
-    return i === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`;
-  }, '');
-
-  const areaD =
-    points.length > 0
-      ? `${pathD} L ${points[points.length - 1].x} ${svgHeight - paddingY} L ${points[0].x} ${svgHeight - paddingY} Z`
-      : '';
+  const totalYearVolume =
+    currentTrends?.totalYearLeads ??
+    trendsData.reduce((acc, t) => acc + t.totalLeads, 0);
 
   const peakMonth = useMemo(() => {
     if (!trendsData.length) return null;
@@ -151,6 +160,12 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
       cur.totalLeads > best.totalLeads ? cur : best
     );
   }, [trendsData]);
+
+  const compareYear = selectedYear - 1;
+  const showPreviousYear =
+    !!previousYearTrends?.trends?.length &&
+    (previousYearTrends.totalYearLeads ?? 0) > 0 &&
+    previousYearTrends.trends.length === trendsData.length;
 
   const availableServices = useMemo(() => {
     if (!serviceAnalytics?.services) return [];
@@ -177,6 +192,8 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
     ],
     [availableServices]
   );
+
+  const chartKey = `${selectedYear}-${selectedService}-${totalYearVolume}`;
 
   if (isLoading) {
     return <ChartSkeleton />;
@@ -281,6 +298,15 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                   <span style={{ color: '#78716C' }}>
                     {peakMonth.monthName} · {peakMonth.totalLeads}
                   </span>
+                  {showPreviousYear && (
+                    <>
+                      {' '}
+                      · vs {compareYear}{' '}
+                      <span style={{ color: '#78716C' }}>
+                        {previousYearTrends?.totalYearLeads ?? 0} total
+                      </span>
+                    </>
+                  )}
                 </p>
               )}
             </div>
@@ -307,118 +333,23 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
             </div>
           </div>
 
-          <div className="relative w-full overflow-x-auto">
-            <div className="relative min-w-[520px]">
-              {totalYearVolume === 0 ? (
-                <EmptyState
-                  compact
-                  icon="chart"
-                  title="No trend data for this year"
-                  description="Monthly volume will show once leads are created."
-                />
-              ) : (
-              <svg
-                viewBox={`0 0 ${svgWidth} ${svgHeight + 28}`}
-                className="w-full h-auto overflow-visible"
-              >
-                <defs>
-                  <linearGradient id="trendsFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#E02126" stopOpacity="0.28" />
-                    <stop offset="100%" stopColor="#E02126" stopOpacity="0.02" />
-                  </linearGradient>
-                </defs>
-
-                {/* Soft baseline */}
-                <line
-                  x1={paddingX}
-                  y1={svgHeight - paddingY}
-                  x2={svgWidth - paddingX}
-                  y2={svgHeight - paddingY}
-                  stroke="#E7E5E4"
-                  strokeWidth="1"
-                />
-
-                {/* Hover band */}
-                {hoveredIndex !== null && (
-                  <rect
-                    x={points[hoveredIndex].x - (svgWidth - 2 * paddingX) / trendsData.length / 2}
-                    y={paddingY - 8}
-                    width={(svgWidth - 2 * paddingX) / trendsData.length}
-                    height={svgHeight - 2 * paddingY + 16}
-                    fill="rgba(224, 33, 38, 0.06)"
-                    rx="4"
-                  />
-                )}
-
-                {/* Area under curve */}
-                <path d={areaD} fill="url(#trendsFill)" />
-
-                {/* Line */}
-                <path
-                  d={pathD}
-                  fill="none"
-                  stroke="#E02126"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-
-                {/* Points + month labels */}
-                {points.map((pt, i) => {
-                  const active = hoveredIndex === i;
-                  const isPeak = peakMonth && pt.raw.month === peakMonth.month && pt.val > 0;
-                  return (
-                    <g
-                      key={i}
-                      className="cursor-pointer"
-                      onMouseEnter={() => setHoveredIndex(i)}
-                      onMouseLeave={() => setHoveredIndex(null)}
-                    >
-                      {/* Invisible hit area */}
-                      <rect
-                        x={pt.x - 16}
-                        y={paddingY - 8}
-                        width={32}
-                        height={svgHeight - 2 * paddingY + 40}
-                        fill="transparent"
-                      />
-                      <circle
-                        cx={pt.x}
-                        cy={pt.y}
-                        r={active ? 5.5 : isPeak ? 4.5 : 3.5}
-                        fill={active || isPeak ? '#E02126' : '#FFFFFF'}
-                        stroke="#E02126"
-                        strokeWidth="2"
-                      />
-                      {active && (
-                        <text
-                          x={pt.x}
-                          y={pt.y - 14}
-                          textAnchor="middle"
-                          fontSize="11"
-                          fontWeight="600"
-                          fill="#1C1917"
-                        >
-                          {pt.val}
-                        </text>
-                      )}
-                      <text
-                        x={pt.x}
-                        y={svgHeight + 12}
-                        textAnchor="middle"
-                        fontSize="11"
-                        fontWeight={active ? '600' : '400'}
-                        fill={active ? '#1C1917' : '#A8A29E'}
-                      >
-                        {pt.label}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-              )}
-            </div>
-          </div>
+          {totalYearVolume === 0 ? (
+            <EmptyState
+              compact
+              icon="chart"
+              title="No trend data for this year"
+              description="Monthly volume will show once leads are created."
+            />
+          ) : (
+            <TrendsChart
+              trends={trendsData}
+              previousYearTrends={
+                showPreviousYear ? previousYearTrends!.trends : null
+              }
+              previousYear={showPreviousYear ? compareYear : null}
+              chartKey={chartKey}
+            />
+          )}
         </div>
       )}
 
