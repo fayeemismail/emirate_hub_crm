@@ -3,7 +3,9 @@
  * Enterprise REST client with authentication headers, cookie support, and typed endpoints.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Prefer same-origin `/api` (Next rewrite → backend) so LAN/phone login works.
+// Absolute localhost URLs break on other devices — they hit the phone, not your machine.
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -389,7 +391,7 @@ export const authApi = {
 
   checkHealth: async (): Promise<boolean> => {
     try {
-      const res = await fetch(`${API_BASE.replace('/api', '')}/health`);
+      const res = await fetch(`${API_BASE}/health`);
       return res.ok;
     } catch {
       return false;
