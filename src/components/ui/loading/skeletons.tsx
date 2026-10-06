@@ -7,49 +7,65 @@ export const PageHeaderSkeleton: React.FC<{
   withSubtitle?: boolean;
   withAction?: boolean;
 }> = ({ withSubtitle = true, withAction = false }) => (
-  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
     <div className="space-y-2">
-      <Skeleton className="h-5 w-40" rounded="md" />
-      {withSubtitle ? <Skeleton className="h-3.5 w-56" rounded="md" /> : null}
+      <Skeleton className="h-5 w-36 sm:w-40" rounded="md" />
+      {withSubtitle ? (
+        <Skeleton className="h-3.5 w-48 sm:w-56" rounded="md" />
+      ) : null}
     </div>
-    {withAction ? <Skeleton className="h-9 w-40" rounded="lg" /> : null}
+    {withAction ? (
+      <Skeleton className="h-10 w-full sm:h-9 sm:w-40" rounded="lg" />
+    ) : null}
   </div>
 );
 
-export const ToolbarSkeleton: React.FC<{ controls?: number }> = ({ controls = 4 }) => (
-  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <Skeleton className="h-9 w-full sm:max-w-xs" rounded="lg" />
-    <div className="flex flex-wrap items-center gap-2">
-      {Array.from({ length: controls }).map((_, i) => (
-        <Skeleton
-          key={i}
-          className="h-9"
-          rounded="lg"
-          style={{ width: i === controls - 1 ? 88 : 132 }}
-        />
-      ))}
+export const ToolbarSkeleton: React.FC<{ controls?: number }> = ({ controls = 4 }) => {
+  const mobileCount = Math.min(2, controls);
+  return (
+    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+      <Skeleton className="h-10 w-full sm:h-9 sm:max-w-xs" rounded="lg" />
+
+      {/* Mobile: two equal chips */}
+      <div className="grid grid-cols-2 gap-2 sm:hidden">
+        {Array.from({ length: mobileCount }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" rounded="lg" />
+        ))}
+      </div>
+
+      {/* Desktop: full control row (unchanged) */}
+      <div className="hidden flex-wrap items-center gap-2 sm:flex">
+        {Array.from({ length: controls }).map((_, i) => (
+          <Skeleton
+            key={i}
+            className="h-9"
+            rounded="lg"
+            style={{ width: i === controls - 1 ? 88 : 132 }}
+          />
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const MetricsSkeleton: React.FC = () => (
-  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-5">
     {Array.from({ length: 5 }).map((_, i) => (
-      <SkeletonPanel key={i} className="p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <Skeleton className="h-3 w-24" rounded="md" />
+      <SkeletonPanel key={i} className="p-4 sm:p-5">
+        <div className="mb-3 flex items-center justify-between sm:mb-4">
+          <Skeleton className="h-3 w-20 sm:w-24" rounded="md" />
           <Skeleton className="h-8 w-8" rounded="xl" />
         </div>
-        <Skeleton className="h-8 w-16" rounded="md" />
-        <Skeleton className="mt-2 h-3 w-28" rounded="md" />
+        <Skeleton className="h-7 w-14 sm:h-8 sm:w-16" rounded="md" />
+        <Skeleton className="mt-2 h-3 w-24 sm:w-28" rounded="md" />
       </SkeletonPanel>
     ))}
   </div>
 );
 
 export const ChartSkeleton: React.FC = () => (
-  <SkeletonPanel className="space-y-6 px-5 py-5 sm:px-6 sm:py-6">
-    <div className="flex items-center justify-between gap-3">
+  <SkeletonPanel className="space-y-5 px-4 py-4 sm:space-y-6 sm:px-6 sm:py-6">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <Skeleton className="h-4 w-24" rounded="md" />
       <div className="flex gap-2">
         <Skeleton className="h-8 w-16" rounded="lg" />
@@ -57,25 +73,25 @@ export const ChartSkeleton: React.FC = () => (
         <Skeleton className="h-8 w-16" rounded="lg" />
       </div>
     </div>
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
       <div className="space-y-2">
         <Skeleton className="h-3 w-28" rounded="md" />
-        <Skeleton className="h-9 w-24" rounded="md" />
+        <Skeleton className="h-8 w-20 sm:h-9 sm:w-24" rounded="md" />
       </div>
-      <div className="flex gap-2">
-        <Skeleton className="h-9 w-36" rounded="lg" />
-        <Skeleton className="h-9 w-24" rounded="lg" />
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
+        <Skeleton className="h-10 w-full sm:h-9 sm:w-36" rounded="lg" />
+        <Skeleton className="h-10 w-full sm:h-9 sm:w-24" rounded="lg" />
       </div>
     </div>
     <div
-      className="relative h-52 w-full overflow-hidden rounded-xl"
+      className="relative h-40 w-full overflow-hidden rounded-xl sm:h-52"
       style={{ backgroundColor: '#FAF9F6' }}
     >
-      <div className="absolute inset-x-4 bottom-4 flex h-36 items-end gap-2">
+      <div className="absolute inset-x-3 bottom-3 flex h-28 items-end gap-1.5 sm:inset-x-4 sm:bottom-4 sm:h-36 sm:gap-2">
         {[40, 65, 45, 80, 55, 70, 50, 75, 60, 85, 48, 72].map((h, i) => (
           <Skeleton
             key={i}
-            className="flex-1"
+            className={`flex-1 ${i >= 6 ? 'hidden sm:block' : ''}`}
             rounded="md"
             style={{ height: `${h}%` }}
           />
@@ -86,22 +102,22 @@ export const ChartSkeleton: React.FC = () => (
 );
 
 export const RecentInquiriesSkeleton: React.FC = () => (
-  <SkeletonPanel className="lg:col-span-2 px-5 py-5">
-    <div className="mb-4 flex items-center justify-between">
-      <Skeleton className="h-4 w-32" rounded="md" />
-      <Skeleton className="h-4 w-16" rounded="md" />
+  <SkeletonPanel className="px-4 py-4 sm:px-5 sm:py-5 lg:col-span-2">
+    <div className="mb-3 flex items-center justify-between sm:mb-4">
+      <Skeleton className="h-4 w-28 sm:w-32" rounded="md" />
+      <Skeleton className="h-4 w-14 sm:w-16" rounded="md" />
     </div>
     <ul>
       {Array.from({ length: 5 }).map((_, i) => (
         <li
           key={i}
-          className="flex items-start gap-3 py-3.5"
+          className={`flex items-start gap-3 py-3 sm:py-3.5 ${i >= 3 ? 'hidden sm:flex' : ''}`}
           style={{ borderTop: i === 0 ? undefined : '1px solid #F5F5F4' }}
         >
           <SkeletonCircle size={36} />
           <div className="min-w-0 flex-1 space-y-2 pt-0.5">
             <div className="flex justify-between gap-3">
-              <Skeleton className="h-3.5 w-28" rounded="md" />
+              <Skeleton className="h-3.5 w-24 sm:w-28" rounded="md" />
               <Skeleton className="h-3 w-10" rounded="md" />
             </div>
             <Skeleton className="h-3 w-3/4 max-w-[240px]" rounded="md" />
@@ -113,13 +129,13 @@ export const RecentInquiriesSkeleton: React.FC = () => (
 );
 
 export const DemandSkeleton: React.FC = () => (
-  <SkeletonPanel className="px-5 py-5">
+  <SkeletonPanel className="px-4 py-4 sm:px-5 sm:py-5">
     <Skeleton className="h-4 w-20" rounded="md" />
-    <Skeleton className="mt-2 h-3 w-40" rounded="md" />
-    <div className="mt-6 space-y-4">
+    <Skeleton className="mt-2 h-3 w-36 sm:w-40" rounded="md" />
+    <div className="mt-5 space-y-4 sm:mt-6">
       <div className="rounded-xl px-4 py-4" style={{ backgroundColor: '#FAF9F6' }}>
         <Skeleton className="h-3 w-16" rounded="md" />
-        <Skeleton className="mt-2 h-4 w-36" rounded="md" />
+        <Skeleton className="mt-2 h-4 w-32 sm:w-36" rounded="md" />
         <Skeleton className="mt-3 h-8 w-20" rounded="md" />
       </div>
       {Array.from({ length: 3 }).map((_, i) => (
@@ -133,10 +149,10 @@ export const DemandSkeleton: React.FC = () => (
 );
 
 export const DashboardSkeleton: React.FC = () => (
-  <div className="space-y-6" aria-busy="true" aria-label="Loading dashboard">
+  <div className="space-y-5 sm:space-y-6" aria-busy="true" aria-label="Loading dashboard">
     <MetricsSkeleton />
     <ChartSkeleton />
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-3">
       <RecentInquiriesSkeleton />
       <DemandSkeleton />
     </div>
@@ -145,14 +161,14 @@ export const DashboardSkeleton: React.FC = () => (
 
 export const KanbanSkeleton: React.FC<{ columns?: number }> = ({ columns = 4 }) => (
   <div
-    className="flex gap-4 overflow-x-auto pb-2"
+    className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 sm:mx-0 sm:gap-4 sm:snap-none sm:px-0"
     aria-busy="true"
     aria-label="Loading board"
   >
     {Array.from({ length: columns }).map((_, col) => (
       <div
         key={col}
-        className="w-72 shrink-0 rounded-2xl border p-3"
+        className="w-[16.5rem] shrink-0 snap-start rounded-2xl border p-3 sm:w-72"
         style={{ backgroundColor: '#FAF9F6', borderColor: '#E7E5E4' }}
       >
         <div className="mb-3 flex items-center justify-between px-1">
@@ -193,6 +209,30 @@ export const TableSkeleton: React.FC<{
   bare?: boolean;
 }> = ({ rows = 6, columns = 6, withActions = true, bare = false }) => {
   const cols = Math.max(2, columns);
+  const mobileRows = Math.min(rows, 5);
+
+  const mobileCards = (
+    <div className="space-y-2.5 sm:hidden" aria-busy aria-label="Loading table">
+      {Array.from({ length: mobileRows }).map((_, i) => (
+        <div
+          key={i}
+          className="space-y-2.5 rounded-xl border p-3.5"
+          style={{ backgroundColor: '#FFFFFF', borderColor: '#E7E5E4' }}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <Skeleton className="h-3.5 w-32" rounded="md" />
+            <Skeleton className="h-5 w-14" rounded="full" />
+          </div>
+          <Skeleton className="h-3 w-40" rounded="md" />
+          <div className="flex items-center justify-between gap-3 pt-0.5">
+            <Skeleton className="h-3 w-24" rounded="md" />
+            {withActions ? <Skeleton className="h-3 w-12" rounded="md" /> : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   const body = (
     <>
       <div
@@ -248,28 +288,38 @@ export const TableSkeleton: React.FC<{
 
   if (bare) {
     return (
-      <div
-        className="overflow-hidden rounded-xl border"
-        style={{ borderColor: '#F5F5F4' }}
-        aria-busy
-        aria-label="Loading table"
-      >
-        {body}
-      </div>
+      <>
+        {mobileCards}
+        <div
+          className="hidden overflow-hidden rounded-xl border sm:block"
+          style={{ borderColor: '#F5F5F4' }}
+          aria-busy
+          aria-label="Loading table"
+        >
+          {body}
+        </div>
+      </>
     );
   }
 
   return (
-    <SkeletonPanel className="overflow-hidden" aria-busy aria-label="Loading table">
-      {body}
-    </SkeletonPanel>
+    <>
+      {mobileCards}
+      <SkeletonPanel
+        className="hidden overflow-hidden sm:block"
+        aria-busy
+        aria-label="Loading table"
+      >
+        {body}
+      </SkeletonPanel>
+    </>
   );
 };
 
 export const InquiriesPageSkeleton: React.FC<{ viewMode?: 'kanban' | 'table' }> = ({
   viewMode = 'kanban',
 }) => (
-  <div className="space-y-5" aria-busy="true" aria-label="Loading service inquiries">
+  <div className="space-y-4 sm:space-y-5" aria-busy="true" aria-label="Loading service inquiries">
     <PageHeaderSkeleton />
     <ToolbarSkeleton controls={4} />
     {viewMode === 'kanban' ? <KanbanSkeleton /> : <TableSkeleton rows={8} columns={6} />}
@@ -278,12 +328,12 @@ export const InquiriesPageSkeleton: React.FC<{ viewMode?: 'kanban' | 'table' }> 
 
 export const ArchivesPageSkeleton: React.FC = () => (
   <div className="space-y-4" aria-busy="true" aria-label="Loading archives">
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
       <div className="flex items-baseline gap-2">
         <Skeleton className="h-5 w-28" rounded="md" />
         <Skeleton className="h-3 w-8" rounded="md" />
       </div>
-      <Skeleton className="h-9 w-full sm:w-64" rounded="lg" />
+      <Skeleton className="h-10 w-full sm:h-9 sm:w-64" rounded="lg" />
     </div>
     <TableSkeleton rows={7} columns={6} />
   </div>
@@ -292,7 +342,7 @@ export const ArchivesPageSkeleton: React.FC = () => (
 export const OrphansPageSkeleton: React.FC = () => (
   <div className="space-y-4" aria-busy="true" aria-label="Loading off-pipeline inquiries">
     <PageHeaderSkeleton withSubtitle />
-    <SkeletonPanel className="px-4 py-3">
+    <SkeletonPanel className="px-3.5 py-3 sm:px-4">
       <Skeleton className="h-3.5 w-full max-w-xl" rounded="md" />
     </SkeletonPanel>
     <TableSkeleton rows={5} columns={5} />
@@ -302,7 +352,7 @@ export const OrphansPageSkeleton: React.FC = () => (
 export const TeamSectionSkeleton: React.FC = () => (
   <SkeletonPanel className="overflow-hidden">
     <div
-      className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
       style={{ borderColor: '#F5F5F4', backgroundColor: '#FAFAF9' }}
     >
       <div className="flex items-center gap-2">
@@ -312,44 +362,48 @@ export const TeamSectionSkeleton: React.FC = () => (
           <Skeleton className="h-3 w-32" rounded="md" />
         </div>
       </div>
-      <Skeleton className="h-10 w-28" rounded="lg" />
+      <Skeleton className="h-10 w-full sm:w-28" rounded="lg" />
     </div>
-    <div className="px-5 py-4">
+    <div className="px-4 py-4 sm:px-5">
       <TableSkeleton rows={4} columns={4} bare />
     </div>
   </SkeletonPanel>
 );
 
 export const SettingsPageSkeleton: React.FC = () => (
-  <div className="space-y-5" aria-busy="true" aria-label="Loading settings">
+  <div className="space-y-4 sm:space-y-5" aria-busy="true" aria-label="Loading settings">
     <PageHeaderSkeleton />
-    <SkeletonPanel className="px-5 py-4">
+    <SkeletonPanel className="px-4 py-4 sm:px-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3.5">
-          <Skeleton className="h-10 w-10" rounded="xl" />
-          <div className="space-y-1.5">
+          <Skeleton className="h-10 w-10 shrink-0" rounded="xl" />
+          <div className="min-w-0 space-y-1.5">
             <Skeleton className="h-2.5 w-20" rounded="md" />
-            <Skeleton className="h-4 w-36" rounded="md" />
-            <Skeleton className="h-3 w-44" rounded="md" />
+            <Skeleton className="h-4 w-32 sm:w-36" rounded="md" />
+            <Skeleton className="h-3 w-40 sm:w-44" rounded="md" />
           </div>
         </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-10 w-28" rounded="lg" />
-          <Skeleton className="h-10 w-36" rounded="lg" />
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <Skeleton className="h-10 w-full sm:w-28" rounded="lg" />
+          <Skeleton className="h-10 w-full sm:w-36" rounded="lg" />
         </div>
       </div>
     </SkeletonPanel>
-    <SkeletonPanel className="space-y-3.5 px-5 py-5">
-      <div className="flex items-center justify-between gap-3">
+    <SkeletonPanel className="space-y-3.5 px-4 py-4 sm:px-5 sm:py-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="space-y-1.5">
           <Skeleton className="h-3.5 w-32" rounded="md" />
-          <Skeleton className="h-3 w-56" rounded="md" />
+          <Skeleton className="h-3 w-48 sm:w-56" rounded="md" />
         </div>
         <Skeleton className="h-3 w-24" rounded="md" />
       </div>
       <div className="flex flex-wrap gap-2">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-24" rounded="lg" />
+          <Skeleton
+            key={i}
+            className={`h-10 w-[calc(50%-0.25rem)] sm:w-24 ${i >= 4 ? 'hidden sm:block' : ''}`}
+            rounded="lg"
+          />
         ))}
       </div>
       <div className="flex items-end gap-2 pt-1">
@@ -364,7 +418,7 @@ export const SettingsPageSkeleton: React.FC = () => (
 /** Full CRM chrome while session is verified. */
 export const AppShellSkeleton: React.FC = () => (
   <div
-    className="flex min-h-screen"
+    className="flex min-h-screen min-h-dvh"
     style={{ backgroundColor: '#F7F5F1' }}
     aria-busy="true"
     aria-label="Loading workspace"
@@ -391,14 +445,17 @@ export const AppShellSkeleton: React.FC = () => (
     </aside>
 
     <div className="flex min-w-0 flex-1 flex-col">
+      {/* Matches Header: menu (mobile) + create lead */}
       <header
-        className="flex h-14 items-center justify-between border-b px-4 sm:px-6"
+        className="flex h-16 items-center justify-between border-b px-3 sm:px-6 lg:px-8"
         style={{ backgroundColor: '#FFFFFF', borderColor: '#E7E5E4' }}
       >
-        <Skeleton className="h-4 w-32" rounded="md" />
-        <Skeleton className="h-9 w-28" rounded="lg" />
+        <Skeleton className="h-9 w-9 rounded-xl lg:hidden" rounded="xl" />
+        <div className="ml-auto">
+          <Skeleton className="h-9 w-9 sm:w-[7.75rem]" rounded="full" />
+        </div>
       </header>
-      <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 p-4 sm:p-6 lg:p-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 space-y-5 p-3 sm:space-y-6 sm:p-6 lg:p-8">
         <DashboardSkeleton />
       </main>
     </div>

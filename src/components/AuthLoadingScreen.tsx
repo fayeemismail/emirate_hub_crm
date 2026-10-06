@@ -14,7 +14,10 @@ export const AuthLoadingScreen: React.FC<AuthLoadingScreenProps> = ({
   return (
     <div className="relative">
       <AppShellSkeleton />
-      <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center lg:bottom-8">
+      <div
+        className="pointer-events-none absolute inset-x-0 flex justify-center"
+        style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+      >
         <div
           className="flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-medium"
           style={{

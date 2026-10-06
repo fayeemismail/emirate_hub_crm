@@ -119,12 +119,23 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
     hovered?.raw.momChangePercentage != null &&
     hovered.raw.momChangePercentage >= 0;
 
+  const selectPoint = (i: number) => {
+    setHoveredIndex((prev) => (prev === i ? null : i));
+  };
+
+  const clearHoverIfDesktop = () => {
+    if (typeof window === 'undefined') return;
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      setHoveredIndex(null);
+    }
+  };
+
   return (
-    <div key={chartKey} className="relative w-full overflow-x-auto">
-      <div className="relative min-w-[560px]">
+    <div key={chartKey} className="relative w-full">
+      <div className="relative min-w-0 sm:min-w-[560px] sm:overflow-visible">
         {/* Legend */}
         <div
-          className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]"
+          className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:mb-3 sm:gap-x-4"
           style={{ color: '#A8A29E' }}
         >
           <span className="inline-flex items-center gap-1.5">
@@ -151,6 +162,68 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
             Avg {avg > 0 ? avg.toFixed(avg >= 10 ? 0 : 1) : '0'}
           </span>
         </div>
+
+        {/* Mobile tap readout (floating tooltip is desktop-only) */}
+        {hovered && (
+          <div
+            className="crm-chart-tooltip mb-3 rounded-xl border px-3 py-2.5 sm:hidden"
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderColor: '#E7E5E4',
+              boxShadow: '0 8px 20px rgba(28, 25, 23, 0.08)',
+            }}
+          >
+            <div className="flex items-baseline justify-between gap-3">
+              <p
+                className="text-[11px] font-medium uppercase tracking-wide"
+                style={{ color: '#A8A29E' }}
+              >
+                {hovered.raw.monthName}
+              </p>
+              <p
+                className="text-lg font-semibold tabular-nums tracking-tight"
+                style={{ color: '#1C1917' }}
+              >
+                {hovered.val}
+                <span className="ml-1 text-xs font-normal" style={{ color: '#78716C' }}>
+                  leads
+                </span>
+              </p>
+            </div>
+            <div
+              className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px]"
+              style={{ color: '#78716C' }}
+            >
+              {momLabel && (
+                <span
+                  className="inline-flex items-center gap-0.5 font-semibold tabular-nums"
+                  style={{ color: momPositive ? '#15803D' : '#E02126' }}
+                >
+                  {momPositive ? (
+                    <TrendingUp className="h-3 w-3" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3" />
+                  )}
+                  {momLabel} MoM
+                </span>
+              )}
+              <span>
+                Won / lost{' '}
+                <span className="font-medium tabular-nums" style={{ color: '#1C1917' }}>
+                  {hovered.raw.wonLeads} · {hovered.raw.lostLeads}
+                </span>
+              </span>
+              {hoveredPrev && previousYear != null && (
+                <span>
+                  {previousYear}{' '}
+                  <span className="font-medium tabular-nums" style={{ color: '#1C1917' }}>
+                    {hoveredPrev.val}
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         <svg
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
@@ -274,7 +347,8 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
                 key={pt.raw.month}
                 className="cursor-pointer"
                 onMouseEnter={() => setHoveredIndex(i)}
-                onMouseLeave={() => setHoveredIndex(null)}
+                onMouseLeave={clearHoverIfDesktop}
+                onClick={() => selectPoint(i)}
               >
                 <rect
                   x={pt.x - slot / 2}
@@ -306,10 +380,10 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
           })}
         </svg>
 
-        {/* Hover readout card */}
+        {/* Desktop hover readout card */}
         {hovered && tooltipAnchor && (
           <div
-            className="pointer-events-none absolute z-10"
+            className="pointer-events-none absolute z-10 hidden sm:block"
             style={{
               top: tooltipAnchor.top,
               left: tooltipAnchor.preferLeft ? undefined : `${tooltipAnchor.leftPct}%`,

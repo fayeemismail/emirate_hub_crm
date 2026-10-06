@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={onCreateLead}
-          className="crm-interactive inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold tracking-wide cursor-pointer shrink-0"
+          className="crm-interactive inline-flex min-h-9 min-w-9 shrink-0 touch-manipulation cursor-pointer items-center justify-center gap-1.5 rounded-full border px-2.5 py-2 text-[13px] font-semibold tracking-wide sm:min-w-0 sm:px-4"
           style={{
             color: 'var(--crm-accent-primary, #E02126)',
             borderColor: 'var(--crm-accent-primary, #E02126)',
@@ -50,8 +50,9 @@ export const Header: React.FC<HeaderProps> = ({
             e.currentTarget.style.color = '#E02126';
           }}
           title="Create lead"
+          aria-label="Create lead"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Create lead</span>
         </button>
       </div>

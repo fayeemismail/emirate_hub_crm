@@ -167,7 +167,7 @@ export default function Home() {
           onCreateLead={() => setIsSimulateModalOpen(true)}
         />
 
-        <main className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl w-full mx-auto">
+        <main className="mx-auto w-full max-w-7xl flex-1 p-3 sm:p-6 lg:p-8">
           <PageEnter resetKey={activeTab} className="space-y-6">
           {activeTab === 'dashboard' && (
             <DashboardOverview

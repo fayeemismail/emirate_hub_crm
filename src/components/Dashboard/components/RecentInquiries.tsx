@@ -39,13 +39,13 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
 }) => {
   return (
     <div
-      className="crm-enter lg:col-span-2 rounded-2xl border px-5 py-5"
+      className="crm-enter rounded-2xl border px-4 py-4 sm:px-5 sm:py-5 lg:col-span-2"
       style={{
         backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
         borderColor: 'var(--crm-card-border, #E7E5E4)',
       }}
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
         <h3
           className="text-base font-semibold tracking-tight"
           style={{ color: 'var(--crm-text-primary, #1C1917)' }}
@@ -55,7 +55,7 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
         <button
           type="button"
           onClick={onNavigateToRequests}
-          className="inline-flex items-center gap-1 text-sm font-medium cursor-pointer hover:opacity-80"
+          className="inline-flex min-h-9 touch-manipulation items-center gap-1 px-1 text-sm font-medium cursor-pointer hover:opacity-80 sm:min-h-0"
           style={{ color: 'var(--crm-accent-primary, #E02126)' }}
         >
           View all
@@ -80,7 +80,7 @@ export const RecentInquiries: React.FC<RecentInquiriesProps> = ({
               <li
                 key={req.id}
                 onClick={() => onSelectRequest(req)}
-                className="crm-interactive flex cursor-pointer items-start gap-3 py-3.5 hover:bg-[#FAF9F6] -mx-2 px-2 rounded-xl"
+                className="crm-interactive -mx-1 flex cursor-pointer touch-manipulation items-start gap-2.5 rounded-xl px-1.5 py-3 hover:bg-[#FAF9F6] sm:-mx-2 sm:gap-3 sm:px-2 sm:py-3.5"
                 style={{
                   borderTop: index === 0 ? undefined : '1px solid #F5F5F4',
                 }}

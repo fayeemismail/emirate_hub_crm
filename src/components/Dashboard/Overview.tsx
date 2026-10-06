@@ -81,7 +81,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   }
 
   return (
-    <div className="relative space-y-6">
+    <div className="relative space-y-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:space-y-6 sm:pb-0">
       <OverviewMetrics
         totalCount={overviewKpi?.activeLeads ?? requests.length}
         pendingCount={pendingCount}
@@ -110,7 +110,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         isRefreshing={isRefreshing}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
         <RecentInquiries
           recentRequests={recentRequests}
           onNavigateToRequests={onNavigateToRequests}

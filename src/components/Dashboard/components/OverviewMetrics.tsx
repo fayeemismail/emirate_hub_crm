@@ -51,7 +51,7 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       : 'Share of closed inquiries that were won';
 
   return (
-    <Stagger className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+    <Stagger className="grid grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-5">
       <MetricCard
         label="Total Inquiries"
         hint="Active inquiries only — archived ones are hidden"
@@ -91,6 +91,7 @@ export const OverviewMetrics: React.FC<OverviewMetricsProps> = ({
       />
 
       <MetricCard
+        className="col-span-2 xl:col-span-1"
         label="Win rate"
         hint={winHint}
         icon={Target}

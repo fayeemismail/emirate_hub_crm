@@ -203,14 +203,14 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
 
   return (
     <div
-      className="crm-enter relative rounded-2xl border px-5 py-5 sm:px-6 sm:py-6 space-y-6"
+      className="crm-enter relative space-y-4 rounded-2xl border px-4 py-4 sm:space-y-6 sm:px-6 sm:py-6"
       style={{
         backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
         borderColor: 'var(--crm-card-border, #E7E5E4)',
       }}
     >
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <h2
             className="text-base font-semibold tracking-tight"
@@ -231,7 +231,10 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
           ) : null}
         </div>
 
-        <div className="flex items-center gap-1 border-b sm:border-b-0" style={{ borderColor: '#E7E5E4' }}>
+        <div
+          className="-mx-1 flex items-stretch gap-0 overflow-x-auto border-b px-1 sm:mx-0 sm:items-center sm:gap-1 sm:overflow-visible sm:border-b-0 sm:px-0"
+          style={{ borderColor: '#E7E5E4' }}
+        >
           {TABS.map((tab) => {
             const active = activeTab === tab.id;
             return (
@@ -239,7 +242,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className="crm-interactive relative px-3 py-2 text-sm font-medium cursor-pointer"
+                className="crm-interactive relative min-h-10 flex-1 touch-manipulation px-3 py-2.5 text-sm font-medium cursor-pointer sm:min-h-0 sm:flex-none sm:py-2"
                 style={{
                   color: active
                     ? 'var(--crm-text-primary, #1C1917)'
@@ -263,14 +266,14 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
       {/* Trends */}
       {activeTab === 'monthly' && (
         <div>
-          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
             <div>
               <p className="text-sm" style={{ color: '#78716C' }}>
                 Monthly volume
               </p>
-              <div className="mt-1 flex items-baseline gap-2.5">
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                 <span
-                  className="text-3xl font-semibold tracking-tight tabular-nums"
+                  className="text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl"
                   style={{ color: 'var(--crm-text-primary, #1C1917)' }}
                 >
                   {totalYearVolume}
@@ -293,7 +296,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 )}
               </div>
               {peakMonth && peakMonth.totalLeads > 0 && (
-                <p className="mt-1.5 text-xs" style={{ color: '#A8A29E' }}>
+                <p className="mt-1.5 text-xs leading-relaxed" style={{ color: '#A8A29E' }}>
                   Peak{' '}
                   <span style={{ color: '#78716C' }}>
                     {peakMonth.monthName} · {peakMonth.totalLeads}
@@ -311,14 +314,16 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div
+              className={`grid gap-2 ${availableServices.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} sm:flex sm:items-center`}
+            >
               {availableServices.length > 0 && (
                 <CustomSelect
                   value={selectedService}
                   options={serviceOptions}
                   onChange={handleServiceChange}
                   ariaLabel="Filter by service"
-                  minWidth={160}
+                  minWidth={140}
                   align="right"
                 />
               )}
@@ -376,7 +381,7 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                 return (
                   <div
                     key={stage.slug}
-                    className="flex items-center justify-between gap-3 px-4 py-2.5 transition-all"
+                    className="flex min-h-10 min-w-[12rem] items-center justify-between gap-2 px-3 py-2.5 transition-all sm:min-h-0 sm:min-w-0 sm:gap-3 sm:px-4"
                     style={{
                       width: `${widthPct}%`,
                       backgroundColor: `rgba(224, 33, 38, ${opacity.toFixed(2)})`,
@@ -387,10 +392,10 @@ export const MessagesGraph: React.FC<MessagesGraphProps> = ({
                       color: opacity > 0.55 ? '#FFFFFF' : '#1C1917',
                     }}
                   >
-                    <span className="min-w-0 truncate text-sm font-medium">{stage.title}</span>
-                    <span className="shrink-0 text-sm font-semibold tabular-nums">
+                    <span className="min-w-0 truncate text-xs font-medium sm:text-sm">{stage.title}</span>
+                    <span className="shrink-0 text-xs font-semibold tabular-nums sm:text-sm">
                       {stage.leadCount}
-                      <span className="ml-1.5 text-[11px] font-normal opacity-80">
+                      <span className="ml-1 text-[10px] font-normal opacity-80 sm:ml-1.5 sm:text-[11px]">
                         {stage.percentageOfTotal}%
                       </span>
                     </span>

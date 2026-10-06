@@ -28,7 +28,7 @@ export const DemandBreakdown: React.FC<DemandBreakdownProps> = ({
 
   return (
     <div
-      className="crm-enter rounded-2xl border px-5 py-5"
+      className="crm-enter rounded-2xl border px-4 py-4 sm:px-5 sm:py-5"
       style={{
         backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
         borderColor: 'var(--crm-card-border, #E7E5E4)',
@@ -52,10 +52,10 @@ export const DemandBreakdown: React.FC<DemandBreakdownProps> = ({
           description="Service breakdown appears once inquiries start coming in."
         />
       ) : (
-        <div className="mt-6">
+        <div className="mt-4 sm:mt-6">
           {top && (
             <div
-              className="rounded-xl px-4 py-4 mb-2"
+              className="mb-2 rounded-xl px-3.5 py-3.5 sm:px-4 sm:py-4"
               style={{ backgroundColor: '#FAF9F6' }}
             >
               <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#A8A29E' }}>
