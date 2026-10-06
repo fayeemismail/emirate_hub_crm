@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Spinner } from './loading';
 
 export interface ConfirmModalProps {
@@ -24,8 +25,13 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelText = 'Cancel',
   variant = 'warning',
 }) => {
+  const [mounted, setMounted] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -40,7 +46,16 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose, isConfirming]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
 
   const confirmBg =
     variant === 'danger'
@@ -66,20 +81,21 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 crm-modal-backdrop"
-      style={{ backgroundColor: 'rgba(28, 25, 23, 0.28)' }}
+      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden sm:overflow-y-auto crm-modal-backdrop"
+      style={{ backgroundColor: 'rgba(28, 25, 23, 0.45)' }}
       onClick={() => {
         if (!isConfirming) onClose();
       }}
     >
       <div
-        className="w-full max-w-lg sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 crm-modal-panel border-t sm:border-t-0 shadow-2xl pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        className="w-full max-w-lg sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 bg-white crm-modal-panel border-t sm:border-t-0 shadow-2xl overscroll-contain"
         style={{
-          backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
-          borderColor: 'var(--crm-border-subtle, #E7E5E4)',
+          backgroundColor: '#FFFFFF',
+          borderColor: '#E7E5E4',
           boxShadow: '0 16px 40px rgba(28, 25, 23, 0.12)',
+          paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -145,6 +161,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

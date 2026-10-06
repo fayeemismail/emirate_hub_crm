@@ -131,6 +131,15 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,8 +184,8 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto crm-modal-backdrop"
-      style={{ backgroundColor: '#1C191755' }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden sm:overflow-y-auto crm-modal-backdrop"
+      style={{ backgroundColor: 'rgba(28, 25, 23, 0.45)' }}
       onClick={onClose}
     >
       <div
@@ -233,7 +242,7 @@ export const SimulateFormModal: React.FC<SimulateFormModalProps> = ({
             description="Publish active emirateCorporateService documents in Sanity, then refresh."
           />
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4 overflow-y-auto flex-1 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4 overflow-y-auto overscroll-contain flex-1 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
             <div className="space-y-1.5">
               <label className="block text-sm font-medium" style={labelStyle}>
                 Service <span style={{ color: '#E02126' }}>*</span>

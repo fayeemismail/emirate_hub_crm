@@ -193,6 +193,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   }, [request?.id]);
 
   useEffect(() => {
+    if (!request) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [request]);
+
+  useEffect(() => {
     return () => {
       if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
       if (priorityTimerRef.current) clearTimeout(priorityTimerRef.current);
@@ -354,15 +363,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto crm-modal-backdrop"
-        style={{ backgroundColor: 'rgba(28, 25, 23, 0.28)' }}
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden sm:overflow-y-auto crm-modal-backdrop"
+        style={{ backgroundColor: 'rgba(28, 25, 23, 0.45)' }}
         onClick={onClose}
       >
         <div
-          className="w-full max-w-2xl rounded-t-3xl sm:rounded-2xl sm:my-auto crm-modal-panel max-h-[92vh] flex flex-col border-t sm:border-t-0 shadow-2xl overflow-hidden"
+          className="w-full max-w-2xl rounded-t-3xl sm:rounded-2xl sm:my-auto bg-white crm-modal-panel max-h-[92vh] flex flex-col border-t sm:border-t-0 shadow-2xl overflow-hidden"
           style={{
-            backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
-            borderColor: 'var(--crm-border-subtle, #E7E5E4)',
+            backgroundColor: '#FFFFFF',
+            borderColor: '#E7E5E4',
             boxShadow: '0 16px 40px rgba(28, 25, 23, 0.12)',
           }}
           onClick={(e) => e.stopPropagation()}
@@ -412,7 +421,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           />
 
           {/* Body */}
-          <div className="px-5 py-4 sm:px-6 sm:py-5 space-y-5 overflow-y-auto flex-1">
+          <div className="px-5 py-4 sm:px-6 sm:py-5 space-y-5 overflow-y-auto overscroll-contain flex-1">
             {/*
               One 3-col grid so row1 (Name/Email/Phone) and row2 (Service/Status/Priority)
               share the same tracks. Email gets a slightly wider track (longer content).

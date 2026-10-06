@@ -184,6 +184,7 @@
 /* Modal / dialog */
 .crm-modal-backdrop {
   animation: crm-fade-in var(--crm-dur-fast) var(--crm-ease-soft) both;
+  overscroll-behavior: none;
 }
 
 @keyframes crm-sheet-in {
@@ -199,6 +200,7 @@
 
 .crm-modal-panel {
   animation: crm-scale-in var(--crm-dur) var(--crm-ease-out) both;
+  overscroll-behavior: contain;
 }
 
 @media (max-width: 639px) {

@@ -144,6 +144,15 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
     persistViewMode(filters.viewMode);
   }, [filters.viewMode]);
 
+  useEffect(() => {
+    if (!isMobileFilterOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isMobileFilterOpen]);
+
   // On mobile (< 640px), ensure table view is default if no explicit preference is stored
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 640) {
@@ -895,7 +904,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
       {/* Mobile Filters Bottom Sheet */}
       {isMobileFilterOpen && (
         <div
-          className="fixed inset-0 z-50 sm:hidden flex flex-col justify-end"
+          className="fixed inset-0 z-50 sm:hidden flex flex-col justify-end overflow-hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Filter inquiries"
@@ -943,7 +952,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
             </div>
 
             {/* Filter Sections (Scrollable) */}
-            <div className="p-5 space-y-5 overflow-y-auto max-h-[60vh]">
+            <div className="p-5 space-y-5 overflow-y-auto overscroll-contain max-h-[60vh]">
               {/* Lookback Window */}
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2 block">

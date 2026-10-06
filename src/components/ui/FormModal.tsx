@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface FormModalProps {
@@ -24,6 +25,12 @@ export const FormModal: React.FC<FormModalProps> = ({
   size = 'sm',
   busy = false,
 }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -33,12 +40,21 @@ export const FormModal: React.FC<FormModalProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen, onClose, busy]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
 
-  return (
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 crm-modal-backdrop"
-      style={{ backgroundColor: 'rgba(28, 25, 23, 0.28)' }}
+      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden sm:overflow-y-auto crm-modal-backdrop"
+      style={{ backgroundColor: 'rgba(28, 25, 23, 0.45)' }}
       onClick={() => {
         if (!busy) onClose();
       }}
@@ -47,13 +63,14 @@ export const FormModal: React.FC<FormModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="form-modal-title"
-        className={`w-full max-h-[92vh] sm:max-h-none overflow-y-auto rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 crm-modal-panel border-t sm:border-t-0 shadow-2xl pb-[max(1.5rem,env(safe-area-inset-bottom))] ${
+        className={`w-full max-h-[92vh] sm:max-h-none overflow-y-auto overscroll-contain rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 bg-white crm-modal-panel border-t sm:border-t-0 shadow-2xl ${
           size === 'md' ? 'max-w-lg' : 'max-w-md'
         }`}
         style={{
-          backgroundColor: 'var(--crm-card-bg, #FFFFFF)',
-          borderColor: 'var(--crm-border-subtle, #E7E5E4)',
+          backgroundColor: '#FFFFFF',
+          borderColor: '#E7E5E4',
           boxShadow: '0 16px 40px rgba(28, 25, 23, 0.12)',
+          paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -86,6 +103,7 @@ export const FormModal: React.FC<FormModalProps> = ({
         </div>
         <div className="mt-4">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
