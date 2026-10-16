@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ServiceRequest, RequestPriority, PipelineStatus, CatalogService } from '../../types';
-import { LOOKBACK_PRESETS, lookbackLabel, type TableSortMode } from '../../lib/crmSettings';
+import { LOOKBACK_PRESETS, lookbackLabel, tableSortToApi, type TableSortMode } from '../../lib/crmSettings';
 import { useCrmSettings } from '../../hooks/useCrmSettings';
+import { leadsApi, type LeadItem } from '../../lib/api';
+import { leadToServiceRequest } from '../../lib/adapters';
 import { KanbanBoard } from './KanbanBoard';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { CustomSelect } from '../ui/CustomSelect';
@@ -30,7 +32,25 @@ import {
   Clock,
   Phone,
   Mail,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
+
+function getPaginationRange(currentPage: number, totalPages: number): (number | '...')[] {
+  if (totalPages <= 1) return [1];
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  if (currentPage <= 4) {
+    return [1, 2, 3, 4, 5, '...', totalPages];
+  }
+  if (currentPage >= totalPages - 3) {
+    return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+}
 
 type InquiriesViewMode = 'kanban' | 'table';
 
@@ -130,6 +150,123 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
   const [pendingService, setPendingService] = useState(filters.service);
   const [pendingStatus, setPendingStatus] = useState(filters.status);
   const [pendingSort, setPendingSort] = useState<TableSortMode>(filters.tableSort);
+
+  // Table view backend-driven pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [tableData, setTableData] = useState<ServiceRequest[]>([]);
+  const [tableTotalItems, setTableTotalItems] = useState(0);
+  const [tableTotalPages, setTableTotalPages] = useState(1);
+  const [isTableLoading, setIsTableLoading] = useState(false);
+  const [isTableFetching, setIsTableFetching] = useState(false);
+  const [tableRefreshKey, setTableRefreshKey] = useState(0);
+  const tableFetchGen = useRef(0);
+  const hasLoadedTableOnce = useRef(false);
+  const prevRequestsRef = useRef(requests);
+
+  // Sync external request changes (status/notes updates from modal or refetches) into table view
+  useEffect(() => {
+    if (prevRequestsRef.current !== requests) {
+      prevRequestsRef.current = requests;
+      if (filters.viewMode === 'table') {
+        setTableRefreshKey((k) => k + 1);
+      }
+    }
+  }, [requests, filters.viewMode]);
+
+  // Reset page to 1 whenever any filter or pagination limit changes
+  const filterFingerprint = `${filters.search.trim()}|${filters.service}|${filters.status}|${filters.tableSort}|${lookbackDays}|${limit}`;
+  const prevFilterFingerprintRef = useRef(filterFingerprint);
+  useEffect(() => {
+    if (prevFilterFingerprintRef.current !== filterFingerprint) {
+      prevFilterFingerprintRef.current = filterFingerprint;
+      setPage(1);
+    }
+  }, [filterFingerprint]);
+
+  // Backend-driven fetching for table view
+  useEffect(() => {
+    if (filters.viewMode !== 'table') return;
+
+    let cancelled = false;
+    const gen = ++tableFetchGen.current;
+
+    if (!hasLoadedTableOnce.current) {
+      setIsTableLoading(true);
+    }
+    setIsTableFetching(true);
+
+    const { sortBy, sortOrder } = tableSortToApi(filters.tableSort);
+
+    leadsApi
+      .getAdminLeads({
+        view: 'list',
+        page,
+        limit,
+        search: filters.search.trim() || undefined,
+        service: filters.service !== 'All' ? filters.service : undefined,
+        status: filters.status !== 'All' ? filters.status : undefined,
+        lookbackDays: lookbackDays > 0 ? lookbackDays : undefined,
+        sortBy,
+        sortOrder,
+      })
+      .then((res) => {
+        if (cancelled || gen !== tableFetchGen.current) return;
+        const rawList = Array.isArray(res.data) ? (res.data as LeadItem[]) : [];
+        const mapped = rawList
+          .map(leadToServiceRequest)
+          .filter((req) => !req.isDeleted);
+        setTableData(mapped);
+        const total = res.pagination?.totalItems ?? mapped.length;
+        const totalP = res.pagination?.totalPages ?? Math.max(1, Math.ceil(total / limit));
+        setTableTotalItems(total);
+        setTableTotalPages(totalP);
+        hasLoadedTableOnce.current = true;
+        if (page > totalP && totalP > 0) {
+          setPage(totalP);
+        }
+      })
+      .catch((err) => {
+        if (cancelled || gen !== tableFetchGen.current) return;
+        console.error('Failed to load paginated leads for table:', err);
+      })
+      .finally(() => {
+        if (!cancelled && gen === tableFetchGen.current) {
+          setIsTableLoading(false);
+          setIsTableFetching(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    filters.viewMode,
+    page,
+    limit,
+    filters.search,
+    filters.service,
+    filters.status,
+    filters.tableSort,
+    lookbackDays,
+    tableRefreshKey,
+  ]);
+
+  const handleArchiveRow = async (reqId: string) => {
+    if (onDeleteRequest) {
+      await onDeleteRequest(reqId);
+    }
+    if (tableData.length <= 1 && page > 1) {
+      setPage((p) => Math.max(1, p - 1));
+    } else {
+      setTableRefreshKey((k) => k + 1);
+    }
+  };
+
+  const goToPage = (newPage: number) => {
+    if (newPage < 1 || newPage > tableTotalPages || newPage === page) return;
+    setPage(newPage);
+  };
 
   const [confirmAction, setConfirmAction] = useState<{
     isOpen: boolean;
@@ -289,10 +426,11 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
   };
 
   const rangeLabel = lookbackLabel(lookbackDays);
+  const isTableMode = filters.viewMode === 'table';
+  const startItem = tableTotalItems === 0 ? 0 : (page - 1) * limit + 1;
+  const endItem = Math.min(page * limit, tableTotalItems);
 
-  const shownCount = requests.length;
-
-  if (isLoading) {
+  if (isLoading || (isTableMode && isTableLoading)) {
     return <InquiriesPageSkeleton viewMode={filters.viewMode} />;
   }
 
@@ -311,9 +449,13 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           style={{ color: '#78716C' }}
         >
           <span>
-            {shownCount} shown · {rangeLabel}
+            {isTableMode
+              ? tableTotalItems === 0
+                ? `0 inquiries · ${rangeLabel}`
+                : `${startItem}–${endItem} of ${tableTotalItems} · ${rangeLabel}`
+              : `${requests.length} shown · ${rangeLabel}`}
           </span>
-          {isRefreshing ? (
+          {isRefreshing || isTableFetching ? (
             <span
               className="crm-fade-enter inline-flex items-center"
               role="status"
@@ -339,11 +481,15 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           style={{ color: '#78716C' }}
         >
           <span>
-            {shownCount} shown
+            {isTableMode
+              ? tableTotalItems === 0
+                ? `0 inquiries`
+                : `Showing ${startItem}–${endItem} of ${tableTotalItems} inquiries`
+              : `${requests.length} shown`}
             {' · '}
             {rangeLabel}
           </span>
-          {isRefreshing ? (
+          {isRefreshing || isTableFetching ? (
             <span
               className="crm-fade-enter inline-flex items-center gap-1.5 text-xs font-medium"
               style={{ color: '#A8A29E' }}
@@ -612,7 +758,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
           title="Pipeline not configured"
           description="No lead statuses are available from the CMS yet. Add and publish leadStatus documents in Sanity, then refresh."
         />
-      ) : requests.length === 0 ? (
+      ) : (isTableMode ? tableTotalItems === 0 : requests.length === 0) ? (
         <EmptyState
           icon={hasActiveFilters || lookbackDays > 0 ? 'search' : 'inbox'}
           title={hasActiveFilters || lookbackDays > 0 ? 'No matching inquiries' : 'No inquiries yet'}
@@ -658,7 +804,10 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
               borderColor: '#E7E5E4',
             }}
           >
-            <div className="overflow-x-auto">
+            <div
+              className="overflow-x-auto transition-opacity duration-150"
+              style={{ opacity: isTableFetching ? 0.6 : 1 }}
+            >
               <table className="w-full text-left min-w-[720px]">
                 <thead>
                   <tr
@@ -678,7 +827,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {requests.map((req) => {
+                  {tableData.map((req) => {
                     const clientName =
                       req.name ||
                       `${req.firstName} ${req.lastName}`.trim() ||
@@ -752,7 +901,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                                   message: archiveConfirmMessage(clientName),
                                   confirmText: ARCHIVE_CONFIRM_BUTTON,
                                   variant: 'danger',
-                                  onConfirm: () => onDeleteRequest(req.id),
+                                  onConfirm: () => handleArchiveRow(req.id),
                                 });
                               }}
                               className="p-1.5 rounded-lg cursor-pointer"
@@ -770,11 +919,148 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                 </tbody>
               </table>
             </div>
+
+            {/* Desktop Table Pagination Footer */}
+            <div
+              className="border-t px-4 py-3 sm:px-5 flex items-center justify-between text-xs"
+              style={{ borderColor: '#E7E5E4', backgroundColor: '#FFFFFF' }}
+            >
+              {/* Left: Showing X to Y of Z */}
+              <div className="flex items-center gap-2.5">
+                <span style={{ color: '#78716C' }}>
+                  Showing <span className="font-semibold" style={{ color: '#1C1917' }}>{startItem}</span> to{' '}
+                  <span className="font-semibold" style={{ color: '#1C1917' }}>{endItem}</span> of{' '}
+                  <span className="font-semibold" style={{ color: '#1C1917' }}>{tableTotalItems}</span> inquiries
+                </span>
+                {isTableFetching && (
+                  <span className="inline-flex items-center gap-1">
+                    <Spinner size="xs" color="#E02126" />
+                  </span>
+                )}
+              </div>
+
+              {/* Right: Rows per page & Page controls */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2" style={{ color: '#78716C' }}>
+                  <span>Rows per page:</span>
+                  <select
+                    id="table-page-size-select"
+                    value={limit}
+                    onChange={(e) => {
+                      setLimit(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    className="rounded-lg border px-2 py-1 text-xs font-medium cursor-pointer outline-none transition-colors"
+                    style={{
+                      borderColor: '#E7E5E4',
+                      backgroundColor: '#FFFFFF',
+                      color: '#1C1917',
+                    }}
+                    aria-label="Rows per page"
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  {/* First page button */}
+                  <button
+                    type="button"
+                    disabled={page <= 1 || isTableFetching}
+                    onClick={() => goToPage(1)}
+                    className="p-1.5 rounded-lg border transition-colors disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer hover:bg-stone-50"
+                    style={{ borderColor: '#E7E5E4', color: '#78716C' }}
+                    title="First page"
+                    aria-label="First page"
+                  >
+                    <ChevronsLeft className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Previous page button */}
+                  <button
+                    type="button"
+                    disabled={page <= 1 || isTableFetching}
+                    onClick={() => goToPage(page - 1)}
+                    className="p-1.5 rounded-lg border transition-colors disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer hover:bg-stone-50"
+                    style={{ borderColor: '#E7E5E4', color: '#78716C' }}
+                    title="Previous page"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Numbered page buttons with Ellipsis */}
+                  <div className="flex items-center gap-1 mx-1">
+                    {getPaginationRange(page, tableTotalPages).map((p, idx) => {
+                      if (p === '...') {
+                        return (
+                          <span
+                            key={`ellipsis-${idx}`}
+                            className="px-1 text-xs select-none"
+                            style={{ color: '#A8A29E' }}
+                          >
+                            …
+                          </span>
+                        );
+                      }
+                      const isCurrent = p === page;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          disabled={isCurrent || isTableFetching}
+                          onClick={() => goToPage(p as number)}
+                          className="min-w-[28px] h-7 px-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:cursor-default"
+                          style={{
+                            backgroundColor: isCurrent ? '#E02126' : 'transparent',
+                            color: isCurrent ? '#FFFFFF' : '#1C1917',
+                            border: isCurrent ? '1px solid #E02126' : '1px solid #E7E5E4',
+                          }}
+                        >
+                          {p}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Next page button */}
+                  <button
+                    type="button"
+                    disabled={page >= tableTotalPages || isTableFetching}
+                    onClick={() => goToPage(page + 1)}
+                    className="p-1.5 rounded-lg border transition-colors disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer hover:bg-stone-50"
+                    style={{ borderColor: '#E7E5E4', color: '#78716C' }}
+                    title="Next page"
+                    aria-label="Next page"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Last page button */}
+                  <button
+                    type="button"
+                    disabled={page >= tableTotalPages || isTableFetching}
+                    onClick={() => goToPage(tableTotalPages)}
+                    className="p-1.5 rounded-lg border transition-colors disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer hover:bg-stone-50"
+                    style={{ borderColor: '#E7E5E4', color: '#78716C' }}
+                    title="Last page"
+                    aria-label="Last page"
+                  >
+                    <ChevronsRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Mobile Redesigned Card List */}
-          <div className="space-y-3 sm:hidden">
-            {requests.map((req) => {
+          <div
+            className="space-y-3 sm:hidden transition-opacity duration-150"
+            style={{ opacity: isTableFetching ? 0.6 : 1 }}
+          >
+            {tableData.map((req) => {
               const clientName =
                 req.name ||
                 `${req.firstName} ${req.lastName}`.trim() ||
@@ -881,7 +1167,7 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
                             message: archiveConfirmMessage(clientName),
                             confirmText: ARCHIVE_CONFIRM_BUTTON,
                             variant: 'danger',
-                            onConfirm: () => onDeleteRequest(req.id),
+                            onConfirm: () => handleArchiveRow(req.id),
                           });
                         }}
                         className="p-1.5 rounded-lg cursor-pointer -mr-1"
@@ -897,6 +1183,81 @@ export const ServiceRequestsView: React.FC<ServiceRequestsViewProps> = ({
               );
             })}
           </div>
+
+          {/* Mobile Pagination Bar */}
+          {tableTotalPages > 0 && (
+            <div
+              className="sm:hidden rounded-2xl border p-4 space-y-3"
+              style={{
+                backgroundColor: '#FFFFFF',
+                borderColor: '#E7E5E4',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+              }}
+            >
+              {/* Page indicator & rows per page selector */}
+              <div className="flex items-center justify-between text-xs">
+                <div style={{ color: '#78716C' }}>
+                  Page <span className="font-semibold" style={{ color: '#1C1917' }}>{page}</span> of{' '}
+                  <span className="font-semibold" style={{ color: '#1C1917' }}>{tableTotalPages}</span>
+                  <span className="ml-1" style={{ color: '#A8A29E' }}>({tableTotalItems} total)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span style={{ color: '#78716C' }}>Rows:</span>
+                  {[10, 25, 50].map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => {
+                        if (limit !== size) {
+                          setLimit(size);
+                          setPage(1);
+                        }
+                      }}
+                      className="px-2 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer"
+                      style={{
+                        backgroundColor: limit === size ? '#E02126' : '#F5F5F4',
+                        color: limit === size ? '#FFFFFF' : '#78716C',
+                      }}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Prev & Next touch buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1 || isTableFetching}
+                  onClick={() => goToPage(page - 1)}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98]"
+                  style={{
+                    borderColor: '#E7E5E4',
+                    backgroundColor: '#FAF9F6',
+                    color: '#1C1917',
+                  }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={page >= tableTotalPages || isTableFetching}
+                  onClick={() => goToPage(page + 1)}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98]"
+                  style={{
+                    borderColor: '#E7E5E4',
+                    backgroundColor: '#FAF9F6',
+                    color: '#1C1917',
+                  }}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
       </Enter>
